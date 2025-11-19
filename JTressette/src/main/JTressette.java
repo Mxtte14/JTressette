@@ -1,8 +1,9 @@
 package main;
 
 import menu.MenuFrame;
+
+import javax.swing.*;
 import java.util.logging.Logger;
-import javax.swing.Timer;
 
 public class JTressette {
 
@@ -24,7 +25,10 @@ public class JTressette {
                 switch (selected) {
                     case 1 -> LOG.info("Avvio partita...");
                     case 2 -> LOG.info("Mostra regole...");
-                    case 3 -> LOG.info("Accesso al profilo...");
+                    case 3 -> {
+                        LOG.info("Accesso al profilo...");
+                        frame.showProfile(); // NAVIGA alla schermata profilo
+                    }
                     case 4 -> LOG.info("Impostazioni...");
                     case 5 -> {
                         LOG.info("Uscita...");
