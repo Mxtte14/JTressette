@@ -16,7 +16,7 @@ public class MenuFrame extends JFrame {
     public final HomeMenu panel; // mantiene nome e visibilità originale per compatibilità
     private final JPanel cards;
     private ProfileMenu profilePanel;
-    private RulesPage RulesPage;
+    private RulesPage rulesPanel;
 
     public MenuFrame(ProfileController controller) {
         super("JTressette");
@@ -30,8 +30,12 @@ public class MenuFrame extends JFrame {
         // pannello profilo (nuova card) - passa il container cards e il controller
         profilePanel = new ProfileMenu(cards, controller);
 
+        // pannello regole (nuova card)
+        rulesPanel = new RulesPage(cards);
+
         cards.add(panel, "MENU");
         cards.add(profilePanel, "PROFILE");
+        cards.add(rulesPanel, "RULES"); // aggiunta della card Regole
 
         // collega il click sull'area avatar/nome dell'home per aprire il profilo
         panel.setOnProfileClick(this::showProfile);
@@ -64,6 +68,7 @@ public class MenuFrame extends JFrame {
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "RULES");
     }
+
     /**
      * Torna alla schermata menu (card "MENU").
      */

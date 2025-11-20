@@ -36,7 +36,10 @@ public class JTressette {
                 int selected = frame.panel.getSelectedOption();
                 switch (selected) {
                     case 1 -> LOG.info("Avvio partita...");
-                    case 2 -> LOG.info("Mostra regole...");
+                    case 2 -> {
+                        LOG.info("Mostra regole...");
+                        frame.showRules(); // NAVIGA alla schermata regole
+                    }
                     case 3 -> {
                         LOG.info("Accesso al profilo...");
                         frame.showProfile(); // NAVIGA alla schermata profilo
