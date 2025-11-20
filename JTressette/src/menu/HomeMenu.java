@@ -1,11 +1,8 @@
 package menu;
 
-import controller.Cursor;
 import controller.ProfileController;
 import controller.ProfileListener;
 import profile.UserProfile;
-import controller.KeyHandler;
-import controller.Cursor;
 
 
 import java.awt.*;
@@ -157,7 +154,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
             }
             if (icon == null) {
                 try {
-                    BufferedImage def = ImageIO.read(getClass().getResourceAsStream("/main/resource/default_avatar.png"));
+                    BufferedImage def = ImageIO.read(getClass().getResourceAsStream("/main/resource/default_icon.jpg"));
                     if (def != null) icon = def;
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, "Impossibile caricare avatar di default dalle risorse", ex);
