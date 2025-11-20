@@ -1,6 +1,10 @@
 package profile;
 
-public class GamesRecord {
+import java.io.Serializable;
+
+public class GamesRecord implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final String date;
     private final String opponent;
     private final String result;

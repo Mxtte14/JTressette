@@ -3,7 +3,7 @@ package main;
 import controller.ProfileController;
 import controller.ProfileControllerImpl;
 import profile.ProfileStorage;
-import profile.ProfileStorageJsonP;
+import profile.ProfileStorageSerialized;
 import profile.UserProfile;
 import menu.MenuFrame;
 
@@ -17,7 +17,7 @@ public class JTressette {
 
     public JTressette() {
         // inizializza storage e controller (Model + Controller)
-        ProfileStorage storage = new ProfileStorageJsonP();
+        ProfileStorage storage = new ProfileStorageSerialized();
         UserProfile userProfile = storage.loadOrCreateDefault();
         ProfileController profileController = new ProfileControllerImpl(storage, userProfile);
 

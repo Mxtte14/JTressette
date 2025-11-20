@@ -25,8 +25,12 @@ public class Cursor {
     }
 
     private void loadImage() {
-        try {
-            image = ImageIO.read(getClass().getResourceAsStream("/main/resource/sfondo_1.jpg"));
+        try (java.io.InputStream is = getClass().getResourceAsStream("/main/resource/sfondo_1.jpg")) {
+            if (is == null) {
+                LOGGER.warning("Immagine cursore non trovata: /main/resource/sfondo_1.jpg");
+                return;
+            }
+            image = ImageIO.read(is);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Errore nel caricamento del cursore", e);
         }

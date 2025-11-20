@@ -2,6 +2,7 @@ package menu;
 
 import controller.ProfileController;
 import profile.ProfileMenu;
+import rules.RulesPage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +16,7 @@ public class MenuFrame extends JFrame {
     public final HomeMenu panel; // mantiene nome e visibilità originale per compatibilità
     private final JPanel cards;
     private ProfileMenu profilePanel;
+    private RulesPage RulesPage;
 
     public MenuFrame(ProfileController controller) {
         super("JTressette");
@@ -55,6 +57,13 @@ public class MenuFrame extends JFrame {
         cl.show(cards, "PROFILE");
     }
 
+    /**
+     * Mostra la schermata regole (card "RULES").
+     */
+    public void showRules() {
+        CardLayout cl = (CardLayout) cards.getLayout();
+        cl.show(cards, "RULES");
+    }
     /**
      * Torna alla schermata menu (card "MENU").
      */
