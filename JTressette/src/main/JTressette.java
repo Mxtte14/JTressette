@@ -1,5 +1,10 @@
 package main;
 
+import controller.ProfileController;
+import controller.ProfileControllerImpl;
+import profile.ProfileStorage;
+import profile.ProfileStorageJsonP;
+import profile.UserProfile;
 import menu.MenuFrame;
 
 import javax.swing.*;
@@ -11,12 +16,19 @@ public class JTressette {
     private final MenuFrame frame;
 
     public JTressette() {
-        frame = new MenuFrame();  // crea la finestra e il menu
+        // inizializza storage e controller (Model + Controller)
+        ProfileStorage storage = new ProfileStorageJsonP();
+        UserProfile userProfile = storage.loadOrCreateDefault();
+        ProfileController profileController = new ProfileControllerImpl(storage, userProfile);
+
+        // crea la UI (View) passando il controller
+        frame = new MenuFrame(profileController);
+
         setupMouseListener();
         setupRepaintTimer();
     }
 
-    // Gestione click del mouse sul menu
+    // Gestione click del mouse sul menu (mantengo la logica di navigazione qui)
     private void setupMouseListener() {
         frame.panel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -49,7 +61,7 @@ public class JTressette {
     // PUNTO D'INGRESSO DEL PROGRAMMA
     // -------------------------------
     static void main(String[] args) {
-        new JTressette(); // crea e avvia il menu
+        // Avvia Swing sul EDT
+        SwingUtilities.invokeLater(JTressette::new);
     }
 }
-

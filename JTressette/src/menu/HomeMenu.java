@@ -1,15 +1,28 @@
 package menu;
 
+import controller.Cursor;
+import controller.ProfileController;
+import controller.ProfileListener;
+import profile.UserProfile;
+import controller.KeyHandler;
+import controller.Cursor;
+
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class HomeMenu extends JPanel {
+/**
+ * HomeMenu è ora View e implementa ProfileListener per aggiornarsi quando il modello cambia.
+ * Riceve ProfileController nel costruttore (per registrarsi come listener).
+ */
+public class HomeMenu extends JPanel implements ProfileListener {
 
     private static final Logger LOGGER = Logger.getLogger(HomeMenu.class.getName());
 
@@ -20,11 +33,19 @@ public class HomeMenu extends JPanel {
 
     BufferedImage background;
     public MenuOption[] options;
-    public Cursor cursor;
+    public controller.Cursor cursor;
 
     private int selectedOption = 0; // 0 = nessuna selezione, 1..4 = opzioni
 
-    public HomeMenu() {
+    // --- campi per avatar/nome in alto a destra
+    private final JLabel avatarSmallLabel;
+    private final JLabel nameSmallLabel;
+    private final ProfileController controller;
+    private Runnable onProfileClick; // callback per aprire profilo (MenuFrame imposta)
+
+    public HomeMenu(ProfileController controller) {
+        this.controller = controller;
+
         loadBackground();
 
         options = new MenuOption[]{
@@ -35,7 +56,37 @@ public class HomeMenu extends JPanel {
                 new MenuOption("Esci", 520)
         };
 
-        cursor = new Cursor(this);
+        cursor = new controller.Cursor(this);
+
+        // usa BorderLayout così possiamo aggiungere un pannello in alto a destra
+        setLayout(new BorderLayout());
+
+        // pannello top trasparente per contenere avatar e nome a destra
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 6));
+        topPanel.setOpaque(false); // lascia vedere lo sfondo disegnato in paintComponent
+
+        avatarSmallLabel = new JLabel();
+        avatarSmallLabel.setPreferredSize(new Dimension(48, 48));
+        avatarSmallLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        nameSmallLabel = new JLabel();
+        nameSmallLabel.setForeground(Color.WHITE);
+        nameSmallLabel.setFont(new Font("Serif", Font.BOLD, 16));
+        nameSmallLabel.setVerticalAlignment(SwingConstants.CENTER);
+
+        // area cliccabile per aprire il profilo
+        JPanel clickable = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        clickable.setOpaque(false);
+        clickable.add(nameSmallLabel);
+        clickable.add(avatarSmallLabel);
+        clickable.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                if (onProfileClick != null) onProfileClick.run();
+            }
+        });
+
+        topPanel.add(clickable);
+        add(topPanel, BorderLayout.NORTH);
 
         setPreferredSize(new Dimension(screenWidth, screenHeight));
         setBackground(Color.BLACK);
@@ -67,10 +118,70 @@ public class HomeMenu extends JPanel {
         // Swing Timer per aggiornare il pannello (~60 FPS)
         Timer timer = new Timer(16, e -> repaint());
         timer.start();
+
+        // registrazione al controller come listener (observer)
+        if (this.controller != null) {
+            this.controller.addListener(this);
+            // inizializza con i dati correnti
+            UserProfile p = this.controller.getProfile();
+            if (p != null) onProfileUpdated(p);
+        }
     }
 
     public int getSelectedOption() {
         return selectedOption;
+    }
+
+    /**
+     * Imposta la callback eseguita quando si clicca l'area avatar/nome.
+     */
+    public void setOnProfileClick(Runnable r) {
+        this.onProfileClick = r;
+    }
+
+    @Override
+    public void onProfileUpdated(UserProfile profile) {
+        // aggiornamento UI da EDT
+        SwingUtilities.invokeLater(() -> {
+            String n = profile.getName() == null || profile.getName().isBlank() ? "Giocatore" : profile.getName();
+            nameSmallLabel.setText(n);
+
+            // avatar: prima prova il path dell'utente, altrimenti carica risorsa di default
+            Image icon = null;
+            if (profile.getAvatarPath() != null) {
+                try {
+                    icon = ImageIO.read(new File(profile.getAvatarPath()));
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, "Impossibile leggere avatar utente: " + profile.getAvatarPath(), ex);
+                }
+            }
+            if (icon == null) {
+                try {
+                    BufferedImage def = ImageIO.read(getClass().getResourceAsStream("/main/resource/default_avatar.png"));
+                    if (def != null) icon = def;
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Impossibile caricare avatar di default dalle risorse", ex);
+                }
+            }
+
+            if (icon != null) {
+                Image scaled = icon.getScaledInstance(48, 48, Image.SCALE_SMOOTH);
+                avatarSmallLabel.setIcon(new ImageIcon(scaled));
+                avatarSmallLabel.setText("");
+            } else {
+                avatarSmallLabel.setIcon(null);
+                avatarSmallLabel.setText("?");
+                avatarSmallLabel.setForeground(Color.WHITE);
+            }
+        });
+    }
+
+    @Override
+    public void onProfileSaveFailed(Exception ex) {
+        // opzionale: mostrare dialog o loggare
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(this, "Salvataggio profilo fallito: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
+        });
     }
 
     private void loadBackground() {

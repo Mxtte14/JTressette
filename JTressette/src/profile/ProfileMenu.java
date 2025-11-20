@@ -1,5 +1,8 @@
 package profile;
 
+import controller.ProfileController;
+import controller.ProfileListener;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -9,20 +12,31 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class ProfileMenu extends JPanel {
+/**
+ * ProfileMenu: View che si registra come listener al ProfileController.
+ * Non esegue I/O direttamente: chiama il controller per cambiare nome/avatar.
+ */
+public class ProfileMenu extends JPanel implements ProfileListener {
     private final JPanel cards;
-    private final UserProfile profile;
+    private final ProfileController controller;
 
     private JTextField nameField;
     private JLabel avatarLabel;
     private JTable historyTable;
     private DefaultTableModel tableModel;
 
-    public ProfileMenu(JPanel cards, UserProfile profile) {
+    public ProfileMenu(JPanel cards, ProfileController controller) {
         this.cards = cards;
-        this.profile = profile;
+        this.controller = controller;
         init();
-        refreshFromModel();
+
+        // registrazione come observer
+        if (this.controller != null) {
+            this.controller.addListener(this);
+            // inizializza la view dallo stato corrente
+            UserProfile p = this.controller.getProfile();
+            if (p != null) onProfileUpdated(p);
+        }
     }
 
     private void init() {
@@ -79,32 +93,44 @@ public class ProfileMenu extends JPanel {
         add(center, BorderLayout.CENTER);
     }
 
-    public void refreshFromModel() {
-        // update name
-        nameField.setText(profile.getName());
+    /**
+     * Aggiorna la view dal modello; viene chiamato dal controller tramite observer.
+     */
+    @Override
+    public void onProfileUpdated(UserProfile profile) {
+        SwingUtilities.invokeLater(() -> {
+            // update name
+            nameField.setText(profile.getName());
 
-        // update avatar
-        if (profile.getAvatarPath() != null) {
-            setAvatarFromPath(profile.getAvatarPath());
-        } else {
-            avatarLabel.setIcon(null);
-            avatarLabel.setText("Nessun avatar");
-        }
+            // update avatar
+            if (profile.getAvatarPath() != null) {
+                setAvatarFromPath(profile.getAvatarPath());
+            } else {
+                avatarLabel.setIcon(null);
+                avatarLabel.setText("Nessun avatar");
+            }
 
-        // update history table
-        tableModel.setRowCount(0);
-        List<GamesRecord> history = profile.getHistory();
-        for (GamesRecord m : history) {
-            tableModel.addRow(new Object[]{m.getDate(), m.getOpponent(), m.getResult()});
-        }
+            // update history table
+            tableModel.setRowCount(0);
+            List<GamesRecord> history = profile.getHistory();
+            for (GamesRecord m : history) {
+                tableModel.addRow(new Object[]{m.getDate(), m.getOpponent(), m.getResult()});
+            }
+        });
+    }
+
+    @Override
+    public void onProfileSaveFailed(Exception ex) {
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(this, "Salvataggio profilo fallito: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
+        });
     }
 
     private void onSaveName() {
         String newName = nameField.getText().trim();
         if (!newName.isEmpty()) {
-            profile.setName(newName);
-            JOptionPane.showMessageDialog(this, "Nome salvato.");
-            // persist profile here if needed
+            // delega al controller (controller si occupa di validare/salvare)
+            controller.setName(newName);
         } else {
             JOptionPane.showMessageDialog(this, "Il nome non può essere vuoto.", "Errore", JOptionPane.ERROR_MESSAGE);
         }
@@ -115,9 +141,8 @@ public class ProfileMenu extends JPanel {
         int res = chooser.showOpenDialog(this);
         if (res == JFileChooser.APPROVE_OPTION) {
             File f = chooser.getSelectedFile();
-            profile.setAvatarPath(f.getAbsolutePath());
-            setAvatarFromPath(f.getAbsolutePath());
-            // persist profile here if needed
+            // delega al controller (che potrà copiare il file nella cartella dell'app se desiderato)
+            controller.setAvatar(f);
         }
     }
 
@@ -136,5 +161,13 @@ public class ProfileMenu extends JPanel {
             avatarLabel.setIcon(null);
             avatarLabel.setText("Impossibile aprire immagine");
         }
+    }
+
+    /**
+     * Metodo pubblico per forzare un refresh immediato dalla view esterna (MenuFrame).
+     */
+    public void refreshFromModel() {
+        UserProfile p = controller.getProfile();
+        if (p != null) onProfileUpdated(p);
     }
 }

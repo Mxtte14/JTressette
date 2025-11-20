@@ -1,34 +1,38 @@
 package menu;
 
+import controller.ProfileController;
 import profile.ProfileMenu;
 
 import javax.swing.*;
 import java.awt.*;
 
-
 /**
- * MenuFrame aggiornato per usare CardLayout e navigare nella stessa finestra.
- * Mantiene la proprietà pubblica `panel` per compatibilità con il codice esistente.
+ * MenuFrame: contiene le card e gestisce la navigazione.
+ * Ora è "View" e riceve il ProfileController per passarlo alle sottoview.
  */
 public class MenuFrame extends JFrame {
 
     public final HomeMenu panel; // mantiene nome e visibilità originale per compatibilità
     private final JPanel cards;
-    private ProfileMenu ProfileMenu;
+    private ProfileMenu profilePanel;
 
-    public MenuFrame() {
-        super("JTressette"); 
+    public MenuFrame(ProfileController controller) {
+        super("JTressette");
 
-        // pannello principale (home menu)
-        panel = new HomeMenu();
-
-        // pannello profilo (nuova card)
-        ProfileMenu profilePanel = new ProfileMenu(this);
+        // pannello principale (home menu) che riceve il controller
+        panel = new HomeMenu(controller);
 
         // contenitore a carte
         cards = new JPanel(new CardLayout());
+
+        // pannello profilo (nuova card) - passa il container cards e il controller
+        profilePanel = new ProfileMenu(cards, controller);
+
         cards.add(panel, "MENU");
         cards.add(profilePanel, "PROFILE");
+
+        // collega il click sull'area avatar/nome dell'home per aprire il profilo
+        panel.setOnProfileClick(this::showProfile);
 
         add(cards);
 
@@ -44,9 +48,10 @@ public class MenuFrame extends JFrame {
      * Mostra la schermata profilo (card "PROFILE").
      */
     public void showProfile() {
+        // aggiorna i dati della view dal controller (il ProfileMenu è registrato come listener al controller,
+        // ma forziamo comunque un refresh immediato)
+        profilePanel.refreshFromModel();
         CardLayout cl = (CardLayout) cards.getLayout();
-        // opzionale: il profilePanel può aggiornarsi quando viene mostrato
-        ProfileMenu.refreshFromModel();
         cl.show(cards, "PROFILE");
     }
 
