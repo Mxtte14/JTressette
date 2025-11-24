@@ -1,5 +1,6 @@
 package controller;
 
+import profile.GamesRecord;
 import profile.ProfileStorage;
 import profile.UserProfile;
 
@@ -40,6 +41,12 @@ public class ProfileControllerImpl implements ProfileController {
         if (imageFile == null || !imageFile.exists()) return;
         // Opzione: qui puoi copiare il file nella cartella dell'app; per semplicità salvo l'assoluto
         profile.setAvatarPath(imageFile.getAbsolutePath());
+        saveAsync();
+    }
+
+    @Override
+    public void recordMatch(GamesRecord game) {
+        profile.addMatch(game);
         saveAsync();
     }
 

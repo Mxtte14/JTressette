@@ -1,5 +1,6 @@
 package controller;
 
+import profile.GamesRecord;
 import profile.UserProfile;
 
 import java.io.File;
@@ -13,4 +14,5 @@ public interface ProfileController {
     void setAvatar(File imageFile);
     void addListener(ProfileListener l);
     void removeListener(ProfileListener l);
+    void recordMatch(profile.GamesRecord game);
 }

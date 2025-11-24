@@ -50,6 +50,12 @@ public class MenuFrame extends JFrame {
         setVisible(true);
     }
 
+    public void showGame() {
+        // Implementa la logica per mostrare la schermata di gioco
+        // Al momento non è implementata, quindi rimaniamo sulla schermata del menu
+    }
+
+
     /**
      * Mostra la schermata profilo (card "PROFILE").
      */
