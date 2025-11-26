@@ -1,9 +1,6 @@
 package ui;
 
-import game.Engine;
-import game.GameState;
-import game.GiocatoreUmano;
-import game.Player;
+import game.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +78,7 @@ public class GameDialog extends JDialog {
         }
 
         // se è il turno dell'humano abilitiamo il controllo
-        Player current = state.getCurrentPlayer();
+        Giocatore current = state.getCurrentPlayer();
         boolean myTurn = current != null && current instanceof GiocatoreUmano && current.getName().equals(human.getName());
         playBtn.setEnabled(myTurn && !hand.isEmpty());
         if (myTurn) {

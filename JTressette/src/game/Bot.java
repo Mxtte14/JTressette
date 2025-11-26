@@ -41,7 +41,7 @@ public class Bot implements Giocatore {
                         .orElse(legal[0]);
 
             case HARD:
-                // se esiste una carta legale che vince il lead (se presente) scegliene la minima che vince,
+                // se esiste una carta legale che vince il lead (se presente) sceglie la minima che vince,
                 // altrimenti scarta la minima (più debole)
                 Cards lead = state.getLeadCard();
                 if (lead != null) {

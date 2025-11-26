@@ -1,9 +1,6 @@
 package ui;
 
-import game.Difficoltà;
-import game.GiocatoreUmano;
-import game.Player;
-import game.Bot;
+import game.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,7 +23,7 @@ public class GameSetup extends JDialog {
     private final List<JTextField> botNameFields = new ArrayList<>();
     private final List<JComboBox<Difficoltà>> botDiffBoxes = new ArrayList<>();
 
-    private List<Player> players = null;
+        private List<Giocatore> players = null;
 
     public GameSetup(Window owner) {
         super(owner, "Impostazioni partita", ModalityType.APPLICATION_MODAL);
@@ -80,10 +77,10 @@ public class GameSetup extends JDialog {
     }
 
     private void updateBotsPanel() {
-        int nb = (Integer) nbBox.getSelectedItem();
+        int numberOfBots = (Integer) nbBox.getSelectedItem();
         Component[] comps = botsPanel.getComponents();
         for (int i = 0; i < comps.length; i++) {
-            comps[i].setVisible(i < nb);
+            comps[i].setVisible(i < numberOfBots);
         }
         botsPanel.revalidate();
         botsPanel.repaint();
@@ -95,14 +92,14 @@ public class GameSetup extends JDialog {
 
         players = new ArrayList<>();
         // human first
-        players.add(new GiocatoreUmano(playerName));
+        players.add((Giocatore) new GiocatoreUmano(playerName));
 
         int nb = (Integer) nbBox.getSelectedItem();
         for (int i = 0; i < nb; i++) {
             String bn = botNameFields.get(i).getText().trim();
             if (bn.isEmpty()) bn = randomBotName();
             Difficoltà d = (Difficoltà) botDiffBoxes.get(i).getSelectedItem();
-            players.add(new Bot(bn, d));
+                        players.add(new Bot(bn, d));
         }
 
         dispose();
@@ -116,7 +113,7 @@ public class GameSetup extends JDialog {
     /**
      * Mostra la dialog (modal). Restituisce la lista di players o null se annullato.
      */
-    public List<Player> showDialogAndGetPlayers() {
+    public List<Giocatore> showDialogAndGetPlayers() {
         setVisible(true);
         return players;
     }

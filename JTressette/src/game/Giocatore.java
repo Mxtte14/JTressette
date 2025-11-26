@@ -7,6 +7,7 @@ public interface Giocatore {
     String getName();
     boolean isBot();
 
+
     /**
      * Sceglie la carta da giocare. L'implementazione può usare GameState.getHand(this)
      * e GameState.getLegalMoves(this) per decidere.

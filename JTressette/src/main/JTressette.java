@@ -2,16 +2,17 @@ package main;
 
 import controller.ProfileController;
 import controller.ProfileControllerImpl;
+import game.Giocatore;
 import profile.ProfileStorage;
 import profile.ProfileStorageSerialized;
 import profile.UserProfile;
 import menu.MenuFrame;
 import ui.GameDialog;
-import ui.GameSetupDialog;
-import game.GameEngine;
-import game.HumanPlayer;
+import game.Engine;
+import game.GiocatoreUmano;
 import game.Player;
 import profile.GamesRecord;
+import ui.GameSetup;
 
 import javax.swing.*;
 import java.util.List;
@@ -68,32 +69,32 @@ public class JTressette {
 
     private void onStartGame() {
         // mostra dialog di setup
-        GameSetupDialog setup = new GameSetupDialog(frame);
-        List<Player> players = setup.showDialogAndGetPlayers();
+        GameSetup setup = new GameSetup(frame);
+        List<Giocatore> players = setup.showDialogAndGetPlayers();
         if (players == null || players.isEmpty()) return;
 
         // trova il primo umano nella lista (assumiamo sia il primo)
-        HumanPlayer human = null;
-        for (Player p : players) {
-            if (!p.isBot() && p instanceof HumanPlayer) {
-                human = (HumanPlayer) p;
+        GiocatoreUmano human = null;
+        for (Giocatore p : players) {
+            if (!p.isBot() && p instanceof GiocatoreUmano) {
+                human = (GiocatoreUmano) p;
                 break;
             }
         }
 
         // crea GameEngine e GamePlayDialog (UI per l'umano)
-        GameEngine engine = new GameEngine(players);
-        GamePlayDialog playDialog = null;
+        Engine engine = new Engine(players);
+        GameDialog playDialog = null;
         if (human != null) {
-            playDialog = new GamePlayDialog(frame, engine, human);
+            playDialog = new GameDialog(frame, engine, human);
             playDialog.setVisible(true); // modeless: rimane davanti, il motore gira in background
         }
 
-        GamePlayDialog finalPlayDialog = playDialog;
+        GameDialog finalPlayDialog = playDialog;
         // avvia partita in background
         SwingWorker<GamesRecord, Void> w = new SwingWorker<>() {
             @Override
-            protected GamesRecord doInBackground() {
+            protected GamesRecord doInBackground() throws InterruptedException {
                 return engine.playMatch();
             }
             @Override

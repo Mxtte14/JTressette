@@ -14,7 +14,7 @@ public interface Player {
      * Sceglie quale carta giocare, dato lo stato di gioco (GameState).
      * Deve restituire l'indice della carta nella mano del player; -1 = pass (se supportato).
      */
-    int chooseCard(GameState state);
+    int chooseCard(GameState state) ;
 
     /** Riceve una carta in mano */
     void receiveCard(Cards c);

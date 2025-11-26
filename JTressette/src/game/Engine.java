@@ -14,18 +14,18 @@ import java.util.StringJoiner;
 public class Engine {
     private final GameState state;
 
-    public Engine(List<Player> players) {
+    public Engine(List<Giocatore> players) {
         this.state = new GameState(players);
     }
 
     public GameState getState() { return state; }
 
-    public GamesRecord playMatch() {
+    public GamesRecord playMatch() throws InterruptedException {
         state.deal();
 
         // loop principale: fino a fine partita
         while (!state.isFinished()) {
-            Player current = state.getCurrentPlayer();
+            Giocatore current = state.getCurrentPlayer();
             int idx = -1;
             try {
                 idx = current.chooseCard(state);
@@ -45,7 +45,7 @@ public class Engine {
             }
 
             // Gestione avanzamento turno:
-            Player newCurrent = state.getCurrentPlayer();
+            Giocatore newCurrent = state.getCurrentPlayer();
             if (newCurrent == current) {
                 // la presa è stata completata e current è stato impostato sul vincitore:
                 // non avanziamo in questo caso
@@ -70,7 +70,7 @@ public class Engine {
 
         // lista avversari bot (comma separated)
         StringJoiner opponents = new StringJoiner(",");
-        for (Player p : state.getPlayers()) {
+        for (Giocatore p : state.getPlayers()) {
             if (p.isBot()) opponents.add(p.getName());
         }
 
