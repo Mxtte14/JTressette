@@ -3,16 +3,11 @@ package game;
 import java.util.*;
 
 /**
- * Stato minimale del gioco:
- * - lista players (ordine di gioco)
- * - mani memorizzate internamente (Map<Player, List<Card>>)
- * - deck, punteggi basati su strength delle carte giocate
- * - indice del current player
- *
- * Questa implementazione è volutamente semplice: non ha il concetto
- * di "presa" completa; quando una carta viene giocata ne somma la strength
- * al punteggio del player (è un modo semplice per avere un risultato finale).
- * Estendi successivamente per regole complete di prese.
+ * Stato completo con:
+ * - mani (Map<Player, List<Card>>)
+ * - punteggi (Map<Player,Integer>) accumulati dalle prese
+ * - buffer della presa corrente (lista di coppie Player->Card nell'ordine di gioco)
+ * - regole legali: follow-suit obbligatorio se presente
  */
 public class GameState {
     private final List<Player> players;
@@ -20,6 +15,24 @@ public class GameState {
     private final Map<Player, Integer> scores = new LinkedHashMap<>();
     private final Mazzo deck;
     private int currentPlayerIndex = 0;
+
+    // trick buffer: mantiene l'ordine dei giocatori in questa presa
+    private final List<Player> trickPlayers = new ArrayList<>();
+    private final List<Cards> trickCards = new ArrayList<>();
+
+    // punti per carta (mappa semplificata): A,3,2,K,Q,J = 1 punto ciascuna (configurabile)
+    private static final Map<Cards.Rank, Integer> CARD_POINTS;
+    static {
+        Map<Cards.Rank, Integer> m = new EnumMap<>(Cards.Rank.class);
+        m.put(Cards.Rank.ASSO, 1);
+        m.put(Cards.Rank.TRE, 1);
+        m.put(Cards.Rank.DUE, 1);
+        m.put(Cards.Rank.RE, 1);
+        m.put(Cards.Rank.CAVALLO, 1);
+        m.put(Cards.Rank.ALFIERE, 1);
+        // le altre rimangono a 0
+        CARD_POINTS = Collections.unmodifiableMap(m);
+    }
 
     public GameState(List<Player> players) {
         this.players = new ArrayList<>(players);
@@ -30,7 +43,6 @@ public class GameState {
         }
     }
 
-    /** Distribuisce tutte le carte del mazzo round-robin ai players (fino a esaurimento) */
     public void deal() {
         deck.shuffle();
         while (!deck.isEmpty()) {
@@ -38,65 +50,129 @@ public class GameState {
                 Cards c = deck.draw();
                 if (c == null) break;
                 hands.get(p).add(c);
-                // notifichiamo il Player per implementazioni che tengono mano localmente (es. SimpleBotPlayer)
-                p.receiveCard(c);
             }
         }
+        // definisci il primo giocatore (puoi scegliere random o fissare il primo della lista)
+        currentPlayerIndex = 0;
     }
 
     public boolean isFinished() {
-        // partita finisce quando tutte le mani sono vuote
         for (List<Cards> h : hands.values()) {
             if (!h.isEmpty()) return false;
         }
         return true;
     }
 
-    public Player getCurrentPlayer() {
-        return players.get(currentPlayerIndex);
+    public List<Player> getPlayers() { return Collections.unmodifiableList(players); }
+
+    public List<Cards> getHand(Player p) {
+        List<Cards> hand = hands.get(p);
+        return (hand == null) ? List.of() : Collections.unmodifiableList(hand);
     }
+
+    public int getScore(Player p) { return scores.getOrDefault(p, 0); }
+    public Map<Player, Integer> getScores() { return Collections.unmodifiableMap(scores); }
+
+    public Player getCurrentPlayer() { return players.get(currentPlayerIndex); }
 
     public void advanceTurn() {
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     }
 
-    /** Restituisce array di indici legali (0..handSize-1) per il player */
+    /**
+     * Restituisce gli indici legali nella mano del player rispettando l'obbligo
+     * di seguire il seme di mano se possibile.
+     */
     public int[] getLegalMoves(Player p) {
         List<Cards> hand = hands.get(p);
         if (hand == null || hand.isEmpty()) return new int[0];
-        int[] res = new int[hand.size()];
-        for (int i = 0; i < hand.size(); i++) res[i] = i;
-        return res;
+
+        // se nessuna carta ancora giocata nella presa corrente => tutte legali
+        if (trickCards.isEmpty()) {
+            int[] all = new int[hand.size()];
+            for (int i = 0; i < hand.size(); i++) all[i] = i;
+            return all;
+        }
+
+        // altrimenti segue il seme leader se possibile
+        Cards lead = trickCards.get(0);
+        Cards.Segno leadSuit = lead.getSegno();
+        List<Integer> sameSuit = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getSegno() == leadSuit) sameSuit.add(i);
+        }
+        if (!sameSuit.isEmpty()) {
+            return sameSuit.stream().mapToInt(Integer::intValue).toArray();
+        } else {
+            int[] all = new int[hand.size()];
+            for (int i = 0; i < hand.size(); i++) all[i] = i;
+            return all;
+        }
     }
 
     /**
-     * Esegue la mossa: rimuove la carta dalla mano del player, somma la strength
-     * al punteggio (semplificazione). Restituisce la carta giocata o null.
+     * Esegue la mossa: rimuove la carta dalla mano del player e la aggiunge alla presa corrente.
+     * Se la presa viene completata (tutti i players hanno giocato), determina il vincitore,
+     * assegna i punti della presa al vincitore e svuota il buffer della presa.
+     *
+     * Ritorna la card giocata (o null se mossa invalida).
      */
-    public Cards playCard(Player p, int cardIndex) {
+    public Cards playCard(Player p, int handIndex) {
         List<Cards> hand = hands.get(p);
-        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) return null;
+        if (hand == null || handIndex < 0 || handIndex >= hand.size()) return null;
 
-        Cards c = hand.remove(cardIndex);
+        Cards c = hand.remove(handIndex);
 
-        // se il Player ha implementazioni locali della mano, è loro responsabilità sincronizzare;
-        // SimpleBotPlayer rimuove la carta dalla propria mano solo se lo implementi li; per semplicità
-        // manteniamo una mappa centralizzata come sorgente di verità.
+        trickPlayers.add(p);
+        trickCards.add(c);
 
-        int prev = scores.getOrDefault(p, 0);
-        scores.put(p, prev + c.getPriority());
+        // se presa completata
+        if (trickCards.size() == players.size()) {
+            // determina vincitore della presa
+            int winnerPos = determineTrickWinner();
+            Player winner = trickPlayers.get(winnerPos);
+
+            // calcola punti della presa
+            int trickPoints = 0;
+            for (Cards card : trickCards) {
+                trickPoints += CARD_POINTS.getOrDefault(card.getRank(), 0);
+            }
+
+            // assegna punti
+            int prev = scores.getOrDefault(winner, 0);
+            scores.put(winner, prev + trickPoints);
+
+            // prepara per la prossima presa: il prossimo currentPlayerIndex = index del winner nella lista players
+            int winnerPlayerIndex = players.indexOf(winner);
+            currentPlayerIndex = winnerPlayerIndex;
+
+            // svuota buffer
+            trickPlayers.clear();
+            trickCards.clear();
+        } else {
+            // la turno continua: il next player sarà avanzato esternamente chiamando advanceTurn()
+        }
 
         return c;
     }
 
-    public int getScore(Player p) {
-        return scores.getOrDefault(p, 0);
-    }
+    /**
+     * Determina il vincitore della presa (indice nella trickPlayers/trickCards).
+     * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getStrength()).
+     */
+    private int determineTrickWinner() {
+        Cards lead = trickCards.get(0);
+        Cards.Segno leadSuit = lead.getSegno();
 
-    public Map<Player,Integer> getScores() {
-        return Collections.unmodifiableMap(scores);
+        int bestIdx = 0;
+        Cards bestCard = trickCards.get(0);
+        for (int i = 1; i < trickCards.size(); i++) {
+            Cards c = trickCards.get(i);
+            if (c.getSegno() == leadSuit && c.getPriority() > bestCard.getPriority()) {
+                bestCard = c;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
     }
-
-    public List<Player> getPlayers() { return Collections.unmodifiableList(players); }
-    public List<Cards> getHand(Player p) { return Collections.unmodifiableList(hands.getOrDefault(p, List.of())); }
 }

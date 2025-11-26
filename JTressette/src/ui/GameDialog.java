@@ -96,7 +96,7 @@ public class GameDialog extends JDialog {
             return;
         }
         human.submitCardChoice(sel);
-        log("Hai giocato carta indice " + sel);
+        log("Hai giocato carta " + sel);
         // disabilitiamo finché non sarà di nuovo il turno
         playBtn.setEnabled(false);
     }
