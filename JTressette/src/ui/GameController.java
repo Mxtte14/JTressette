@@ -70,13 +70,13 @@ public class GameController {
                 Platform.runLater(() -> view.refresh());
 
                 int idx;
-                if (current == humanPlayer) {
+                if (current.getName().equals(humanPlayer.getName())) {
                     // Wait for human input
                     view.log("È il tuo turno - scegli una carta");
                     idx = humanPlayer.chooseCard(gameState);
                 } else {
-                    // Bot plays
-                    Thread.sleep(800); // Add delay for visual effect
+                    // Bot plays - delay for visual effect (in background thread, so blocking is acceptable)
+                    Thread.sleep(800);
                     idx = current.chooseCard(gameState);
                 }
 
@@ -98,7 +98,7 @@ public class GameController {
 
                         // Check if trick was completed (currentPlayer changed to winner)
                         Giocatore newCurrent = gameState.getCurrentPlayer();
-                        if (newCurrent != current) {
+                        if (!newCurrent.getName().equals(current.getName())) {
                             // Trick completed - pause to show cards, then clear table
                             Thread.sleep(1500);
                             Platform.runLater(() -> {

@@ -54,6 +54,7 @@ public class GameView {
     private Label scoreLabel;
     private VBox logArea;
     private Button playButton;
+    private Label noCardsLabel; // Reference to "no cards" placeholder
 
     private int selectedCardIndex = -1;
     private List<StackPane> cardViews = new ArrayList<>();
@@ -447,6 +448,7 @@ public class GameView {
 
     private void updateTableCards() {
         tableCardsBox.getChildren().clear();
+        noCardsLabel = null; // Reset reference
 
         // Get trick cards from game state using the new methods
         List<Cards> trickCards = gameState.getTrickCards();
@@ -471,10 +473,10 @@ public class GameView {
 
         // Display message if no cards on table
         if (tableCardsBox.getChildren().isEmpty()) {
-            Label noCards = new Label("Nessuna carta giocata");
-            noCards.setTextFill(Color.rgb(200, 200, 200, 0.7));
-            noCards.setFont(Font.font("Arial", 14));
-            tableCardsBox.getChildren().add(noCards);
+            noCardsLabel = new Label("Nessuna carta giocata");
+            noCardsLabel.setTextFill(Color.rgb(200, 200, 200, 0.7));
+            noCardsLabel.setFont(Font.font("Arial", 14));
+            tableCardsBox.getChildren().add(noCardsLabel);
         }
     }
 
@@ -535,8 +537,11 @@ public class GameView {
      */
     public void showCardPlayed(Giocatore player, Cards card) {
         Platform.runLater(() -> {
-            // Remove "no cards" message if present
-            tableCardsBox.getChildren().removeIf(node -> node instanceof Label);
+            // Remove "no cards" placeholder if present
+            if (noCardsLabel != null && tableCardsBox.getChildren().contains(noCardsLabel)) {
+                tableCardsBox.getChildren().remove(noCardsLabel);
+                noCardsLabel = null;
+            }
 
             VBox playedCard = new VBox(3);
             playedCard.setAlignment(Pos.CENTER);
