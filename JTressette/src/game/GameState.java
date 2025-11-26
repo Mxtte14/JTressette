@@ -181,4 +181,18 @@ public class GameState {
         int winnerIdx = determineTrickWinner();
         return trickCards.get(winnerIdx);
     }
+
+    /**
+     * Returns the list of cards currently on the table for the current trick.
+     */
+    public List<Cards> getTrickCards() {
+        return Collections.unmodifiableList(trickCards);
+    }
+
+    /**
+     * Returns the list of players who have played in the current trick, in order.
+     */
+    public List<Giocatore> getTrickPlayers() {
+        return Collections.unmodifiableList(trickPlayers);
+    }
 }
