@@ -3,9 +3,9 @@ package ui;
 import game.*;
 import profile.GamesRecord;
 
-import javafx.application.Platform;
-import javafx.stage.Stage;
-
+import javax.swing.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -14,23 +14,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * GameController: Controller for the game following MVC pattern.
+ * GameControllerSwing: Controller for the game following MVC pattern.
  * Manages game flow, player actions, and updates the view.
+ * Uses Swing instead of JavaFX.
  */
-public class GameController {
+public class GameControllerSwing {
 
     private final Engine engine;
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
-    private final GameView view;
-    private final Stage stage;
+    private final GameViewSwing view;
     private final Runnable onGameEnd;
 
     private final ExecutorService gameExecutor;
     private volatile boolean gameRunning = false;
 
-    public GameController(List<Giocatore> players, Stage stage, Runnable onGameEnd) {
-        this.stage = stage;
+    public GameControllerSwing(List<Giocatore> players, Runnable onGameEnd) {
         this.onGameEnd = onGameEnd;
         this.engine = new Engine(players);
         this.gameState = engine.getState();
@@ -47,7 +46,15 @@ public class GameController {
         this.humanPlayer = human;
 
         // Create view
-        this.view = new GameView(stage, gameState, humanPlayer, this);
+        this.view = new GameViewSwing(gameState, humanPlayer, this);
+
+        // Handle window close
+        view.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                onExitGame();
+            }
+        });
     }
 
     /**
@@ -56,6 +63,7 @@ public class GameController {
     public void startGame() {
         gameRunning = true;
         gameState.deal();
+        view.setVisible(true);
         view.refresh();
         view.log("Partita iniziata!");
 
@@ -67,7 +75,7 @@ public class GameController {
             while (!gameState.isFinished() && gameRunning) {
                 Giocatore current = gameState.getCurrentPlayer();
 
-                Platform.runLater(() -> view.refresh());
+                SwingUtilities.invokeLater(() -> view.refresh());
 
                 int idx;
                 if (current.getName().equals(humanPlayer.getName())) {
@@ -90,7 +98,7 @@ public class GameController {
                     if (played != null) {
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
-                        Platform.runLater(() -> {
+                        SwingUtilities.invokeLater(() -> {
                             view.showCardPlayed(finalCurrent, finalPlayed);
                             view.log(finalCurrent.getName() + " ha giocato " + finalPlayed);
                             view.refresh();
@@ -101,7 +109,7 @@ public class GameController {
                         if (!newCurrent.getName().equals(current.getName())) {
                             // Trick completed - pause to show cards, then clear table
                             Thread.sleep(1500);
-                            Platform.runLater(() -> {
+                            SwingUtilities.invokeLater(() -> {
                                 view.clearTable();
                                 view.log(newCurrent.getName() + " vince la presa!");
                             });
@@ -114,7 +122,7 @@ public class GameController {
 
             // Game finished
             String result = calculateResult();
-            Platform.runLater(() -> {
+            SwingUtilities.invokeLater(() -> {
                 view.showGameOver(result);
             });
 
@@ -156,8 +164,8 @@ public class GameController {
         gameRunning = false;
         gameExecutor.shutdownNow();
 
-        Platform.runLater(() -> {
-            stage.close();
+        SwingUtilities.invokeLater(() -> {
+            view.dispose();
             if (onGameEnd != null) {
                 onGameEnd.run();
             }
@@ -178,11 +186,7 @@ public class GameController {
         return new GamesRecord(date, opponents.toString(), result);
     }
 
-    public GameView getView() {
+    public GameViewSwing getView() {
         return view;
-    }
-
-    public Stage getStage() {
-        return stage;
     }
 }

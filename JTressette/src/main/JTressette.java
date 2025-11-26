@@ -7,14 +7,9 @@ import profile.ProfileStorage;
 import profile.ProfileStorageSerialized;
 import profile.UserProfile;
 import menu.MenuFrame;
-import game.GiocatoreUmano;
 import profile.GamesRecord;
-import ui.GameController;
+import ui.GameControllerSwing;
 import ui.GameSetup;
-
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
-import javafx.stage.Stage;
 
 import javax.swing.*;
 import java.util.List;
@@ -22,8 +17,8 @@ import java.util.logging.Logger;
 
 /**
  * Punto d'ingresso: all'avvio, quando si clicca "Gioca" nel menu viene mostrato il GameSetupDialog.
- * Dopo l'impostazione si avvia la pagina di gioco JavaFX in stile poker.
- * Utilizza il pattern MVC: GameState (Model), GameView (View), GameController (Controller).
+ * Dopo l'impostazione si avvia la pagina di gioco Swing in stile poker.
+ * Utilizza il pattern MVC: GameState (Model), GameViewSwing (View), GameControllerSwing (Controller).
  */
 public class JTressette {
 
@@ -32,9 +27,6 @@ public class JTressette {
     private final ProfileController profileController;
 
     public JTressette() {
-        // Inizializza JavaFX toolkit (necessario per usare JavaFX da Swing)
-        new JFXPanel();
-
         // inizializza storage e controller (Model + Controller)
         ProfileStorage storage = new ProfileStorageSerialized();
         UserProfile userProfile = storage.loadOrCreateDefault();
@@ -82,33 +74,23 @@ public class JTressette {
         // Nascondi il menu principale
         frame.setVisible(false);
 
-        // Avvia JavaFX game page sul thread JavaFX
-        Platform.runLater(() -> {
-            Stage gameStage = new Stage();
+        // Create controller with Swing-based game view
+        final GameControllerSwing[] controllerHolder = new GameControllerSwing[1];
 
-            // Create controller with a callback that will be set after
-            final GameController[] controllerHolder = new GameController[1];
+        controllerHolder[0] = new GameControllerSwing(players, () -> {
+            // Registra il risultato nel profilo
+            GamesRecord record = controllerHolder[0].getGameRecord();
+            profileController.recordMatch(record);
 
-            controllerHolder[0] = new GameController(players, gameStage, () -> {
-                // Registra il risultato nel profilo
-                GamesRecord record = controllerHolder[0].getGameRecord();
-                profileController.recordMatch(record);
-
-                // Mostra il risultato
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
-                            "Risultato", JOptionPane.INFORMATION_MESSAGE);
-                    frame.setVisible(true);
-                });
+            // Mostra il risultato
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
+                        "Risultato", JOptionPane.INFORMATION_MESSAGE);
+                frame.setVisible(true);
             });
-
-            gameStage.setOnCloseRequest(e -> {
-                SwingUtilities.invokeLater(() -> frame.setVisible(true));
-            });
-
-            gameStage.show();
-            controllerHolder[0].startGame();
         });
+
+        controllerHolder[0].startGame();
     }
 
     // Timer per aggiornare il pannello (~60 FPS)
