@@ -18,6 +18,7 @@ public class MenuOption {
     private static final Color TEXT_CREAM = new Color(255, 248, 220);
     private static final Color SHADOW_COLOR = new Color(0, 0, 0, 150);
     private static final Color GLOW_COLOR = new Color(255, 215, 0, 80);
+    private static final Color UNSELECTED_SHADOW = new Color(0, 0, 0, 100);
 
     // Font moderno
     private static final Font MENU_FONT = new Font("Georgia", Font.BOLD, 32);
@@ -41,14 +42,12 @@ public class MenuOption {
         FontMetrics fm = g2d.getFontMetrics();
 
         if (selected) {
-            // Effetto glow/alone per l'opzione selezionata
+            // Effetto glow/alone semplificato per l'opzione selezionata (ridotto per performance)
             g2d.setColor(GLOW_COLOR);
-            for (int i = 3; i >= 1; i--) {
-                g2d.drawString(text, x - i, y);
-                g2d.drawString(text, x + i, y);
-                g2d.drawString(text, x, y - i);
-                g2d.drawString(text, x, y + i);
-            }
+            g2d.drawString(text, x - 2, y);
+            g2d.drawString(text, x + 2, y);
+            g2d.drawString(text, x, y - 2);
+            g2d.drawString(text, x, y + 2);
 
             // Ombra del testo
             g2d.setColor(SHADOW_COLOR);
@@ -67,7 +66,7 @@ public class MenuOption {
 
         } else {
             // Ombra leggera per opzioni non selezionate
-            g2d.setColor(new Color(0, 0, 0, 100));
+            g2d.setColor(UNSELECTED_SHADOW);
             g2d.drawString(text, x + 2, y + 2);
 
             // Testo cremoso per opzioni normali

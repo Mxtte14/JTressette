@@ -45,6 +45,25 @@ public class HomeMenu extends JPanel implements ProfileListener {
     private static final Color PANEL_BG = new Color(0, 50, 30, 180);
     private static final Color PANEL_BORDER = new Color(255, 215, 0, 100);
 
+    // Colori pre-creati per effetti (ottimizzazione performance)
+    private static final Color PANEL_SHADOW = new Color(0, 0, 0, 80);
+    private static final Color PANEL_GRADIENT_TOP = new Color(10, 60, 35, 200);
+    private static final Color PANEL_GRADIENT_BOTTOM = new Color(5, 40, 25, 220);
+    private static final Color PANEL_INNER_BORDER = new Color(255, 215, 0, 30);
+    private static final Color TITLE_GLOW = new Color(255, 215, 0, 40);
+    private static final Color SUBTITLE_SHADOW = new Color(0, 0, 0, 100);
+    private static final Color SUBTITLE_COLOR = new Color(220, 210, 190);
+    private static final Color[] SHADOW_COLORS = {
+            new Color(0, 0, 0, 130), new Color(0, 0, 0, 110),
+            new Color(0, 0, 0, 90), new Color(0, 0, 0, 70)
+    };
+    private static final Color VIGNETTE_TRANSPARENT = new Color(0, 0, 0, 0);
+    private static final Color VIGNETTE_MEDIUM = new Color(0, 0, 0, 50);
+    private static final Color VIGNETTE_DARK = new Color(0, 0, 0, 150);
+
+    // Costante per raggio vignettatura
+    private static final float VIGNETTE_RADIUS_FACTOR = 0.8f;
+
     // Font per il titolo
     private static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 56);
     private static final Font SUBTITLE_FONT = new Font("Georgia", Font.ITALIC, 18);
@@ -294,16 +313,12 @@ public class HomeMenu extends JPanel implements ProfileListener {
     private void drawVignette(Graphics2D g2d) {
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
-        float radius = Math.max(screenWidth, screenHeight) * 0.8f;
+        float radius = Math.max(screenWidth, screenHeight) * VIGNETTE_RADIUS_FACTOR;
 
         RadialGradientPaint vignette = new RadialGradientPaint(
                 centerX, centerY, radius,
                 new float[]{0.0f, 0.7f, 1.0f},
-                new Color[]{
-                        new Color(0, 0, 0, 0),
-                        new Color(0, 0, 0, 50),
-                        new Color(0, 0, 0, 150)
-                }
+                new Color[]{VIGNETTE_TRANSPARENT, VIGNETTE_MEDIUM, VIGNETTE_DARK}
         );
         g2d.setPaint(vignette);
         g2d.fillRect(0, 0, screenWidth, screenHeight);
@@ -317,13 +332,13 @@ public class HomeMenu extends JPanel implements ProfileListener {
         int arc = 25;
 
         // Ombra del pannello
-        g2d.setColor(new Color(0, 0, 0, 80));
+        g2d.setColor(PANEL_SHADOW);
         g2d.fillRoundRect(panelX + 5, panelY + 5, panelWidth, panelHeight, arc, arc);
 
         // Pannello principale con gradiente
         GradientPaint panelGradient = new GradientPaint(
-                panelX, panelY, new Color(10, 60, 35, 200),
-                panelX, panelY + panelHeight, new Color(5, 40, 25, 220)
+                panelX, panelY, PANEL_GRADIENT_TOP,
+                panelX, panelY + panelHeight, PANEL_GRADIENT_BOTTOM
         );
         g2d.setPaint(panelGradient);
         g2d.fillRoundRect(panelX, panelY, panelWidth, panelHeight, arc, arc);
@@ -334,7 +349,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
         g2d.drawRoundRect(panelX, panelY, panelWidth, panelHeight, arc, arc);
 
         // Linea decorativa interna
-        g2d.setColor(new Color(255, 215, 0, 30));
+        g2d.setColor(PANEL_INNER_BORDER);
         g2d.setStroke(new BasicStroke(1f));
         g2d.drawRoundRect(panelX + 8, panelY + 8, panelWidth - 16, panelHeight - 16, arc - 5, arc - 5);
     }
@@ -347,20 +362,19 @@ public class HomeMenu extends JPanel implements ProfileListener {
         int titleX = (screenWidth - fm.stringWidth(title)) / 2;
         int titleY = 120;
 
-        // Ombra multipla per effetto 3D
-        for (int i = 4; i >= 1; i--) {
-            g2d.setColor(new Color(0, 0, 0, 50 + i * 20));
-            g2d.drawString(title, titleX + i, titleY + i);
+        // Ombra multipla per effetto 3D (usa colori pre-creati)
+        for (int i = 0; i < SHADOW_COLORS.length; i++) {
+            g2d.setColor(SHADOW_COLORS[i]);
+            int offset = 4 - i;
+            g2d.drawString(title, titleX + offset, titleY + offset);
         }
 
-        // Effetto glow
-        g2d.setColor(new Color(255, 215, 0, 40));
-        for (int i = 4; i >= 1; i--) {
-            g2d.drawString(title, titleX - i, titleY);
-            g2d.drawString(title, titleX + i, titleY);
-            g2d.drawString(title, titleX, titleY - i);
-            g2d.drawString(title, titleX, titleY + i);
-        }
+        // Effetto glow semplificato (ridotto da 16 a 8 draw per performance)
+        g2d.setColor(TITLE_GLOW);
+        g2d.drawString(title, titleX - 2, titleY);
+        g2d.drawString(title, titleX + 2, titleY);
+        g2d.drawString(title, titleX, titleY - 2);
+        g2d.drawString(title, titleX, titleY + 2);
 
         // Gradiente per il titolo
         GradientPaint titleGradient = new GradientPaint(
@@ -377,10 +391,10 @@ public class HomeMenu extends JPanel implements ProfileListener {
         int subX = (screenWidth - fmSub.stringWidth(subtitle)) / 2;
         int subY = titleY + 35;
 
-        g2d.setColor(new Color(0, 0, 0, 100));
+        g2d.setColor(SUBTITLE_SHADOW);
         g2d.drawString(subtitle, subX + 1, subY + 1);
 
-        g2d.setColor(new Color(220, 210, 190));
+        g2d.setColor(SUBTITLE_COLOR);
         g2d.drawString(subtitle, subX, subY);
     }
 
