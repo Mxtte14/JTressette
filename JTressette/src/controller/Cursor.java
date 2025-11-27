@@ -53,10 +53,7 @@ public class Cursor {
     }
 
     public void draw(Graphics g) {
-        if (image != null) g.drawImage(image, x, y, 32, 32, null);
-        else {
-            g.setColor(Color.RED);
-            g.fillOval(x, y, 20, 20);
-        }
+        // L'indicatore di selezione viene ora disegnato in MenuOption
+        // Questo metodo viene mantenuto per compatibilita ma non disegna piu nulla
     }
 }

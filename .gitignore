@@ -1,0 +1,16 @@
+# Compiled class files
+*.class
+out/
+JTressette/out/
+
+# IDE files
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+target/
+build/

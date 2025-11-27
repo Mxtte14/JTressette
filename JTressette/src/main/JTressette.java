@@ -129,7 +129,7 @@ public class JTressette {
     // -------------------------------
     // PUNTO D'INGRESSO DEL PROGRAMMA
     // -------------------------------
-    static void main(String[] args) {
+    public static void main(String[] args) {
         // Avvia Swing sul EDT
         SwingUtilities.invokeLater(JTressette::new);
     }
