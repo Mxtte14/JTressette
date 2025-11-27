@@ -25,10 +25,14 @@ public class UserProfile {
         this.recentGames = new ArrayList<>();
     }
 
-    public void addGameRecord(String summary) {
+    public void addGameRecord(GamesRecord summary) {
         this.recentGames.add(0, summary); // ultima prima
         if (this.recentGames.size() > 50) this.recentGames.remove(this.recentGames.size() - 1);
         this.totalGames++;
+    }
+    
+    public List<GamesRecord> getHistory() {
+        return recentGames;
     }
 
     public String getUsername() {

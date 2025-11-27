@@ -46,7 +46,7 @@ public class ProfileControllerImpl implements ProfileController {
 
     @Override
     public void recordMatch(GamesRecord game) {
-        profile.addMatch(game);
+        profile.addGameRecord(game);
         saveAsync();
     }
 

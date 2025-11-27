@@ -25,9 +25,9 @@ public class Cursor {
     }
 
     private void loadImage() {
-        try (java.io.InputStream is = getClass().getResourceAsStream("/res/default_images/white_ping.jpg")) {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/main/resource/sfondo_1.jpg")) {
             if (is == null) {
-                LOGGER.warning("Immagine cursore non trovata: /res/images/sfondo_1.jpg");
+                LOGGER.warning("Immagine cursore non trovata: /main/resource/sfondo_1.jpg");
                 return;
             }
             image = ImageIO.read(is);
@@ -53,10 +53,7 @@ public class Cursor {
     }
 
     public void draw(Graphics g) {
-        if (image != null) g.drawImage(image, x, y, 32, 32, null);
-        else {
-            g.setColor(Color.RED);
-            g.fillOval(x, y, 20, 20);
-        }
+        // L'indicatore di selezione viene ora disegnato in MenuOption
+        // Questo metodo viene mantenuto per compatibilita ma non disegna piu nulla
     }
 }

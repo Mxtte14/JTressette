@@ -1,15 +1,16 @@
-
 package main;
 
 import controller.ProfileController;
 import controller.ProfileControllerImpl;
 import game.Giocatore;
-import profile.ProfileStorage;
+import profile.StorageUser;
 import profile.ProfileStorageSerialized;
 import profile.UserProfile;
 import menu.MenuFrame;
+import ui.GameDialog;
+import game.Engine;
+import game.GiocatoreUmano;
 import profile.GamesRecord;
-import ui.GameController;
 import ui.GameSetup;
 
 import javax.swing.*;
@@ -18,8 +19,7 @@ import java.util.logging.Logger;
 
 /**
  * Punto d'ingresso: all'avvio, quando si clicca "Gioca" nel menu viene mostrato il GameSetupDialog.
- * Dopo l'impostazione si avvia la pagina di gioco Swing in stile poker.
- * Utilizza il pattern MVC: GameState (Model), GameViewSwing (View), GameControllerSwing (Controller).
+ * Dopo l'impostazione si avvia GameEngine in background; per la sessione umana viene mostrato GamePlayDialog.
  */
 public class JTressette {
 
@@ -72,26 +72,51 @@ public class JTressette {
         List<Giocatore> players = setup.showDialogAndGetPlayers();
         if (players == null || players.isEmpty()) return;
 
-        // Nascondi il menu principale
-        frame.setVisible(false);
+        // trova il primo umano nella lista (assumiamo sia il primo)
+        GiocatoreUmano human = null;
+        for (Giocatore p : players) {
+            if (!p.isBot() && p instanceof GiocatoreUmano) {
+                human = (GiocatoreUmano) p;
+                break;
+            }
+        }
 
-        // Create controller with Swing-based game view
-        final GameController[] controllerHolder = new GameController[1];
+        // crea GameEngine e GamePlayDialog (UI per l'umano)
+        Engine engine = new Engine(players);
+        GameDialog playDialog = null;
+        if (human != null) {
+            playDialog = new GameDialog(frame, engine, human);
+            playDialog.setVisible(true); // modeless: rimane davanti, il motore gira in background
+        }
 
-        controllerHolder[0] = new GameController(players, () -> {
-            // Registra il risultato nel profilo
-            GamesRecord record = controllerHolder[0].getGameRecord();
-            profileController.recordMatch(record);
+        GameDialog finalPlayDialog = playDialog;
+        // avvia partita in background
+        SwingWorker<GamesRecord, Void> w = new SwingWorker<>() {
+            @Override
+            protected GamesRecord doInBackground() throws InterruptedException {
+                return engine.playMatch();
+            }
+            @Override
+            protected void done() {
+                try {
+                    GamesRecord rec = get();
+                    // registra risultato nello storico tramite ProfileController
+                    profileController.recordMatch(rec);
 
-            // Mostra il risultato
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
-                        "Risultato", JOptionPane.INFORMATION_MESSAGE);
-                frame.setVisible(true);
-            });
-        });
+                    // mostra risultato
+                    JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + rec.getResult(),
+                            "Risultato", JOptionPane.INFORMATION_MESSAGE);
 
-        controllerHolder[0].startGame();
+                    if (finalPlayDialog != null) {
+                        finalPlayDialog.log("Partita terminata: " + rec.getResult());
+                        finalPlayDialog.dispose();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        };
+        w.execute();
     }
 
     // Timer per aggiornare il pannello (~60 FPS)

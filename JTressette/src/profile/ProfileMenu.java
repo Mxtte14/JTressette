@@ -100,7 +100,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
     public void onProfileUpdated(UserProfile profile) {
         SwingUtilities.invokeLater(() -> {
             // update name
-            nameField.setText(profile.getName());
+            nameField.setText(profile.getUsername());
 
             // update avatar
             if (profile.getAvatarPath() != null) {
