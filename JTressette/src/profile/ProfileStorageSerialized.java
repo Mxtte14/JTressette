@@ -26,7 +26,7 @@ public class ProfileStorageSerialized implements ProfileStorage {
         try {
             if (Files.notExists(profileFile)) {
                 if (Files.notExists(profileDir)) Files.createDirectories(profileDir);
-                UserProfile defaultProfile = new UserProfile("Giocatore", null, new ArrayList<>());
+                UserProfile defaultProfile = new UserProfile("Giocatore");
                 save(defaultProfile);
                 return defaultProfile;
             } else {
@@ -37,20 +37,20 @@ public class ProfileStorageSerialized implements ProfileStorage {
                         return (UserProfile) o;
                     } else {
                         // file corrotto / formato non previsto: ricrea default
-                        UserProfile defaultProfile = new UserProfile("Giocatore", null, new ArrayList<>());
+                        UserProfile defaultProfile = new UserProfile("Giocatore");
                         save(defaultProfile);
                         return defaultProfile;
                     }
                 } catch (ClassNotFoundException | IOException ex) {
                     // in caso di errore, ritorna default (e prova a sovrascrivere)
-                    UserProfile defaultProfile = new UserProfile("Giocatore", null, new ArrayList<>());
+                    UserProfile defaultProfile = new UserProfile("Giocatore");
                     try { save(defaultProfile); } catch (IOException ignored) {}
                     return defaultProfile;
                 }
             }
         } catch (IOException e) {
             // se non riesce a creare la dir, ritorna profilo default in memoria
-            return new UserProfile("Giocatore", null, new ArrayList<>());
+            return new UserProfile("Giocatore");
         }
     }
 

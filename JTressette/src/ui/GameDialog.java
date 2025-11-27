@@ -5,6 +5,7 @@ import game.*;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Dialog minimale che:
@@ -25,6 +26,10 @@ public class GameDialog extends JDialog {
 
     private final Timer pollTimer;
 
+    // stato usato per evitare aggiornamenti inutili della UI
+    private int lastHandSize = -1;
+    private String lastCurrentName = null;
+
     public GameDialog(Window owner, Engine engine, GiocatoreUmano giocatore) {
         super(owner, "Partita in corso", ModalityType.MODELESS);
         this.engine = engine;
@@ -33,8 +38,8 @@ public class GameDialog extends JDialog {
 
         initUI();
 
-        // poll ogni 300ms per verificare se è il turno dell'humano
-        pollTimer = new Timer(300, e -> refresh());
+        // poll ogni 1000ms per verificare se è il turno dell'umano (ridotto da 300ms)
+        pollTimer = new Timer(1000, e -> refresh());
         pollTimer.start();
 
         pack();
@@ -72,17 +77,31 @@ public class GameDialog extends JDialog {
     private void refresh() {
         // aggiorna mano umana
         List<game.Cards> hand = state.getHand(human);
-        handModel.clear();
-        for (int i = 0; i < hand.size(); i++) {
-            handModel.addElement("[" + i + "] " + hand.get(i).toString());
-        }
-
-        // se è il turno dell'humano abilitiamo il controllo
         Giocatore current = state.getCurrentPlayer();
+
+        String currentName = (current != null) ? current.getName() : null;
+        int handSize = (hand != null) ? hand.size() : 0;
+
+        // Se lo stato (player corrente o dimensione mano) non è cambiato, evitiamo di ricostruire la lista
+        boolean stateChanged = (handSize != lastHandSize) || !Objects.equals(currentName, lastCurrentName);
+
         boolean myTurn = current != null && current instanceof GiocatoreUmano && current.getName().equals(human.getName());
-        playBtn.setEnabled(myTurn && !hand.isEmpty());
-        if (myTurn) {
-            log("È il tuo turno — scegli una carta.");
+        playBtn.setEnabled(myTurn && handSize > 0);
+
+        if (stateChanged) {
+            // ricostruisci la lista mano solo quando serve (evita di perdere la selezione ad ogni tick)
+            handModel.clear();
+            for (int i = 0; i < handSize; i++) {
+                handModel.addElement("[" + i + "] " + hand.get(i).toString());
+            }
+
+            if (myTurn) {
+                log("È il tuo turno — scegli una carta.");
+            }
+
+            // aggiorna stato di confronto
+            lastHandSize = handSize;
+            lastCurrentName = currentName;
         }
     }
 

@@ -44,18 +44,16 @@ public class MenuFrame extends JFrame {
 
         setTitle("JTressette");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
+        setResizable(true);
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
     }
 
-    public void showGame() {
-        // Implementa la logica per mostrare la schermata di gioco
-        // Al momento non è implementata, quindi rimaniamo sulla schermata del menu
+    public void showSettings() {
+        // Implementa la logica per mostrare le impostazioni se necessario
+
     }
-
-
     /**
      * Mostra la schermata profilo (card "PROFILE").
      */

@@ -1,29 +1,41 @@
 package profile;
 
-import java.io.Serializable;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
-public class UserProfile implements Serializable {
-    private static final long serialVersionUID = 1L;
+/**
+ * Esempio minimale di profilo utente. Estendi con i campi che ti servono.
+ */
+public class UserProfile {
+    public String username;
+    public Instant createdAt;
+    public int totalGames;
+    public int totalWins;
+    public List<String> recentGames; // potresti usare oggetti più ricchi
 
-    private String name;
-    private String avatarPath; // percorso file dell'avatar
-    private final List<GamesRecord> history;
-
-    public UserProfile(String name, String avatarPath, List<GamesRecord> history) {
-        this.name = name;
-        this.avatarPath = avatarPath;
-        this.history = history;
+    public UserProfile() { // per Gson
     }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public UserProfile(String username) {
+        this.username = username;
+        this.createdAt = Instant.now();
+        this.totalGames = 0;
+        this.totalWins = 0;
+        this.recentGames = new ArrayList<>();
+    }
 
-    public String getAvatarPath() { return avatarPath; }
-    public void setAvatarPath(String avatarPath) { this.avatarPath = avatarPath; }
+    public void addGameRecord(String summary) {
+        this.recentGames.add(0, summary); // ultima prima
+        if (this.recentGames.size() > 50) this.recentGames.remove(this.recentGames.size() - 1);
+        this.totalGames++;
+    }
 
-    public List<GamesRecord> getHistory() { return history; }
+    public String getUsername() {
+        return username;
+    }
 
-    // add helper to append partita
-    public void addMatch(GamesRecord m) { history.add(m); }
+    public String getAvatarPath() {
+
+    }
 }

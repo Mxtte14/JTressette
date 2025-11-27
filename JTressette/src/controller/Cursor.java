@@ -25,9 +25,9 @@ public class Cursor {
     }
 
     private void loadImage() {
-        try (java.io.InputStream is = getClass().getResourceAsStream("/main/resource/sfondo_1.jpg")) {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/res/default_images/white_ping.jpg")) {
             if (is == null) {
-                LOGGER.warning("Immagine cursore non trovata: /main/resource/sfondo_1.jpg");
+                LOGGER.warning("Immagine cursore non trovata: /res/images/sfondo_1.jpg");
                 return;
             }
             image = ImageIO.read(is);

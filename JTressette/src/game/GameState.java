@@ -17,7 +17,7 @@ public class GameState {
     private int currentPlayerIndex = 0;
 
     // trick buffer: mantiene l'ordine dei giocatori in questa presa
-        private final List<Giocatore> trickPlayers = new ArrayList<>();
+    private final List<Giocatore> trickPlayers = new ArrayList<>();
     private final List<Cards> trickCards = new ArrayList<>();
 
     // punti per carta (mappa semplificata): A,3,2,K,Q,J = 1 punto ciascuna (configurabile)
@@ -73,7 +73,7 @@ public class GameState {
     public int getScore(Giocatore p) { return scores.getOrDefault(p, 0); }
     public Map<Giocatore, Integer> getScores() { return Collections.unmodifiableMap(scores); }
 
-        public Giocatore getCurrentPlayer() { return players.get(currentPlayerIndex); }
+    public Giocatore getCurrentPlayer() { return players.get(currentPlayerIndex); }
 
     public void advanceTurn() {
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
@@ -123,7 +123,7 @@ public class GameState {
 
         Cards c = hand.remove(handIndex);
 
-                trickCards.add(c);
+        trickCards.add(c);
         trickPlayers.add(p);
 
         // se presa completata
@@ -157,7 +157,7 @@ public class GameState {
     }
 
     /**
-          * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getPriority()).itore è la carta del seme di mano (lead suit) con valore più alto (getStrength()).
+     * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getPriority()).itore è la carta del seme di mano (lead suit) con valore più alto (getStrength()).
      */
     private int determineTrickWinner() {
         Cards lead = trickCards.get(0);
@@ -180,5 +180,19 @@ public class GameState {
         if (trickCards.isEmpty()) return null;
         int winnerIdx = determineTrickWinner();
         return trickCards.get(winnerIdx);
+    }
+
+    /**
+     * Returns the list of cards currently on the table for the current trick.
+     */
+    public List<Cards> getTrickCards() {
+        return Collections.unmodifiableList(trickCards);
+    }
+
+    /**
+     * Returns the list of players who have played in the current trick, in order.
+     */
+    public List<Giocatore> getTrickPlayers() {
+        return Collections.unmodifiableList(trickPlayers);
     }
 }

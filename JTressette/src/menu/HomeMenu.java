@@ -1,4 +1,3 @@
-
 package menu;
 
 import controller.ProfileController;
@@ -11,6 +10,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -19,6 +19,12 @@ import javax.swing.*;
 /**
  * HomeMenu è ora View e implementa ProfileListener per aggiornarsi quando il modello cambia.
  * Riceve ProfileController nel costruttore (per registrarsi come listener).
+ *
+ * Modifiche principali:
+ * - scaling "cover" per lo sfondo con caching (scaledBackground)
+ * - ridimensionamento in background via SwingWorker
+ * - overlay semitrasparente per migliorare leggibilità del testo
+ * - caricamento risorsa con diversi fallback di percorso
  */
 public class HomeMenu extends JPanel implements ProfileListener {
 
@@ -29,7 +35,17 @@ public class HomeMenu extends JPanel implements ProfileListener {
     public final int maxScreenCol = 17, maxScreenRow = 13;
     public final int screenWidth = tileSize * maxScreenCol, screenHeight = tileSize * maxScreenRow;
 
+    // immagine originale caricata dalle risorse
     BufferedImage background;
+
+    // immagine scalata in cache (per la dimensione corrente)
+    private volatile Image scaledBackground;
+    private volatile Dimension lastSize;
+    private SwingWorker<Image, Void> scaleWorker;
+
+    // overlay per migliorare leggibilità (alpha 0..255)
+    private Color overlay = new Color(0, 0, 0, 80);
+
     public MenuOption[] options;
     public controller.Cursor cursor;
 
@@ -44,7 +60,9 @@ public class HomeMenu extends JPanel implements ProfileListener {
     public HomeMenu(ProfileController controller) {
         this.controller = controller;
 
-        loadBackground();
+        loadBackground(); // carica "background" originale (BufferedImage)
+        // avvia il primo ridimensionamento (se possibile)
+        // il listener componentResized si occuperà di futuri cambi di dimensione
 
         options = new MenuOption[]{
                 new MenuOption("Gioca", 250),
@@ -91,6 +109,14 @@ public class HomeMenu extends JPanel implements ProfileListener {
         setFocusable(true);
         setDoubleBuffered(true);
 
+        // Listener per ridimensionamento: riscaliamo l'immagine in background
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                requestRescaleBackground();
+            }
+        });
+
         // Mouse movement
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
@@ -124,6 +150,9 @@ public class HomeMenu extends JPanel implements ProfileListener {
             UserProfile p = this.controller.getProfile();
             if (p != null) onProfileUpdated(p);
         }
+
+        // se abbiamo già una dimensione valida proviamo a ridimensionare subito
+        SwingUtilities.invokeLater(this::requestRescaleBackground);
     }
 
     public int getSelectedOption() {
@@ -182,27 +211,171 @@ public class HomeMenu extends JPanel implements ProfileListener {
         });
     }
 
+    /**
+     * Carica l'immagine di sfondo (prova più percorsi per maggiore tolleranza)
+     */
     private void loadBackground() {
-        try (java.io.InputStream is = getClass().getResourceAsStream("/main/resource/sfondo_1.jpg")) {
-            if (is == null) {
-                LOGGER.severe("Immagine di sfondo non trovata: /main/resource/sfondo_1.jpg");
-                return;
+        String[] resourceCandidates = {
+                "/res/default_images/sfondo_1.jpg",
+        };
+
+        // prova caricamento da classpath
+        for (String p : resourceCandidates) {
+            try (InputStream is = getClass().getResourceAsStream(p)) {
+                if (is != null) {
+                    background = ImageIO.read(is);
+                    LOGGER.info("Background caricato da resource: " + p);
+                    scaledBackground = null;
+                    lastSize = null;
+                    return;
+                }
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Errore caricamento resource " + p, e);
             }
-            background = ImageIO.read(is);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Errore nel caricamento dello sfondo", e);
         }
+
+        // fallback: prova a leggere dal file system relativo al progetto (utile in dev)
+        File fs = new File("res/default_images/sfondo_1.jpg");
+        if (fs.exists()) {
+            try {
+                background = ImageIO.read(fs);
+                LOGGER.info("Background caricato da file system: res/images/sfondo_1.jpg");
+                scaledBackground = null;
+                lastSize = null;
+                return;
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Errore caricamento sfondo da file system", e);
+            }
+        }
+
+        // se non trovato
+        LOGGER.severe("Immagine di sfondo non trovata. Percorsi provati: res/default_images/sfondo_1.jpg");
+        background = null;
+    }
+
+    /**
+     * Richiesta di riscalare l'immagine di background (esegue il lavoro in background)
+     */
+    private void requestRescaleBackground() {
+        if (background == null) return;
+
+        final Dimension size = getSize();
+        if (size.width <= 0 || size.height <= 0) return;
+
+        // se la cache è già valida non fare nulla
+        if (lastSize != null && lastSize.equals(size) && scaledBackground != null) return;
+
+        // cancella eventuale worker precedente
+        if (scaleWorker != null && !scaleWorker.isDone()) {
+            scaleWorker.cancel(true);
+        }
+
+        final BufferedImage orig = background;
+        scaleWorker = new SwingWorker<Image, Void>() {
+            @Override
+            protected Image doInBackground() {
+                int w = orig.getWidth();
+                int h = orig.getHeight();
+
+                double sx = (double) size.width / w;
+                double sy = (double) size.height / h;
+                // COVER: riempi tutta l'area e ritaglia eccessi
+                double scale = Math.max(sx, sy);
+
+                int newW = Math.max(1, (int) Math.round(w * scale));
+                int newH = Math.max(1, (int) Math.round(h * scale));
+
+                BufferedImage out = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g2 = out.createGraphics();
+                try {
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.drawImage(orig, 0, 0, newW, newH, null);
+                } finally {
+                    g2.dispose();
+                }
+                return out;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    if (!isCancelled()) {
+                        Image img = get();
+                        scaledBackground = img;
+                        lastSize = new Dimension(size);
+                        repaint();
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Errore nel ridimensionamento dello sfondo", ex);
+                }
+            }
+        };
+        scaleWorker.execute();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (background != null) g.drawImage(background, 0, 0, screenWidth, screenHeight, null);
 
+        // disegna lo sfondo scalato centrato (modalità cover)
+        if (scaledBackground != null) {
+            int sw = scaledBackground.getWidth(null);
+            int sh = scaledBackground.getHeight(null);
+            int x = (getWidth() - sw) / 2;
+            int y = (getHeight() - sh) / 2;
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2.drawImage(scaledBackground, x, y, this);
+                // overlay semitrasparente per migliorare leggibilità del testo
+                if (overlay != null && overlay.getAlpha() > 0) {
+                    g2.setColor(overlay);
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                }
+            } finally {
+                g2.dispose();
+            }
+        } else if (background != null) {
+            // fallback: disegna l'originale ridimensionato "sul momento" (meglio evitare per performance)
+            int w = background.getWidth();
+            int h = background.getHeight();
+            double sx = (double) getWidth() / w;
+            double sy = (double) getHeight() / h;
+            double scale = Math.max(sx, sy);
+            int nw = (int) Math.round(w * scale);
+            int nh = (int) Math.round(h * scale);
+            int x = (getWidth() - nw) / 2;
+            int y = (getHeight() - nh) / 2;
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g2.drawImage(background, x, y, nw, nh, this);
+                if (overlay != null && overlay.getAlpha() > 0) {
+                    g2.setColor(overlay);
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                }
+            } finally {
+                g2.dispose();
+            }
+        } else {
+            // nessuna immagine: sfondo normale
+            // (super.paintComponent ha già riempito con setBackground color)
+        }
+
+        // Disegna le opzioni e il cursore sopra lo sfondo
         for (int i = 0; i < options.length; i++) {
             options[i].draw(g, cursor.getSelectedIndex() == i);
         }
 
         cursor.draw(g);
+    }
+
+    /**
+     * Chiamare al termine dell'app per cancellare eventuali worker
+     */
+    public void dispose() {
+        if (scaleWorker != null && !scaleWorker.isDone()) scaleWorker.cancel(true);
     }
 }
