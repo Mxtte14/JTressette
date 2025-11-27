@@ -67,8 +67,9 @@ public class JTressette {
     }
 
     private void onStartGame() {
-        // mostra dialog di setup
-        GameSetup setup = new GameSetup(frame);
+        // mostra dialog di setup con il profilo utente per ottenere automaticamente il nome
+        UserProfile profile = profileController.getProfile();
+        GameSetup setup = new GameSetup(frame, profile);
         List<Giocatore> players = setup.showDialogAndGetPlayers();
         if (players == null || players.isEmpty()) return;
 

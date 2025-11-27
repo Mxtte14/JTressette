@@ -4,6 +4,7 @@ import game.Cards;
 import game.Giocatore;
 import game.GiocatoreUmano;
 import game.GameState;
+import util.CardImageLoader;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,12 +13,15 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * GameViewSwing: Swing-based view for the card game following MVC pattern.
  * Displays the table, player's hand, opponent hands (face down), and cards played.
  * Styled like an online poker server with a green felt table.
+ * Uses actual card images from src/res/Cards/.
  */
 public class GameView extends JFrame {
 
@@ -28,6 +32,12 @@ public class GameView extends JFrame {
     private static final Color CARD_BACK = new Color(30, 60, 120);
     private static final Color TEXT_GOLD = new Color(255, 215, 0);
     private static final Color TEXT_WHITE = Color.WHITE;
+
+    // Card dimensions
+    private static final int CARD_WIDTH = 70;
+    private static final int CARD_HEIGHT = 100;
+    private static final int SMALL_CARD_WIDTH = 50;
+    private static final int SMALL_CARD_HEIGHT = 75;
 
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
@@ -41,6 +51,11 @@ public class GameView extends JFrame {
     private JLabel scoreLabel;
     private JPanel logArea;
     private JButton playButton;
+    private JPanel wonCardsPanel;
+    private JLabel wonCardsLabel;
+
+    // Track won cards per player
+    private Map<Giocatore, Integer> wonCardsCount = new HashMap<>();
 
     private int selectedCardIndex = -1;
     private List<CardPanel> cardPanels = new ArrayList<>();
@@ -50,6 +65,8 @@ public class GameView extends JFrame {
         this.gameState = gameState;
         this.humanPlayer = humanPlayer;
         this.controller = controller;
+        // Preload card images
+        CardImageLoader.preloadImages();
         initUI();
     }
 
@@ -127,19 +144,30 @@ public class GameView extends JFrame {
         nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Face-down cards panel
+        // Face-down cards panel using card back images
         JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, -20, 0));
         cardsPanel.setOpaque(false);
 
         List<Cards> hand = gameState.getHand(player);
+        Image cardBackImg = CardImageLoader.getScaledCardBackImage(SMALL_CARD_WIDTH, SMALL_CARD_HEIGHT);
         for (int i = 0; i < hand.size(); i++) {
-            JPanel cardBack = createCardBack();
+            JLabel cardBack = new JLabel(new ImageIcon(cardBackImg));
+            cardBack.setPreferredSize(new Dimension(SMALL_CARD_WIDTH + 5, SMALL_CARD_HEIGHT + 5));
             cardsPanel.add(cardBack);
         }
+
+        // Show won cards count
+        int wonCards = wonCardsCount.getOrDefault(player, 0);
+        JLabel wonLabel = new JLabel("Carte prese: " + wonCards);
+        wonLabel.setForeground(TEXT_GOLD);
+        wonLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        wonLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         box.add(nameLabel);
         box.add(Box.createVerticalStrut(5));
         box.add(cardsPanel);
+        box.add(Box.createVerticalStrut(3));
+        box.add(wonLabel);
         return box;
     }
 
@@ -210,6 +238,14 @@ public class GameView extends JFrame {
         playerHandPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         playerHandPanel.setOpaque(false);
 
+        // Won cards indicator panel
+        wonCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        wonCardsPanel.setOpaque(false);
+        wonCardsLabel = new JLabel("Carte prese: 0");
+        wonCardsLabel.setForeground(TEXT_GOLD);
+        wonCardsLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        wonCardsPanel.add(wonCardsLabel);
+
         playButton = new JButton("Gioca Carta");
         playButton.setFont(new Font("Arial", Font.BOLD, 14));
         playButton.setBackground(new Color(200, 160, 0));
@@ -220,6 +256,8 @@ public class GameView extends JFrame {
         playButton.addActionListener(e -> onPlayCard());
 
         area.add(playerLabel);
+        area.add(Box.createVerticalStrut(5));
+        area.add(wonCardsPanel);
         area.add(Box.createVerticalStrut(10));
         area.add(playerHandPanel);
         area.add(Box.createVerticalStrut(10));
@@ -299,7 +337,9 @@ public class GameView extends JFrame {
     }
 
     private JPanel createCardBack() {
-        JPanel card = new JPanel() {
+        Image cardBackImg = CardImageLoader.getScaledCardBackImage(SMALL_CARD_WIDTH, SMALL_CARD_HEIGHT);
+        JLabel card = new JLabel(new ImageIcon(cardBackImg));
+        JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -308,41 +348,32 @@ public class GameView extends JFrame {
 
                 // Shadow
                 g2d.setColor(new Color(0, 0, 0, 80));
-                g2d.fill(new RoundRectangle2D.Double(3, 3, 50, 75, 8, 8));
-
-                // Card back
-                g2d.setColor(CARD_BACK);
-                g2d.fill(new RoundRectangle2D.Double(0, 0, 50, 75, 8, 8));
-
-                // Border
-                g2d.setColor(Color.WHITE);
-                g2d.setStroke(new BasicStroke(1));
-                g2d.draw(new RoundRectangle2D.Double(0, 0, 49, 74, 8, 8));
-
-                // Inner pattern
-                g2d.setColor(new Color(200, 180, 100));
-                g2d.draw(new RoundRectangle2D.Double(5, 5, 40, 65, 4, 4));
+                g2d.fill(new RoundRectangle2D.Double(3, 3, SMALL_CARD_WIDTH, SMALL_CARD_HEIGHT, 8, 8));
             }
         };
-        card.setOpaque(false);
-        card.setPreferredSize(new Dimension(55, 80));
-        return card;
+        panel.setOpaque(false);
+        panel.setLayout(new BorderLayout());
+        panel.add(card, BorderLayout.CENTER);
+        panel.setPreferredSize(new Dimension(SMALL_CARD_WIDTH + 5, SMALL_CARD_HEIGHT + 5));
+        return panel;
     }
 
-    // Custom card panel for face-up cards
+    // Custom card panel for face-up cards using images
     private class CardPanel extends JPanel {
         private final Cards card;
         private final int index;
         private final boolean isPlayable;
         private boolean isHovered = false;
         private boolean isSelected = false;
+        private Image cardImage;
 
         public CardPanel(Cards card, int index, boolean isPlayable) {
             this.card = card;
             this.index = index;
             this.isPlayable = isPlayable;
+            this.cardImage = CardImageLoader.getScaledCardImage(card, CARD_WIDTH, CARD_HEIGHT);
             setOpaque(false);
-            setPreferredSize(new Dimension(75, 105));
+            setPreferredSize(new Dimension(CARD_WIDTH + 5, CARD_HEIGHT + 15));
 
             if (isPlayable) {
                 addMouseListener(new MouseAdapter() {
@@ -377,29 +408,43 @@ public class GameView extends JFrame {
             super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-            int offsetY = (isHovered || isSelected) ? -10 : 0;
+            int offsetY = (isHovered || isSelected) ? 0 : 10;
 
             // Shadow
             g2d.setColor(new Color(0, 0, 0, 80));
-            g2d.fill(new RoundRectangle2D.Double(5, 5 + offsetY, 70, 100, 10, 10));
+            g2d.fill(new RoundRectangle2D.Double(5, 5 + offsetY, CARD_WIDTH, CARD_HEIGHT, 10, 10));
 
-            // Card background
-            g2d.setColor(Color.WHITE);
-            g2d.fill(new RoundRectangle2D.Double(0, offsetY, 70, 100, 10, 10));
+            // Draw card image
+            if (cardImage != null) {
+                g2d.drawImage(cardImage, 0, offsetY, CARD_WIDTH, CARD_HEIGHT, this);
+            } else {
+                // Fallback to drawn card if image not available
+                drawFallbackCard(g2d, offsetY);
+            }
 
-            // Border
+            // Selection border
             if (isSelected) {
                 g2d.setColor(TEXT_GOLD);
                 g2d.setStroke(new BasicStroke(3));
+                g2d.drawRoundRect(0, offsetY, CARD_WIDTH - 1, CARD_HEIGHT - 1, 10, 10);
             } else if (isHovered) {
                 g2d.setColor(TEXT_GOLD);
                 g2d.setStroke(new BasicStroke(2));
-            } else {
-                g2d.setColor(Color.GRAY);
-                g2d.setStroke(new BasicStroke(1));
+                g2d.drawRoundRect(0, offsetY, CARD_WIDTH - 1, CARD_HEIGHT - 1, 10, 10);
             }
-            g2d.draw(new RoundRectangle2D.Double(0, offsetY, 69, 99, 10, 10));
+        }
+
+        private void drawFallbackCard(Graphics2D g2d, int offsetY) {
+            // Card background
+            g2d.setColor(Color.WHITE);
+            g2d.fill(new RoundRectangle2D.Double(0, offsetY, CARD_WIDTH, CARD_HEIGHT, 10, 10));
+
+            // Border
+            g2d.setColor(Color.GRAY);
+            g2d.setStroke(new BasicStroke(1));
+            g2d.draw(new RoundRectangle2D.Double(0, offsetY, CARD_WIDTH - 1, CARD_HEIGHT - 1, 10, 10));
 
             // Card content
             Color suitColor = getSuitColor(card.getSegno());
@@ -410,14 +455,14 @@ public class GameView extends JFrame {
             String rank = getRankSymbol(card.getRank());
             FontMetrics fm = g2d.getFontMetrics();
             int rankWidth = fm.stringWidth(rank);
-            g2d.drawString(rank, (70 - rankWidth) / 2, 30 + offsetY);
+            g2d.drawString(rank, (CARD_WIDTH - rankWidth) / 2, 30 + offsetY);
 
             // Suit
             g2d.setFont(new Font("Serif", Font.BOLD, 28));
             String suit = getSuitSymbol(card.getSegno());
             fm = g2d.getFontMetrics();
             int suitWidth = fm.stringWidth(suit);
-            g2d.drawString(suit, (70 - suitWidth) / 2, 70 + offsetY);
+            g2d.drawString(suit, (CARD_WIDTH - suitWidth) / 2, 70 + offsetY);
         }
     }
 
@@ -665,6 +710,85 @@ public class GameView extends JFrame {
             tableCardsPanel.revalidate();
             tableCardsPanel.repaint();
         });
+    }
+
+    /**
+     * Called when a trick is won to update the won cards count and show animation.
+     * @param winner The player who won the trick
+     * @param cardsWon Number of cards won in this trick
+     */
+    public void showTrickWon(Giocatore winner, int cardsWon) {
+        SwingUtilities.invokeLater(() -> {
+            // Update won cards count
+            int currentCount = wonCardsCount.getOrDefault(winner, 0);
+            wonCardsCount.put(winner, currentCount + cardsWon);
+
+            // Update human player's won cards label
+            if (winner == humanPlayer) {
+                wonCardsLabel.setText("Carte prese: " + wonCardsCount.get(humanPlayer));
+            }
+
+            // Animate cards moving to winner's pile
+            animateCardsToWinner(winner);
+        });
+    }
+
+    /**
+     * Animate cards moving from table to winner's pile.
+     */
+    private void animateCardsToWinner(Giocatore winner) {
+        // Simple fade-out animation for the table cards
+        Timer fadeTimer = new Timer(50, null);
+        final float[] alpha = {1.0f};
+        
+        fadeTimer.addActionListener(e -> {
+            alpha[0] -= 0.1f;
+            if (alpha[0] <= 0) {
+                fadeTimer.stop();
+                clearTable();
+                refresh();
+            } else {
+                // Repaint with reduced alpha
+                tableCardsPanel.repaint();
+            }
+        });
+        fadeTimer.start();
+    }
+
+    /**
+     * Animate drawing a card (visual effect when dealing).
+     */
+    public void animateCardDraw() {
+        SwingUtilities.invokeLater(() -> {
+            // Flash effect on player hand
+            Timer flashTimer = new Timer(100, null);
+            final int[] flashCount = {0};
+            final Color originalBg = playerHandPanel.getBackground();
+
+            flashTimer.addActionListener(e -> {
+                flashCount[0]++;
+                if (flashCount[0] > 4) {
+                    flashTimer.stop();
+                    playerHandPanel.setOpaque(false);
+                    playerHandPanel.repaint();
+                } else {
+                    playerHandPanel.setOpaque(flashCount[0] % 2 == 1);
+                    if (flashCount[0] % 2 == 1) {
+                        playerHandPanel.setBackground(new Color(255, 215, 0, 50));
+                    }
+                    playerHandPanel.repaint();
+                }
+            });
+            flashTimer.start();
+        });
+    }
+
+    /**
+     * Update the won cards count display.
+     */
+    private void updateWonCardsDisplay() {
+        int humanWonCards = wonCardsCount.getOrDefault(humanPlayer, 0);
+        wonCardsLabel.setText("Carte prese: " + humanWonCards);
     }
 
     /**
