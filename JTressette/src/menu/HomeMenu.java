@@ -232,7 +232,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
             }
             if (icon == null) {
                 try {
-                    BufferedImage def = ImageIO.read(getClass().getResourceAsStream("/main/resource/default_icon.jpg"));
+                    BufferedImage def = ImageIO.read(getClass().getResourceAsStream("/res/default_images/default_icon.jpg"));
                     if (def != null) icon = def;
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, "Impossibile caricare avatar di default dalle risorse", ex);
@@ -259,7 +259,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
     }
 
     private void loadBackground() {
-        try (java.io.InputStream is = getClass().getResourceAsStream("/main/resource/sfondo_1.jpg")) {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/res/default_images/sfondo_1.jpg")) {
             if (is == null) {
                 LOGGER.severe("Immagine di sfondo non trovata: /main/resource/sfondo_1.jpg");
                 return;

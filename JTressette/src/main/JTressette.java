@@ -7,11 +7,11 @@ import profile.StorageUser;
 import profile.ProfileStorageSerialized;
 import profile.UserProfile;
 import menu.MenuFrame;
-import ui.GameDialog;
 import game.Engine;
 import game.GiocatoreUmano;
 import profile.GamesRecord;
 import ui.GameSetup;
+import ui.GameController;
 
 import javax.swing.*;
 import java.util.List;
@@ -29,8 +29,8 @@ public class JTressette {
 
     public JTressette() {
         // inizializza storage e controller (Model + Controller)
-        ProfileStorage storage = new ProfileStorageSerialized();
-        UserProfile userProfile = storage.loadOrCreateDefault();
+        StorageUser storage = new ProfileStorageSerialized();
+        UserProfile userProfile = ((ProfileStorageSerialized) storage).loadOrCreateDefault();
         profileController = new ProfileControllerImpl(storage, userProfile);
 
         // crea la UI (View) passando il controller
@@ -72,51 +72,26 @@ public class JTressette {
         List<Giocatore> players = setup.showDialogAndGetPlayers();
         if (players == null || players.isEmpty()) return;
 
-        // trova il primo umano nella lista (assumiamo sia il primo)
-        GiocatoreUmano human = null;
-        for (Giocatore p : players) {
-            if (!p.isBot() && p instanceof GiocatoreUmano) {
-                human = (GiocatoreUmano) p;
-                break;
-            }
-        }
+        // Nascondi il menu principale
+        frame.setVisible(false);
 
-        // crea GameEngine e GamePlayDialog (UI per l'umano)
-        Engine engine = new Engine(players);
-        GameDialog playDialog = null;
-        if (human != null) {
-            playDialog = new GameDialog(frame, engine, human);
-            playDialog.setVisible(true); // modeless: rimane davanti, il motore gira in background
-        }
+        // Create controller with Swing-based game view
+        final GameController[] controllerHolder = new GameController[1];
 
-        GameDialog finalPlayDialog = playDialog;
-        // avvia partita in background
-        SwingWorker<GamesRecord, Void> w = new SwingWorker<>() {
-            @Override
-            protected GamesRecord doInBackground() throws InterruptedException {
-                return engine.playMatch();
-            }
-            @Override
-            protected void done() {
-                try {
-                    GamesRecord rec = get();
-                    // registra risultato nello storico tramite ProfileController
-                    profileController.recordMatch(rec);
+        controllerHolder[0] = new GameController(players, () -> {
+            // Registra il risultato nel profilo
+            GamesRecord record = controllerHolder[0].getGameRecord();
+            profileController.recordMatch(record);
 
-                    // mostra risultato
-                    JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + rec.getResult(),
-                            "Risultato", JOptionPane.INFORMATION_MESSAGE);
+            // Mostra il risultato
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
+                        "Risultato", JOptionPane.INFORMATION_MESSAGE);
+                frame.setVisible(true);
+            });
+        });
 
-                    if (finalPlayDialog != null) {
-                        finalPlayDialog.log("Partita terminata: " + rec.getResult());
-                        finalPlayDialog.dispose();
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        };
-        w.execute();
+        controllerHolder[0].startGame();
     }
 
     // Timer per aggiornare il pannello (~60 FPS)

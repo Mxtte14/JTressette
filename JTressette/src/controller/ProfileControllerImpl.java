@@ -1,7 +1,8 @@
 package controller;
 
 import profile.GamesRecord;
-import profile.ProfileStorage;
+import profile.StorageUser;
+import profile.StorageUser;
 import profile.UserProfile;
 
 import javax.swing.*;
@@ -15,11 +16,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Notifica i ProfileListener su EDT.
  */
 public class ProfileControllerImpl implements ProfileController {
-    private final ProfileStorage storage;
+    private final StorageUser storage;
     private final UserProfile profile;
     private final List<ProfileListener> listeners = new CopyOnWriteArrayList<>();
 
-    public ProfileControllerImpl(ProfileStorage storage, UserProfile profile) {
+    public ProfileControllerImpl(StorageUser storage, UserProfile profile) {
         this.storage = storage;
         this.profile = profile;
     }
@@ -32,7 +33,7 @@ public class ProfileControllerImpl implements ProfileController {
     @Override
     public void setName(String newName) {
         if (newName == null || newName.isBlank()) return;
-        profile.setName(newName);
+        profile.setUsername(newName);
         saveAsync();
     }
 

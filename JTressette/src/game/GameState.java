@@ -24,9 +24,9 @@ public class GameState {
     private static final Map<Cards.Rank, Integer> CARD_POINTS;
     static {
         Map<Cards.Rank, Integer> m = new EnumMap<>(Cards.Rank.class);
-        m.put(Cards.Rank.ASSO, 1);
-        m.put(Cards.Rank.TRE, 1);
-        m.put(Cards.Rank.DUE, 1);
+        m.put(Cards.Rank.ASSO, 3);
+        m.put(Cards.Rank.TRE, 3);
+        m.put(Cards.Rank.DUE, 3);
         m.put(Cards.Rank.RE, 1);
         m.put(Cards.Rank.CAVALLO, 1);
         m.put(Cards.Rank.ALFIERE, 1);

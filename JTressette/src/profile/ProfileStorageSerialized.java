@@ -1,14 +1,13 @@
 package profile;
 
 import java.io.*;
-        import java.nio.file.*;
-        import java.util.ArrayList;
+import java.nio.file.*;
 
 /**
  * Implementazione ProfileStorage che serializza il modello su disco usando
  * ObjectOutputStream / ObjectInputStream. Non richiede librerie esterne.
  */
-public class ProfileStorageSerialized implements ProfileStorage {
+public class ProfileStorageSerialized extends StorageUser {
     private static final String DIR_NAME = ".jtressette";
     private static final String FILE_NAME = "profile.ser";
 

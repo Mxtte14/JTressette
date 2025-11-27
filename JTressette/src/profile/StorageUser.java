@@ -12,10 +12,10 @@ import java.util.logging.Logger;
  * Salvataggio/caricamento profilo utente usando XMLEncoder/XMLDecoder (built-in JDK).
  * Percorso di base: {user.home}/.jtressette/users/{username}/profile.xml
  *
- * Nota: UserProfile dovrebbe avere un costruttore senza argomenti e getter/setter pubblici
+ * Nota: UserProfile e GamesRecord sono JavaBean compatibili (costruttore no-arg + getter/setter)
  * per essere completamente compatibile con XMLEncoder/XMLDecoder.
  */
-public class StorageUser {
+public abstract class StorageUser {
 
     private static final Logger LOG = Logger.getLogger(StorageUser.class.getName());
     private static final String BASE_DIR_NAME = ".jtressette";
@@ -67,4 +67,8 @@ public class StorageUser {
             LOG.log(Level.SEVERE, "Errore nel salvataggio del profilo XML", e);
         }
     }
+
+    public abstract UserProfile loadOrCreateDefault();
+
+    public abstract void save(UserProfile profile) throws IOException;
 }
