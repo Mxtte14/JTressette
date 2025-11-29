@@ -107,12 +107,19 @@ public class GameController {
                         // Check if trick was completed (currentPlayer changed to winner)
                         Giocatore newCurrent = gameState.getCurrentPlayer();
                         if (!newCurrent.getName().equals(current.getName())) {
-                            // Trick completed - pause to show cards, then clear table
+                            // Trick completed - pause to show both cards on table
                             Thread.sleep(1500);
+
+                            // Show trick won animation with cards moving to winner's pile
+                            final Giocatore trickWinner = newCurrent;
+                            final int numPlayers = gameState.getPlayers().size();
                             SwingUtilities.invokeLater(() -> {
-                                view.clearTable();
-                                view.log(newCurrent.getName() + " vince la presa!");
+                                view.showTrickWon(trickWinner, numPlayers);
+                                view.log(trickWinner.getName() + " vince la presa!");
                             });
+
+                            // Wait for animation to complete
+                            Thread.sleep(500);
                         }
                     }
                 }
