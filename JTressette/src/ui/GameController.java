@@ -104,27 +104,37 @@ public class GameController {
                             view.refresh();
                         });
 
-                        // Check if trick was completed (currentPlayer changed to winner)
-                        Giocatore newCurrent = gameState.getCurrentPlayer();
-                        if (!newCurrent.getName().equals(current.getName())) {
-                            // Trick completed - pause to show both cards on table
+                        // Check if trick was just completed (all players have played)
+                        if (gameState.isTrickJustCompleted()) {
+                            // Pause to show all cards on the table
                             Thread.sleep(1500);
 
-                            // Show trick won animation with cards moving to winner's pile
-                            final Giocatore trickWinner = newCurrent;
-                            final int numPlayers = gameState.getPlayers().size();
+                            // Get the trick winner and cards won from GameState
+                            final Giocatore trickWinner = gameState.getLastTrickWinner();
+                            final int cardsWon = gameState.getLastTrickCardsWon();
+                            
                             SwingUtilities.invokeLater(() -> {
-                                view.showTrickWon(trickWinner, numPlayers);
-                                view.log(trickWinner.getName() + " vince la presa!");
+                                view.showTrickWon(trickWinner, cardsWon);
+                                view.log(trickWinner.getName() + " vince la presa! (+" + cardsWon + " carte)");
                             });
 
                             // Wait for animation to complete
-                            Thread.sleep(500);
+                            Thread.sleep(1000);
+                            
+                            // Clear the trick buffer after showing cards
+                            gameState.clearTrick();
+                            
+                            // Refresh to update the table (cards cleared) and won cards counts
+                            SwingUtilities.invokeLater(() -> view.refresh());
+                            
+                            // Note: currentPlayerIndex is already set to winner in playCard()
+                            // so we don't need to advance turn here
+                        } else {
+                            // Trick not complete, advance to next player
+                            gameState.advanceTurn();
                         }
                     }
                 }
-
-                gameState.advanceTurn();
             }
 
             // Game finished

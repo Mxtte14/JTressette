@@ -42,15 +42,22 @@ public class Engine {
                 Cards played = state.playCard(current, idx);
                 // (opzionale) log su console
                 System.out.println(current.getName() + " played " + played);
-            }
-
-            // Gestione avanzamento turno:
-            Giocatore newCurrent = state.getCurrentPlayer();
-            if (newCurrent == current) {
-                // la presa è stata completata e current è stato impostato sul vincitore:
-                // non avanziamo in questo caso
-            } else {
-                state.advanceTurn();
+                
+                // Check if trick was just completed
+                if (state.isTrickJustCompleted()) {
+                    Giocatore winner = state.getLastTrickWinner();
+                    int cardsWon = state.getLastTrickCardsWon();
+                    System.out.println(winner.getName() + " wins the trick! (+" + cardsWon + " cards)");
+                    
+                    // Clear trick buffer after logging
+                    state.clearTrick();
+                    
+                    // currentPlayerIndex is already set to winner in playCard()
+                    // so we don't advance turn here
+                } else {
+                    // Trick not complete, advance to next player
+                    state.advanceTurn();
+                }
             }
         }
 
