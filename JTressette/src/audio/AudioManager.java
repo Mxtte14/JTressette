@@ -1,6 +1,9 @@
 package audio;
 
+import java.io.IOException;
 import java.net.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sound.sampled.*;
 import javax.swing.Timer;
 
@@ -15,6 +18,8 @@ import javax.swing.Timer;
  * 3 - backGame (game background music)
  */
 public class AudioManager {
+
+    private static final Logger LOGGER = Logger.getLogger(AudioManager.class.getName());
 
     // Audio constants
     public static final int BACKGROUND_MENU = 0;
@@ -44,8 +49,12 @@ public class AudioManager {
             clip = AudioSystem.getClip();
             clip.open(ais);
             setVolume(currentVolume);
-        } catch (Exception e) {
-            // Silent fail for audio issues
+        } catch (UnsupportedAudioFileException e) {
+            LOGGER.log(Level.WARNING, "Unsupported audio file format for index: " + i, e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "IO error loading audio file for index: " + i, e);
+        } catch (LineUnavailableException e) {
+            LOGGER.log(Level.WARNING, "Audio line unavailable for index: " + i, e);
         }
     }
 
@@ -213,8 +222,12 @@ public class AudioManager {
                 }
             });
             effectClip.start();
-        } catch (Exception e) {
-            // Silent fail for audio issues
+        } catch (UnsupportedAudioFileException e) {
+            LOGGER.log(Level.FINE, "Unsupported audio format for sound effect: " + soundIndex, e);
+        } catch (IOException e) {
+            LOGGER.log(Level.FINE, "IO error playing sound effect: " + soundIndex, e);
+        } catch (LineUnavailableException e) {
+            LOGGER.log(Level.FINE, "Audio line unavailable for sound effect: " + soundIndex, e);
         }
     }
 

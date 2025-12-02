@@ -37,6 +37,13 @@ public class GameView extends JFrame {
     private static final int SMALL_CARD_WIDTH = 50;
     private static final int SMALL_CARD_HEIGHT = 75;
 
+    // Animation constants
+    private static final int ANIMATION_DELAY_MS = 80;
+    private static final int CARD_FLY_DURATION_MS = 200;
+    private static final int PLAYER_POSITION_SPACING = 200;
+    private static final double CARD_ARC_HEIGHT = 30.0;
+    private static final double CARD_SCALE_FACTOR = 0.15;
+
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
     private final GameController controller;
@@ -964,9 +971,8 @@ public class GameView extends JFrame {
                 } else {
                     // Opponents at top (spread horizontally)
                     int opponentIndex = i;
-                    int spacing = 200;
-                    int startX = (getWidth() - (numPlayers - 1) * spacing) / 2;
-                    targetPositions[i][0] = startX + opponentIndex * spacing - CARD_WIDTH / 2;
+                    int startX = (getWidth() - (numPlayers - 1) * PLAYER_POSITION_SPACING) / 2;
+                    targetPositions[i][0] = startX + opponentIndex * PLAYER_POSITION_SPACING - CARD_WIDTH / 2;
                     targetPositions[i][1] = 80;
                 }
             }
@@ -995,10 +1001,8 @@ public class GameView extends JFrame {
 
             // Animation parameters
             int cardsPerPlayer = 10; // Standard Tressette hand size
-            int animationDelay = 80; // ms between card deals
-            int cardFlyDuration = 200; // ms for each card to fly to destination
             
-            Timer dealTimer = new Timer(animationDelay, null);
+            Timer dealTimer = new Timer(ANIMATION_DELAY_MS, null);
             final int[] currentCard = {0};
             final int totalCards = numPlayers * cardsPerPlayer;
 
@@ -1042,7 +1046,7 @@ public class GameView extends JFrame {
                 animationOverlay.repaint();
 
                 // Animate card flying to target position
-                animateCardFlight(flyingCard, centerX, centerY, targetX, targetY, cardFlyDuration);
+                animateCardFlight(flyingCard, centerX, centerY, targetX, targetY, CARD_FLY_DURATION_MS);
 
                 currentCard[0]++;
             });
@@ -1072,12 +1076,11 @@ public class GameView extends JFrame {
             int currentY = (int) (startY + (endY - startY) * easedT);
             
             // Add slight arc to the motion
-            double arcHeight = 30;
-            double arc = Math.sin(t * Math.PI) * arcHeight;
+            double arc = Math.sin(t * Math.PI) * CARD_ARC_HEIGHT;
             currentY -= (int) arc;
             
             // Scale down slightly as card flies
-            double scale = 1.0 - (t * 0.15);
+            double scale = 1.0 - (t * CARD_SCALE_FACTOR);
             int scaledWidth = (int) (CARD_WIDTH * scale);
             int scaledHeight = (int) (CARD_HEIGHT * scale);
             
