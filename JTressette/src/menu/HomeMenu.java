@@ -13,7 +13,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import audio.AudioManager;
 
 /**
  * HomeMenu - Menu principale modernizzato con stile elegante.
@@ -33,9 +32,6 @@ public class HomeMenu extends JPanel implements ProfileListener {
     BufferedImage background;
     public MenuOption[] options;
     public controller.Cursor cursor;
-
-    // Risorse audio
-    AudioManager back = new AudioManager();
 
     private int selectedOption = 0;
 

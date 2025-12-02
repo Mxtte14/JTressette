@@ -1,5 +1,6 @@
 package ui;
 
+import audio.AudioManager;
 import game.*;
 import profile.GamesRecord;
 
@@ -25,6 +26,7 @@ public class GameController {
     private final GiocatoreUmano humanPlayer;
     private final GameView view;
     private final Runnable onGameEnd;
+    private final AudioManager audioManager;
 
     private final ExecutorService gameExecutor;
     private volatile boolean gameRunning = false;
@@ -34,6 +36,7 @@ public class GameController {
         this.engine = new Engine(players);
         this.gameState = engine.getState();
         this.gameExecutor = Executors.newSingleThreadExecutor();
+        this.audioManager = new AudioManager();
 
         // Find human player
         GiocatoreUmano human = null;
@@ -62,12 +65,23 @@ public class GameController {
      */
     public void startGame() {
         gameRunning = true;
-        gameState.deal();
+        
+        // Start game background music with fade-in
+        audioManager.setFile(AudioManager.BACKGROUND_GAME);
+        audioManager.fadeIn(800, 1.0f);
+        audioManager.loop();
+        
+        // Show dealing animation before dealing cards
         view.setVisible(true);
-        view.refresh();
-        view.log("Partita iniziata!");
-
-        gameExecutor.submit(this::runGameLoop);
+        view.showDealingAnimation(gameState.getPlayers(), () -> {
+            // Deal cards after animation completes
+            gameState.deal();
+            view.refresh();
+            view.log("Partita iniziata!");
+            
+            // Start game loop
+            gameExecutor.submit(this::runGameLoop);
+        });
     }
 
     private void runGameLoop() {
@@ -96,6 +110,9 @@ public class GameController {
                 if (idx >= 0) {
                     Cards played = gameState.playCard(current, idx);
                     if (played != null) {
+                        // Play card sound
+                        audioManager.playCardSound();
+                        
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
                         SwingUtilities.invokeLater(() -> {
@@ -180,6 +197,11 @@ public class GameController {
     public void onExitGame() {
         gameRunning = false;
         gameExecutor.shutdownNow();
+        
+        // Stop game music with fade out
+        audioManager.fadeOut(500, () -> {
+            audioManager.close();
+        });
 
         SwingUtilities.invokeLater(() -> {
             view.dispose();
@@ -205,5 +227,13 @@ public class GameController {
 
     public GameView getView() {
         return view;
+    }
+    
+    /**
+     * Get the audio manager for this game session.
+     * @return The AudioManager instance
+     */
+    public AudioManager getAudioManager() {
+        return audioManager;
     }
 }

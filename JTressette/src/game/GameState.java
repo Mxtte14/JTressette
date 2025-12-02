@@ -176,11 +176,11 @@ public class GameState {
      * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getPriority()).
      */
     private int determineTrickWinner() {
-        Cards lead = trickCards.getFirst();
+        Cards lead = trickCards.get(0);
         Cards.Segno leadSuit = lead.getSegno();
 
         int bestIdx = 0;
-        Cards bestCard = trickCards.getFirst();
+        Cards bestCard = trickCards.get(0);
         for (int i = 1; i < trickCards.size(); i++) {
             Cards c = trickCards.get(i);
             if (c.getSegno() == leadSuit && c.getPriority() > bestCard.getPriority()) {

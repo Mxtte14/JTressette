@@ -18,13 +18,14 @@ public class MenuFrame extends JFrame {
     private final JPanel cards;
     private ProfileMenu profilePanel;
     private RulesPage rulesPanel;
-    AudioManager back = new AudioManager();
+    private final AudioManager audioManager = new AudioManager();
 
     public MenuFrame(ProfileController controller) {
         super("JTressette");
 
-        back.setFile(0);
-        back.start();
+        // Start menu background music with loop
+        audioManager.setFile(AudioManager.BACKGROUND_MENU);
+        audioManager.loop();
 
         // pannello principale (home menu) che riceve il controller
         panel = new HomeMenu(controller);
@@ -55,29 +56,70 @@ public class MenuFrame extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Get the audio manager for audio control.
+     * @return The AudioManager instance
+     */
+    public AudioManager getAudioManager() {
+        return audioManager;
+    }
+
+    /**
+     * Play menu selection click sound.
+     */
+    public void playMenuClick() {
+        audioManager.playMenuClick();
+    }
+
+    /**
+     * Stop the menu background music (for transitioning to game).
+     */
+    public void stopMenuMusic() {
+        audioManager.stop();
+    }
+
+    /**
+     * Resume menu background music.
+     */
+    public void resumeMenuMusic() {
+        audioManager.setFile(AudioManager.BACKGROUND_MENU);
+        audioManager.loop();
+    }
+
+    /**
+     * Transition from menu music to game music with fade effect.
+     * @param onTransitionComplete Callback when transition is complete
+     */
+    public void transitionToGameMusic(Runnable onTransitionComplete) {
+        audioManager.fadeOut(800, () -> {
+            if (onTransitionComplete != null) {
+                onTransitionComplete.run();
+            }
+        });
+    }
+
     public void showSettings() {
         // Implementa la logica per mostrare le impostazioni se necessario
-
-        back.stop();
+        audioManager.stop();
     }
+
     /**
      * Mostra la schermata profilo (card "PROFILE").
      */
     public void showProfile() {
         // aggiorna i dati della view dal controller (il ProfileMenu è registrato come listener al controller,
         // ma forziamo comunque un refresh immediato)
-        back.stop();
+        playMenuClick();
         profilePanel.refreshFromModel();
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "PROFILE");
-
     }
 
     /**
      * Mostra la schermata regole (card "RULES").
      */
     public void showRules() {
-        back.stop();
+        playMenuClick();
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "RULES");
     }
@@ -86,8 +128,11 @@ public class MenuFrame extends JFrame {
      * Torna alla schermata menu (card "MENU").
      */
     public void showMenu() {
-        back.stop();
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "MENU");
+        // Resume menu music if not playing
+        if (!audioManager.isPlaying()) {
+            resumeMenuMusic();
+        }
     }
 }

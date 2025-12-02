@@ -919,6 +919,180 @@ public class GameView extends JFrame {
     }
 
     /**
+     * Show a modern card dealing animation at the start of the game.
+     * Cards fly from a central deck position to each player's position.
+     * @param players List of players in the game
+     * @param onComplete Callback to run when animation completes
+     */
+    public void showDealingAnimation(List<Giocatore> players, Runnable onComplete) {
+        SwingUtilities.invokeLater(() -> {
+            // Create overlay panel for the animation
+            JPanel animationOverlay = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    // Semi-transparent background
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setColor(new Color(0, 0, 0, 150));
+                    g2d.fillRect(0, 0, getWidth(), getHeight());
+                }
+            };
+            animationOverlay.setLayout(null);
+            animationOverlay.setOpaque(false);
+            animationOverlay.setBounds(0, 0, getWidth(), getHeight());
+
+            // Get glass pane and add overlay
+            JPanel glassPane = (JPanel) getGlassPane();
+            glassPane.setLayout(null);
+            glassPane.add(animationOverlay);
+            glassPane.setVisible(true);
+
+            // Center position (deck position)
+            int centerX = getWidth() / 2 - CARD_WIDTH / 2;
+            int centerY = getHeight() / 2 - CARD_HEIGHT / 2;
+
+            // Calculate target positions for each player
+            int numPlayers = players.size();
+            int[][] targetPositions = new int[numPlayers][2];
+            
+            for (int i = 0; i < numPlayers; i++) {
+                Giocatore player = players.get(i);
+                if (player == humanPlayer) {
+                    // Human player at bottom
+                    targetPositions[i][0] = getWidth() / 2 - CARD_WIDTH / 2;
+                    targetPositions[i][1] = getHeight() - 180;
+                } else {
+                    // Opponents at top (spread horizontally)
+                    int opponentIndex = i;
+                    int spacing = 200;
+                    int startX = (getWidth() - (numPlayers - 1) * spacing) / 2;
+                    targetPositions[i][0] = startX + opponentIndex * spacing - CARD_WIDTH / 2;
+                    targetPositions[i][1] = 80;
+                }
+            }
+
+            // Create "Distribuzione carte..." label
+            JLabel dealingLabel = new JLabel("Distribuzione carte...");
+            dealingLabel.setFont(new Font("Georgia", Font.BOLD, 28));
+            dealingLabel.setForeground(TEXT_GOLD);
+            dealingLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            int labelWidth = 400;
+            int labelHeight = 40;
+            dealingLabel.setBounds((getWidth() - labelWidth) / 2, centerY - 80, labelWidth, labelHeight);
+            animationOverlay.add(dealingLabel);
+
+            // Create deck visual in center
+            Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
+            
+            // Draw deck (stack of cards)
+            for (int i = 0; i < 5; i++) {
+                JLabel deckCard = new JLabel(new ImageIcon(cardBackImg));
+                deckCard.setBounds(centerX + i * 2, centerY - i * 2, CARD_WIDTH, CARD_HEIGHT);
+                animationOverlay.add(deckCard);
+            }
+
+            animationOverlay.repaint();
+
+            // Animation parameters
+            int cardsPerPlayer = 10; // Standard Tressette hand size
+            int animationDelay = 80; // ms between card deals
+            int cardFlyDuration = 200; // ms for each card to fly to destination
+            
+            Timer dealTimer = new Timer(animationDelay, null);
+            final int[] currentCard = {0};
+            final int totalCards = numPlayers * cardsPerPlayer;
+
+            dealTimer.addActionListener(e -> {
+                if (currentCard[0] >= totalCards) {
+                    dealTimer.stop();
+                    
+                    // Show "Pronto!" message
+                    dealingLabel.setText("Pronto!");
+                    
+                    // Fade out and remove overlay after a short delay
+                    Timer fadeOutTimer = new Timer(800, evt -> {
+                        glassPane.remove(animationOverlay);
+                        glassPane.setVisible(false);
+                        glassPane.repaint();
+                        
+                        if (onComplete != null) {
+                            onComplete.run();
+                        }
+                    });
+                    fadeOutTimer.setRepeats(false);
+                    fadeOutTimer.start();
+                    return;
+                }
+
+                // Determine which player gets this card
+                int playerIndex = currentCard[0] % numPlayers;
+                int targetX = targetPositions[playerIndex][0];
+                int targetY = targetPositions[playerIndex][1];
+
+                // Calculate offset for multiple cards (fan effect)
+                int cardNum = currentCard[0] / numPlayers;
+                int offsetX = cardNum * 15; // Horizontal offset for card fanning
+                targetX += offsetX;
+
+                // Create flying card
+                JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
+                flyingCard.setBounds(centerX, centerY, CARD_WIDTH, CARD_HEIGHT);
+                animationOverlay.add(flyingCard);
+                animationOverlay.setComponentZOrder(flyingCard, 0);
+                animationOverlay.repaint();
+
+                // Animate card flying to target position
+                animateCardFlight(flyingCard, centerX, centerY, targetX, targetY, cardFlyDuration);
+
+                currentCard[0]++;
+            });
+
+            dealTimer.start();
+        });
+    }
+
+    /**
+     * Animate a card flying from one position to another with easing.
+     */
+    private void animateCardFlight(JLabel card, int startX, int startY, int endX, int endY, int durationMs) {
+        final int steps = 15;
+        final int delay = durationMs / steps;
+        
+        Timer flyTimer = new Timer(delay, null);
+        final int[] step = {0};
+        
+        flyTimer.addActionListener(e -> {
+            step[0]++;
+            
+            // Use ease-out cubic for smooth deceleration
+            double t = (double) step[0] / steps;
+            double easedT = 1 - Math.pow(1 - t, 3);
+            
+            int currentX = (int) (startX + (endX - startX) * easedT);
+            int currentY = (int) (startY + (endY - startY) * easedT);
+            
+            // Add slight arc to the motion
+            double arcHeight = 30;
+            double arc = Math.sin(t * Math.PI) * arcHeight;
+            currentY -= (int) arc;
+            
+            // Scale down slightly as card flies
+            double scale = 1.0 - (t * 0.15);
+            int scaledWidth = (int) (CARD_WIDTH * scale);
+            int scaledHeight = (int) (CARD_HEIGHT * scale);
+            
+            card.setBounds(currentX, currentY, scaledWidth, scaledHeight);
+            card.getParent().repaint();
+            
+            if (step[0] >= steps) {
+                flyTimer.stop();
+            }
+        });
+        
+        flyTimer.start();
+    }
+
+    /**
      * Show game over message.
      */
     public void showGameOver(String result) {
