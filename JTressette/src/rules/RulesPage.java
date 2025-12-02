@@ -24,7 +24,6 @@ public class RulesPage extends JPanel {
     private static final Color PANEL_BG = new Color(0, 0, 0, 120);   // overlay scuro semitrasparente
     private static final Color TEXT_CREME = new Color(245, 235, 221); // crema per il testo
     private static final Color TITLE_GOLD = new Color(255, 215, 0);   // oro per il titolo
-    private static final Color ACCENT_RED = new Color(200, 40, 40);   // rosso per semi (se necessario)
 
     public RulesPage(JPanel cards) {
         this.cards = cards;
@@ -52,15 +51,6 @@ public class RulesPage extends JPanel {
 
         contentWrapper.add(sp, BorderLayout.CENTER);
 
-        // Bottone sotto (opzionale) o si usa il back nella header
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottom.setOpaque(false);
-        JButton backFooter = new JButton("Indietro");
-        backFooter.addActionListener(this::onBack);
-        styleButton(backFooter);
-        bottom.add(backFooter);
-        contentWrapper.add(bottom, BorderLayout.SOUTH);
-
         // aggiungiamo il wrapper al centro del pannello principale
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0; gbc.gridy = 0;
@@ -83,18 +73,9 @@ public class RulesPage extends JPanel {
         title.setFont(new Font("Serif", Font.BOLD, 22));
         title.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // piccolo pannello con i semi (♠ ♥ ♦ ♣)
-        JLabel suits = new JLabel("<html><span style='color:black'>&spades;</span> " +
-                "<span style='color:red'>\u2665</span> " +
-                "<span style='color:red'>\u2666</span> " +
-                "<span style='color:black'>\u2663</span></html>", SwingConstants.CENTER);
-        suits.setFont(new Font("Serif", Font.PLAIN, 18));
-        suits.setForeground(TEXT_CREME);
-
         JPanel center = new JPanel(new BorderLayout());
         center.setOpaque(false);
         center.add(title, BorderLayout.CENTER);
-        center.add(suits, BorderLayout.SOUTH);
 
         top.add(center, BorderLayout.CENTER);
 
@@ -121,22 +102,7 @@ public class RulesPage extends JPanel {
         pane.setOpaque(false);
         pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE); // usa i font swing
 
-        String html = buildHtmlContent();
-
-        // Imposta stile CSS inline per testo e sfondo trasparente
-        String styledHtml = "<html><head><style type='text/css'>"
-                + "body { font-family: 'Serif', Georgia, 'Times New Roman'; color: rgb("
-                + TEXT_CREME.getRed() + "," + TEXT_CREME.getGreen() + "," + TEXT_CREME.getBlue()
-                + "); background: transparent; padding: 8px; }"
-                + "h2 { color: rgb(" + TITLE_GOLD.getRed() + "," + TITLE_GOLD.getGreen() + "," + TITLE_GOLD.getBlue() + "); }"
-                + "h3 { color: rgb(" + (TEXT_CREME.getRed()-20) + "," + Math.max(0, TEXT_CREME.getGreen()-20) + "," + Math.max(0, TEXT_CREME.getBlue()-20) + "); }"
-                + "p { font-size: 12pt; line-height:1.45; }"
-                + "ul { margin-left: 1.2em; }"
-                + ".note { color: #d6cebf; font-size:10pt; }"
-                + "code { background: rgba(255,255,255,0.06); padding:2px 4px; border-radius:3px; }"
-                + "</style></head><body>"
-                + html
-                + "</body></html>";
+        String styledHtml = getString();
 
         // setText usa il renderer HTML; ci assicuriamo che la pane sia non-opaque così si vede l'overlay disegnato
         pane.setText(styledHtml);
@@ -157,30 +123,47 @@ public class RulesPage extends JPanel {
         return pane;
     }
 
+    private String getString() {
+        String html = buildHtmlContent();
+
+        // Imposta stile CSS inline per testo e sfondo trasparente
+        return "<html><head><style type='text/css'>"
+                + "body { font-family: 'Serif', Georgia, 'Times New Roman'; color: rgb("
+                + TEXT_CREME.getRed() + "," + TEXT_CREME.getGreen() + "," + TEXT_CREME.getBlue()
+                + "); background: transparent; padding: 8px; }"
+                + "h2 { color: rgb(" + TITLE_GOLD.getRed() + "," + TITLE_GOLD.getGreen() + "," + TITLE_GOLD.getBlue() + "); }"
+                + "h3 { color: rgb(" + (TEXT_CREME.getRed()-20) + "," + Math.max(0, TEXT_CREME.getGreen()-20) + "," + Math.max(0, TEXT_CREME.getBlue()-20) + "); }"
+                + "p { font-size: 12pt; line-height:1.45; }"
+                + "ul { margin-left: 1.2em; }"
+                + ".note { color: #d6cebf; font-size:10pt; }"
+                + "code { background: rgba(255,255,255,0.06); padding:2px 4px; border-radius:3px; }"
+                + "</style></head><body>"
+                + html
+                + "</body></html>";
+    }
+
     private String buildHtmlContent() {
         String rulesHtml =
                 "<h2>Regole base del Tressette (sintesi)</h2>" +
-                        "<p>Il <b>Tressette</b> è un classico gioco di prese italiano. Qui trovi una versione sintetica delle regole per giocare velocemente nella nostra applicazione.</p>" +
+                        "<p>Il <b>Tressette</b> è un classico gioco di carte italiano. Qui trovi una versione sintetica delle regole per giocare velocemente a questo gioco.</p>" +
                         "<h3>Obiettivo</h3>" +
-                        "<p>Accumular più punti possibile prendendo carte di valore.</p>" +
+                        "<p>Raccogliere più carte possibili che abbiano un valore attraverso il loro valore e la priorità che hanno sulle altre carte</p>" +
                         "<h3>Carte e valori</h3>" +
                         "<ul>" +
-                        "<li>Si gioca con un mazzo da 40 carte (itagliano): le figure e i valori seguono la scala tipica del Tressette.</li>" +
-                        "<li>Scala di forza (dalla più forte): <b>3</b>, <b>2</b>, <b>A</b>, <b>K</b>, <b>Q</b>, <b>J</b>, 7..4.</li>" +
+                        "<li>Si gioca con un mazzo da 40 carte italiano: le figure e i valori seguono la seguente scala:</li>" +
+                        "<li> <b>3</b>, <b>2</b>, <b>Asso</b>, <b>Re</b>, <b>Cavallo</b>, <b>Fante</b>, ed in ordine dal 7 al 4</li>" +
                         "</ul>" +
                         "<h3>Svolgimento</h3>" +
                         "<ul>" +
-                        "<li>Il giocatore di mano gioca una carta, gli altri devono rispondere del seme se possibile.</li>" +
-                        "<li>Vince la presa la carta di seme di mano con il valore più alto secondo la scala del Tressette.</li>" +
+                        "<li>Il primo giocatore del turno, o il giocatore vincitore del turno precedente, gioca una carta il cui seme sarà il seme dominante di quel turno, gli altri devono rispondere con lo stesso seme laddove possibile, altrimenti saranno liberi di gettare qualsiasi altra carta.</li>" +
+                        "<li>Vince il turno, e quindi conseguentemente prende tutte le carte a terra, la carta con il valore più alto secondo la scala del Tressette.</li>" +
                         "</ul>" +
                         "<h3>Punteggi</h3>" +
-                        "<p>Al termine della mano si conteggiano i punti dalle carte catturate. Le varianti possono differire sui valori esatti; questa implementazione usa una modalità semplificata.</p>" +
+                        "<p>Al termine della mano si conteggiano i punti di tutte le carte raccolte. Il valore delle carte corrisponde a 1 per : Asso, 2 , 3; mentre vale 1/3 per Re, Cavallo e Fante</p>" +
                         "<h3>Consigli</h3>" +
                         "<ul>" +
                         "<li>Ricorda di osservare le carte giocate e pianificare la presa.</li>" +
-                        "<li>Usa le regole fornite come base e personalizza la strategia in base alla tua variante preferita.</li>" +
-                        "</ul>" +
-                        "<p class='note'>Se vuoi aggiungere immagini illustrative (carte, esempi di mano), posso integrarle nella pagina: carica i file PNG/JPG nella cartella <code>src/main/resource/</code> e inseriremo le immagini con URL assoluti.</p>";
+                        "<li>Usa le regole fornite come base e personalizza la strategia in base alla tua variante preferita.</li>" ;
         return rulesHtml;
     }
 
@@ -232,8 +215,5 @@ public class RulesPage extends JPanel {
         } finally {
             g2.dispose();
         }
-
-        // non chiamare super.paintComponent(g) perché vogliamo mantenere la trasparenza
-        // e lasciare che i componenti figli (non-opaque) disegnino il contenuto sopra il box.
     }
 }

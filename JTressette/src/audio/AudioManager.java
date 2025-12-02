@@ -1,25 +1,46 @@
 package audio;
 
-/**
- * Singleton semplice per avere istanza condivisa di AudioImpl.
- * Usalo in tutta l'app: AudioManager.getInstance().getAudio()
- */
+import java.net.*;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+
 public class AudioManager {
 
-    private static AudioManager instance;
-    private final AudioImpl audio;
+    Clip clip;
+    URL[] soundURL = new URL[30];
 
-    private AudioManager() {
-        audio = new AudioImpl();
-        // carica volumi/setting predefiniti se necessario
+    public AudioManager() {
+
+        soundURL[0] = getClass().getResource("/res/audio/backgroundMenu.wav");
+        soundURL[1] = getClass().getResource("/res/audio/MenuSelectionClick.wav");
+        soundURL[2] = getClass().getResource("/res/audio/cardPlayed.wav");
+        soundURL[3] = getClass().getResource("/res/audio/backGame.wav");
+
     }
 
-    public static synchronized AudioManager getInstance() {
-        if (instance == null) instance = new AudioManager();
-        return instance;
+    public void setFile(int i) {
+
+        try {
+
+            AudioInputStream ais = AudioSystem.getAudioInputStream(soundURL[i]);
+            clip = AudioSystem.getClip();
+            clip.open(ais);
+
+        }catch(Exception e) { }
+
     }
 
-    public AudioImpl getAudio() {
-        return audio;
+    public void start() {
+        clip.start();
+    }
+
+    public void stop() {
+        clip.stop();
+    }
+
+    public void loop() {
+        clip.loop(Clip.LOOP_CONTINUOUSLY);
     }
 }

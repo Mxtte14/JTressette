@@ -120,7 +120,7 @@ public class GameSetup extends JDialog {
     }
 
     private String randomBotName() {
-        String[] names = {"Marco", "Luca", "Anna", "Giulia", "Pippo", "Neri", "Mauro", "Sara", "Gino"};
+        String[] names = {"Marco", "Marta", "Stefano", "Luca", "Anna", "Giulia", "Pippo", "Neri", "Mauro", "Sara", "Gino"};
         return "Bot-" + names[new Random().nextInt(names.length)];
     }
 

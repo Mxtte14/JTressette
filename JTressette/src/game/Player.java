@@ -16,6 +16,4 @@ public interface Player {
      */
     int chooseCard(GameState state) ;
 
-    /** Riceve una carta in mano */
-    void receiveCard(Cards c);
 }

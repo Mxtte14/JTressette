@@ -145,4 +145,5 @@ public class UserProfile implements Serializable {
                 ", avatarPath='" + avatarPath + '\'' +
                 '}';
     }
+
 }

@@ -4,6 +4,7 @@ import controller.ProfileController;
 import profile.ProfileMenu;
 import rules.RulesPage;
 
+import audio.AudioManager;
 import javax.swing.*;
 import java.awt.*;
 
@@ -17,9 +18,13 @@ public class MenuFrame extends JFrame {
     private final JPanel cards;
     private ProfileMenu profilePanel;
     private RulesPage rulesPanel;
+    AudioManager back = new AudioManager();
 
     public MenuFrame(ProfileController controller) {
         super("JTressette");
+
+        back.setFile(0);
+        back.start();
 
         // pannello principale (home menu) che riceve il controller
         panel = new HomeMenu(controller);
@@ -53,6 +58,7 @@ public class MenuFrame extends JFrame {
     public void showSettings() {
         // Implementa la logica per mostrare le impostazioni se necessario
 
+        back.stop();
     }
     /**
      * Mostra la schermata profilo (card "PROFILE").
@@ -60,15 +66,18 @@ public class MenuFrame extends JFrame {
     public void showProfile() {
         // aggiorna i dati della view dal controller (il ProfileMenu è registrato come listener al controller,
         // ma forziamo comunque un refresh immediato)
+        back.stop();
         profilePanel.refreshFromModel();
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "PROFILE");
+
     }
 
     /**
      * Mostra la schermata regole (card "RULES").
      */
     public void showRules() {
+        back.stop();
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "RULES");
     }
@@ -77,6 +86,7 @@ public class MenuFrame extends JFrame {
      * Torna alla schermata menu (card "MENU").
      */
     public void showMenu() {
+        back.stop();
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "MENU");
     }

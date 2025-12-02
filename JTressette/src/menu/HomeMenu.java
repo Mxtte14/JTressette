@@ -6,7 +6,6 @@ import profile.UserProfile;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import audio.AudioManager;
 
 /**
  * HomeMenu - Menu principale modernizzato con stile elegante.
@@ -33,6 +33,9 @@ public class HomeMenu extends JPanel implements ProfileListener {
     BufferedImage background;
     public MenuOption[] options;
     public controller.Cursor cursor;
+
+    // Risorse audio
+    AudioManager back = new AudioManager();
 
     private int selectedOption = 0;
 
@@ -403,32 +406,9 @@ public class HomeMenu extends JPanel implements ProfileListener {
         Font symbolFont = new Font("Serif", Font.PLAIN, 36);
         g2d.setFont(symbolFont);
 
-        String spade = "\u2660"; // Picche
-        String heart = "\u2665"; // Cuori
-        String diamond = "\u2666"; // Quadri
-        String club = "\u2663"; // Fiori
-
         int leftX = 80;
         int rightX = screenWidth - 120;
         int y = 100;
-
-        // Simboli a sinistra
-        g2d.setColor(new Color(0, 0, 0, 60));
-        g2d.drawString(spade, leftX + 1, y + 1);
-        g2d.drawString(club, leftX + 1, y + 41);
-
-        g2d.setColor(new Color(40, 40, 40));
-        g2d.drawString(spade, leftX, y);
-        g2d.drawString(club, leftX, y + 40);
-
-        // Simboli a destra
-        g2d.setColor(new Color(0, 0, 0, 60));
-        g2d.drawString(heart, rightX + 1, y + 1);
-        g2d.drawString(diamond, rightX + 1, y + 41);
-
-        g2d.setColor(ACCENT_RED);
-        g2d.drawString(heart, rightX, y);
-        g2d.drawString(diamond, rightX, y + 40);
     }
 
     private void drawFooter(Graphics2D g2d) {

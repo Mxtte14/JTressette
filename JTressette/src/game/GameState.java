@@ -13,6 +13,7 @@ public class GameState {
     private final List<Giocatore> players;
     private final Map<Giocatore, List<Cards>> hands = new LinkedHashMap<>();
     private final Map<Giocatore, Integer> scores = new LinkedHashMap<>();
+    private final Map<Giocatore, Integer> wonCardsCount = new LinkedHashMap<>();
     private final Mazzo deck;
     private int currentPlayerIndex = 0;
 
@@ -20,7 +21,15 @@ public class GameState {
     private final List<Giocatore> trickPlayers = new ArrayList<>();
     private final List<Cards> trickCards = new ArrayList<>();
 
-    // punti per carta (mappa semplificata): A,3,2,K,Q,J = 1 punto ciascuna (configurabile)
+    // storico delle carte già acquisite (carte delle prese completate)
+    private final List<Cards> playedCards = new ArrayList<>();
+
+    // Store the last trick winner for UI display
+    private Giocatore lastTrickWinner = null;
+    private int lastTrickCardsWon = 0;
+
+
+    // punti per carta (mappa semplificata): ASSO, TRE, DUE = 3; RE, CAVALLO, ALFIERE = 1
     private static final Map<Cards.Rank, Integer> CARD_POINTS;
     static {
         Map<Cards.Rank, Integer> m = new EnumMap<>(Cards.Rank.class);
@@ -40,6 +49,7 @@ public class GameState {
         for (Giocatore p : players) {
             hands.put(p, new ArrayList<>());
             scores.put(p, 0);
+            wonCardsCount.put(p, 0);
         }
     }
 
@@ -76,6 +86,7 @@ public class GameState {
     public Giocatore getCurrentPlayer() { return players.get(currentPlayerIndex); }
 
     public void advanceTurn() {
+        if (players == null || players.isEmpty()) return;
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     }
 
@@ -142,29 +153,34 @@ public class GameState {
             int prev = scores.getOrDefault(winner, 0);
             scores.put((Giocatore) winner, prev + trickPoints);
 
+            // Track won cards count
+            int cardsWon = trickCards.size();
+            int prevWonCards = wonCardsCount.getOrDefault(winner, 0);
+            wonCardsCount.put(winner, prevWonCards + cardsWon);
+
+            // Store last trick winner for UI
+            lastTrickWinner = winner;
+            lastTrickCardsWon = cardsWon;
+
             // prepara per la prossima presa: il prossimo currentPlayerIndex = index del winner nella lista players
             int winnerPlayerIndex = players.indexOf(winner);
             currentPlayerIndex = winnerPlayerIndex;
-
-            // svuota buffer
-            trickPlayers.clear();
-            trickCards.clear();
         } else {
-            // la turno continua: il next player sarà avanzato esternamente chiamando advanceTurn()
+            // il turno continua: il next player sarà avanzato esternamente chiamando advanceTurn()
         }
 
         return c;
     }
 
     /**
-     * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getPriority()).itore è la carta del seme di mano (lead suit) con valore più alto (getStrength()).
+     * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getPriority()).
      */
     private int determineTrickWinner() {
-        Cards lead = trickCards.get(0);
+        Cards lead = trickCards.getFirst();
         Cards.Segno leadSuit = lead.getSegno();
 
         int bestIdx = 0;
-        Cards bestCard = trickCards.get(0);
+        Cards bestCard = trickCards.getFirst();
         for (int i = 1; i < trickCards.size(); i++) {
             Cards c = trickCards.get(i);
             if (c.getSegno() == leadSuit && c.getPriority() > bestCard.getPriority()) {
@@ -194,5 +210,66 @@ public class GameState {
      */
     public List<Giocatore> getTrickPlayers() {
         return Collections.unmodifiableList(trickPlayers);
+    }
+
+    /**
+     * Returns the number of cards won by the specified player.
+     */
+    public int getWonCardsCount(Giocatore p) {
+        return wonCardsCount.getOrDefault(p, 0);
+    }
+
+    /**
+     * Returns the map of all won cards counts.
+     */
+    public Map<Giocatore, Integer> getAllWonCardsCount() {
+        return Collections.unmodifiableMap(wonCardsCount);
+    }
+
+    /**
+     * Returns the last trick winner (or null if no trick has been completed yet).
+     */
+    public Giocatore getLastTrickWinner() {
+        return lastTrickWinner;
+    }
+
+
+    /**
+     * Returns true if a trick was just completed (cards are still on table for display).
+     */
+    public boolean isTrickJustCompleted() {
+        return lastTrickWinner != null && !trickCards.isEmpty();
+    }
+
+
+    /**
+     * Restituisce tutte le carte che sono già state prese (storico).
+     */
+    public List<Cards> getPlayedCards() {
+        return Collections.unmodifiableList(playedCards);
+    }
+
+    /**
+     * Ritorna i punti attribuiti a una carta (0, 1 o 3) secondo la mappa interna.
+     */
+    public static int getCardPoints(Cards c) {
+        if (c == null) return 0;
+        return CARD_POINTS.getOrDefault(c.getRank(), 0);
+    }
+
+    /**
+     * Returns the number of cards won in the last trick.
+     */
+    public int getLastTrickCardsWon() {
+        return lastTrickCardsWon;
+    }
+
+    /**
+     * Clears the trick buffer after UI has displayed the cards.
+     * Should be called after showing the trick winner animation.
+     */
+    public void clearTrick() {
+        trickPlayers.clear();
+        trickCards.clear();
     }
 }

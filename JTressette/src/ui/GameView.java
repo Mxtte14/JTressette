@@ -13,9 +13,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * GameViewSwing: Swing-based view for the card game following MVC pattern.
@@ -53,9 +51,6 @@ public class GameView extends JFrame {
     private JButton playButton;
     private JPanel wonCardsPanel;
     private JLabel wonCardsLabel;
-
-    // Track won cards per player
-    private Map<Giocatore, Integer> wonCardsCount = new HashMap<>();
 
     private int selectedCardIndex = -1;
     private List<CardPanel> cardPanels = new ArrayList<>();
@@ -156,19 +151,72 @@ public class GameView extends JFrame {
             cardsPanel.add(cardBack);
         }
 
-        // Show won cards count
-        int wonCards = wonCardsCount.getOrDefault(player, 0);
-        JLabel wonLabel = new JLabel("Carte prese: " + wonCards);
+        // Show won cards count with small deck icon - use GameState tracking
+        int wonCards = gameState.getWonCardsCount(player);
+        JPanel wonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        wonPanel.setOpaque(false);
+
+        // Small deck icon for opponent
+        JPanel opponentDeckIcon = createOpponentWonCardsDeckIcon(player);
+        wonPanel.add(opponentDeckIcon);
+
+        JLabel wonLabel = new JLabel("Carte: " + wonCards);
         wonLabel.setForeground(TEXT_GOLD);
-        wonLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-        wonLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        wonLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+        wonPanel.add(wonLabel);
 
         box.add(nameLabel);
         box.add(Box.createVerticalStrut(5));
         box.add(cardsPanel);
         box.add(Box.createVerticalStrut(3));
-        box.add(wonLabel);
+        box.add(wonPanel);
         return box;
+    }
+
+    /**
+     * Creates a small deck icon for opponent's won cards pile.
+     */
+    private JPanel createOpponentWonCardsDeckIcon(Giocatore player) {
+        JPanel deckIcon = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int wonCards = gameState.getWonCardsCount(player);
+
+                // Draw stacked cards to represent won pile (smaller for opponents)
+                int cardWidth = 18;
+                int cardHeight = 25;
+                int stackOffset = 1;
+                int stackSize = Math.min(wonCards / 2, 4); // Show up to 4 layers
+
+                for (int i = 0; i <= stackSize; i++) {
+                    int x = i * stackOffset;
+                    int y = (stackSize - i) * stackOffset;
+
+                    // Card shadow
+                    g2d.setColor(new Color(0, 0, 0, 60));
+                    g2d.fillRoundRect(x + 1, y + 1, cardWidth, cardHeight, 3, 3);
+
+                    // Card back
+                    g2d.setColor(new Color(30, 60, 120));
+                    g2d.fillRoundRect(x, y, cardWidth, cardHeight, 3, 3);
+
+                    // Card border
+                    g2d.setColor(new Color(20, 40, 80));
+                    g2d.drawRoundRect(x, y, cardWidth, cardHeight, 3, 3);
+                }
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(28, 35);
+            }
+        };
+        deckIcon.setOpaque(false);
+        return deckIcon;
     }
 
     private JPanel createTableCenter() {
@@ -238,9 +286,14 @@ public class GameView extends JFrame {
         playerHandPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         playerHandPanel.setOpaque(false);
 
-        // Won cards indicator panel
-        wonCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        // Won cards indicator panel with deck icon
+        wonCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         wonCardsPanel.setOpaque(false);
+
+        // Create a small deck icon panel
+        JPanel deckIcon = createWonCardsDeckIcon();
+        wonCardsPanel.add(deckIcon);
+
         wonCardsLabel = new JLabel("Carte prese: 0");
         wonCardsLabel.setForeground(TEXT_GOLD);
         wonCardsLabel.setFont(new Font("Arial", Font.BOLD, 12));
@@ -264,6 +317,52 @@ public class GameView extends JFrame {
         area.add(playButton);
 
         return area;
+    }
+
+    /**
+     * Creates a small deck icon representing won cards pile.
+     */
+    private JPanel createWonCardsDeckIcon() {
+        JPanel deckIcon = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int wonCards = gameState.getWonCardsCount(humanPlayer);
+
+                // Draw stacked cards to represent won pile
+                int cardWidth = 25;
+                int cardHeight = 35;
+                int stackOffset = 2;
+                int stackSize = Math.min(wonCards / 2, 5); // Show up to 5 layers
+
+                for (int i = 0; i <= stackSize; i++) {
+                    int x = i * stackOffset;
+                    int y = (stackSize - i) * stackOffset;
+
+                    // Card shadow
+                    g2d.setColor(new Color(0, 0, 0, 60));
+                    g2d.fillRoundRect(x + 2, y + 2, cardWidth, cardHeight, 5, 5);
+
+                    // Card back
+                    g2d.setColor(new Color(30, 60, 120));
+                    g2d.fillRoundRect(x, y, cardWidth, cardHeight, 5, 5);
+
+                    // Card border
+                    g2d.setColor(new Color(20, 40, 80));
+                    g2d.drawRoundRect(x, y, cardWidth, cardHeight, 5, 5);
+                }
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(40, 50);
+            }
+        };
+        deckIcon.setOpaque(false);
+        return deckIcon;
     }
 
     private JPanel createInfoPanel() {
@@ -543,6 +642,7 @@ public class GameView extends JFrame {
             updateOpponentArea();
             updateScores();
             updateStatus();
+            updateWonCardsDisplay();
         });
     }
 
@@ -719,18 +819,45 @@ public class GameView extends JFrame {
      */
     public void showTrickWon(Giocatore winner, int cardsWon) {
         SwingUtilities.invokeLater(() -> {
-            // Update won cards count
-            int currentCount = wonCardsCount.getOrDefault(winner, 0);
-            wonCardsCount.put(winner, currentCount + cardsWon);
-
-            // Update human player's won cards label
+            // Update human player's won cards label from GameState
             if (winner == humanPlayer) {
-                wonCardsLabel.setText("Carte prese: " + wonCardsCount.get(humanPlayer));
+                wonCardsLabel.setText("Carte prese: " + gameState.getWonCardsCount(humanPlayer));
             }
+
+            // Show winner indicator on the table
+            showWinnerIndicator(winner);
 
             // Animate cards moving to winner's pile
             animateCardsToWinner(winner);
         });
+    }
+
+    /**
+     * Show a visual indicator of who won the trick.
+     */
+    private void showWinnerIndicator(Giocatore winner) {
+        // Add a "Winner" label to the table panel
+        JLabel winnerLabel = new JLabel("🏆 " + winner.getName() + " prende!");
+        winnerLabel.setForeground(TEXT_GOLD);
+        winnerLabel.setFont(new Font("Serif", Font.BOLD, 16));
+        winnerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Add to parent of tableCardsPanel
+        JPanel tableOval = (JPanel) tableCardsPanel.getParent();
+        if (tableOval != null) {
+            tableOval.add(winnerLabel);
+            tableOval.revalidate();
+            tableOval.repaint();
+
+            // Remove after animation
+            Timer removeTimer = new Timer(800, e -> {
+                tableOval.remove(winnerLabel);
+                tableOval.revalidate();
+                tableOval.repaint();
+            });
+            removeTimer.setRepeats(false);
+            removeTimer.start();
+        }
     }
 
     /**
@@ -787,7 +914,7 @@ public class GameView extends JFrame {
      * Update the won cards count display.
      */
     private void updateWonCardsDisplay() {
-        int humanWonCards = wonCardsCount.getOrDefault(humanPlayer, 0);
+        int humanWonCards = gameState.getWonCardsCount(humanPlayer);
         wonCardsLabel.setText("Carte prese: " + humanWonCards);
     }
 

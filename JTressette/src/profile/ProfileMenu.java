@@ -19,7 +19,6 @@ import java.util.List;
 public class ProfileMenu extends JPanel implements ProfileListener {
     private final JPanel cards;
     private final ProfileController controller;
-
     private JTextField nameField;
     private JLabel avatarLabel;
     private JTable historyTable;

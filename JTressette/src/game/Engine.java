@@ -2,10 +2,10 @@ package game;
 
 import profile.GamesRecord;
 
-import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.StringJoiner;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
+import java.time.format.DateTimeFormatter;
 
 /**
  * GameEngine che esegue la partita con regole di presa e scoring.
@@ -26,31 +26,29 @@ public class Engine {
         // loop principale: fino a fine partita
         while (!state.isFinished()) {
             Giocatore current = state.getCurrentPlayer();
-            int idx = -1;
+            int idx;
             try {
                 idx = current.chooseCard(state);
-            } finally {
+            } finally {}
 
-            }
-
-            if (idx < 0) {
+            if (idx <= 0) {
                 int[] legal = state.getLegalMoves(current);
                 idx = (legal.length > 0) ? legal[0] : -1;
             }
 
-            if (idx >= 0) {
+            if (idx > 0) {
                 Cards played = state.playCard(current, idx);
-                // (opzionale) log su console
-                System.out.println(current.getName() + " played " + played);
-            }
 
-            // Gestione avanzamento turno:
-            Giocatore newCurrent = state.getCurrentPlayer();
-            if (newCurrent == current) {
-                // la presa è stata completata e current è stato impostato sul vincitore:
-                // non avanziamo in questo caso
-            } else {
-                state.advanceTurn();
+                if (state.isTrickJustCompleted()) {
+                    Giocatore winner = state.getLastTrickWinner();
+                    int cardsWon = state.getLastTrickCardsWon();
+
+                    state.clearTrick();
+
+                    // il vincitore è lo stesso del current quindi non cambio current player
+                } else {
+                    state.advanceTurn();
+                }
             }
         }
 
@@ -68,13 +66,15 @@ public class Engine {
             resultSummary = "Pareggio";
         }
 
+
         // lista avversari bot (comma separated)
         StringJoiner opponents = new StringJoiner(",");
         for (Giocatore p : state.getPlayers()) {
             if (p.isBot()) opponents.add(p.getName());
         }
 
-        String date = Instant.now().toString();
+        LocalDate localDate = LocalDate.now(ZoneId.systemDefault());
+        String date = localDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         return new GamesRecord(date, opponents.toString(), resultSummary);
     }
 }
