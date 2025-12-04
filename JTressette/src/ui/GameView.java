@@ -1,5 +1,6 @@
 package ui;
 
+import controller.GameController;
 import game.Cards;
 import game.Giocatore;
 import game.GiocatoreUmano;
@@ -27,7 +28,6 @@ public class GameView extends JFrame {
     private static final Color FELT_GREEN = new Color(26, 117, 65);
     private static final Color FELT_DARK = new Color(18, 85, 47);
     private static final Color FELT_BORDER = new Color(100, 70, 40);
-    private static final Color CARD_BACK = new Color(30, 60, 120);
     private static final Color TEXT_GOLD = new Color(255, 215, 0);
     private static final Color TEXT_WHITE = Color.WHITE;
 
@@ -36,6 +36,13 @@ public class GameView extends JFrame {
     private static final int CARD_HEIGHT = 100;
     private static final int SMALL_CARD_WIDTH = 50;
     private static final int SMALL_CARD_HEIGHT = 75;
+
+    // Animation constants
+    private static final int ANIMATION_DELAY_MS = 80;
+    private static final int CARD_FLY_DURATION_MS = 200;
+    private static final int PLAYER_POSITION_SPACING = 200;
+    private static final double CARD_ARC_HEIGHT = 30.0;
+    private static final double CARD_SCALE_FACTOR = 0.15;
 
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
@@ -49,11 +56,10 @@ public class GameView extends JFrame {
     private JLabel scoreLabel;
     private JPanel logArea;
     private JButton playButton;
-    private JPanel wonCardsPanel;
     private JLabel wonCardsLabel;
 
     private int selectedCardIndex = -1;
-    private List<CardPanel> cardPanels = new ArrayList<>();
+    private final List<CardPanel> cardPanels = new ArrayList<>();
 
     public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller) {
         super("JTressette - Partita in Corso");
@@ -219,30 +225,43 @@ public class GameView extends JFrame {
         return deckIcon;
     }
 
+    private JPanel tableOval;
+
     private JPanel createTableCenter() {
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
 
-        // Table oval panel
-        JPanel tableOval = new TablePanel();
-        tableOval.setPreferredSize(new Dimension(500, 250));
-        tableOval.setLayout(new BoxLayout(tableOval, BoxLayout.Y_AXIS));
+        tableOval = new TablePanel();
+        tableOval.setPreferredSize(new Dimension(700, 400)); // ingrandisci il tavolo!
+        tableOval.setMaximumSize(new Dimension(700, 400));
+        tableOval.setMinimumSize(new Dimension(700, 400));
+        tableOval.setLayout(null);
 
-        JLabel tableLabel = new JLabel("Tavolo");
-        tableLabel.setForeground(TEXT_GOLD);
-        tableLabel.setFont(new Font("Serif", Font.BOLD, 18));
-        tableLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Mazzo visibile al centro (solo GUI, non interattivo)
+        JLabel deckLabel = createDeckImage();
+        deckLabel.setBounds(305, 150, 90, 120); // centro del tavolo (aggiusta le coordinate se serve)
+        tableOval.add(deckLabel);
+        // deckLabel.setName("MAZZO"); // puoi salvare la reference per aggiornarlo
 
-        tableCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
-        tableCardsPanel.setOpaque(false);
-
-        tableOval.add(Box.createVerticalStrut(30));
-        tableOval.add(tableLabel);
-        tableOval.add(Box.createVerticalStrut(10));
-        tableOval.add(tableCardsPanel);
 
         center.add(tableOval);
         return center;
+    }
+
+    // metodo per creare la visualizzazione del mazzo rimasto
+    private JLabel createDeckImage() {
+        // Mostra il dorso delle carte e un numero di carte rimaste
+        Image cardBackImg = CardImageLoader.getScaledCardBackImage(90, 120);
+        JLabel deckLabel = new JLabel(new ImageIcon(cardBackImg));
+        int cardsLeft = gameState.getDeck().remaining();
+        deckLabel.setToolTipText("Carte nel mazzo: " + cardsLeft);
+        // (opzionale) sovrapponi un JLabel con il numero
+        JLabel numberLabel = new JLabel("" + cardsLeft);
+        numberLabel.setForeground(TEXT_GOLD);
+        numberLabel.setFont(new Font("Arial", Font.BOLD, 22));
+        deckLabel.setLayout(new BorderLayout());
+        deckLabel.add(numberLabel, BorderLayout.SOUTH);
+        return deckLabel;
     }
 
     // Custom table panel with oval shape
@@ -287,7 +306,7 @@ public class GameView extends JFrame {
         playerHandPanel.setOpaque(false);
 
         // Won cards indicator panel with deck icon
-        wonCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        JPanel wonCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         wonCardsPanel.setOpaque(false);
 
         // Create a small deck icon panel
@@ -676,44 +695,90 @@ public class GameView extends JFrame {
         playerHandPanel.repaint();
     }
 
+    private static final int[][] POS2 = {
+            {305, 320}, // basso
+            {305, 30},  // alto
+    };
+    private static final int[][] POS3 = {
+            {305, 320}, // basso
+            {55, 175},  // sinistra
+            {305, 30},  // alto
+    };
+    private static final int[][] POS4 = {
+            {305, 320}, // basso
+            {55, 175},  // sinistra
+            {305, 30},  // alto
+            {555, 175}, // destra
+    };
+
+    // ...import e variabili come nel tuo file...
+
     private void updateTableCards() {
-        tableCardsPanel.removeAll();
+        tableOval.removeAll();
 
-        List<Cards> trickCards = gameState.getTrickCards();
+        int nPlayers = gameState.getPlayers().size();
+        int[][] positions = (nPlayers == 2) ? POS2 : (nPlayers == 3) ? POS3 : POS4;
+        List<Giocatore> players = gameState.getPlayers();
+
+        // 1. Mazzo sempre visibile
+        tableOval.add(createDeckImage());
+
+        // 2. Slot per carte giocate: SOLO bordo trasparente GIALLO se è il turno di quel player
+        for (int i = 0; i < nPlayers; i++) {
+            int x = positions[i][0];
+            int y = positions[i][1];
+            int finalI = i; // for lambda
+
+            JPanel slot = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    // SOLO bordo trasparente, nessun riempimento
+                    if (players.get(finalI) == gameState.getCurrentPlayer()) {
+                        g2d.setColor(new Color(255,215,0,190)); // giallo trasparente
+                        g2d.setStroke(new BasicStroke(3));
+                        g2d.drawRoundRect(5, 5, CARD_WIDTH, CARD_HEIGHT, 14, 14);
+                    }
+                }
+                @Override
+                public Dimension getPreferredSize() { return new Dimension(CARD_WIDTH+10, CARD_HEIGHT+10); }
+            };
+            slot.setOpaque(false);
+            slot.setBounds(x, y, CARD_WIDTH+10, CARD_HEIGHT+10);
+
+            tableOval.add(slot);
+        }
+
+        // 3. Carte giocate nei loro slot
         List<Giocatore> trickPlayers = gameState.getTrickPlayers();
-
-        for (int i = 0; i < trickCards.size(); i++) {
-            Cards card = trickCards.get(i);
+        List<Cards> trickCards = gameState.getTrickCards();
+        for (int i = 0; i < trickPlayers.size(); i++) {
             Giocatore player = trickPlayers.get(i);
+            int idx = players.indexOf(player);
+            if (idx < 0 || idx >= positions.length) continue;
+            int x = positions[idx][0] + 5;
+            int y = positions[idx][1] + 5;
+            CardPanel cardPanel = new CardPanel(trickCards.get(i), -1, false);
+            cardPanel.setBounds(x, y, CARD_WIDTH, CARD_HEIGHT);
 
-            JPanel playedCard = new JPanel();
-            playedCard.setOpaque(false);
-            playedCard.setLayout(new BoxLayout(playedCard, BoxLayout.Y_AXIS));
-
-            JLabel nameLabel = new JLabel(player.getName());
-            nameLabel.setForeground(TEXT_WHITE);
-            nameLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            CardPanel cardPanel = new CardPanel(card, -1, false);
-            cardPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            playedCard.add(nameLabel);
-            playedCard.add(Box.createVerticalStrut(3));
-            playedCard.add(cardPanel);
-
-            tableCardsPanel.add(playedCard);
+            tableOval.add(cardPanel);
         }
 
-        if (tableCardsPanel.getComponentCount() == 0) {
-            JLabel noCards = new JLabel("Nessuna carta giocata");
-            noCards.setForeground(new Color(200, 200, 200, 180));
-            noCards.setFont(new Font("Arial", Font.PLAIN, 14));
-            tableCardsPanel.add(noCards);
+        // 4. Etichette nome giocatore sopra la loro slot (più in alto rispetto alla carta)
+        for (int i = 0; i < nPlayers; i++) {
+            Giocatore player = players.get(i);
+            JLabel name = new JLabel(player.getName());
+            name.setForeground(TEXT_WHITE);
+            name.setFont(new Font("Arial", Font.BOLD, 14));
+            // Più in alto -30 pixel rispetto alla carta
+            name.setBounds(positions[i][0], positions[i][1]-26, 120, 16); // aggiusta se vuoi
+            tableOval.add(name);
         }
 
-        tableCardsPanel.revalidate();
-        tableCardsPanel.repaint();
+        tableOval.revalidate();
+        tableOval.repaint();
     }
 
     private void updateOpponentArea() {
@@ -772,33 +837,8 @@ public class GameView extends JFrame {
      * Show a card being played on the table.
      */
     public void showCardPlayed(Giocatore player, Cards card) {
-        SwingUtilities.invokeLater(() -> {
-            // Remove "no cards" label if present
-            if (tableCardsPanel.getComponentCount() == 1 &&
-                    tableCardsPanel.getComponent(0) instanceof JLabel) {
-                tableCardsPanel.removeAll();
-            }
-
-            JPanel playedCard = new JPanel();
-            playedCard.setOpaque(false);
-            playedCard.setLayout(new BoxLayout(playedCard, BoxLayout.Y_AXIS));
-
-            JLabel nameLabel = new JLabel(player.getName());
-            nameLabel.setForeground(TEXT_WHITE);
-            nameLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            CardPanel cardPanel = new CardPanel(card, -1, false);
-            cardPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            playedCard.add(nameLabel);
-            playedCard.add(Box.createVerticalStrut(3));
-            playedCard.add(cardPanel);
-
-            tableCardsPanel.add(playedCard);
-            tableCardsPanel.revalidate();
-            tableCardsPanel.repaint();
-        });
+        // ora tutta la logica di show è un refresh globale
+        SwingUtilities.invokeLater(this::updateTableCards);
     }
 
     /**
@@ -806,9 +846,9 @@ public class GameView extends JFrame {
      */
     public void clearTable() {
         SwingUtilities.invokeLater(() -> {
-            tableCardsPanel.removeAll();
-            tableCardsPanel.revalidate();
-            tableCardsPanel.repaint();
+            tableOval.removeAll();
+            tableOval.revalidate();
+            tableOval.repaint();
         });
     }
 
@@ -843,7 +883,7 @@ public class GameView extends JFrame {
         winnerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Add to parent of tableCardsPanel
-        JPanel tableOval = (JPanel) tableCardsPanel.getParent();
+        JPanel tableOval = (JPanel) this.tableOval.getParent();
         if (tableOval != null) {
             tableOval.add(winnerLabel);
             tableOval.revalidate();
@@ -876,7 +916,7 @@ public class GameView extends JFrame {
                 refresh();
             } else {
                 // Repaint with reduced alpha
-                tableCardsPanel.repaint();
+                tableOval.repaint();
             }
         });
         fadeTimer.start();
@@ -916,6 +956,167 @@ public class GameView extends JFrame {
     private void updateWonCardsDisplay() {
         int humanWonCards = gameState.getWonCardsCount(humanPlayer);
         wonCardsLabel.setText("Carte prese: " + humanWonCards);
+    }
+
+    /**
+     * Show a modern card dealing animation at the start of the game.
+     * Cards fly from a central deck position to each player's position.
+     * @param players List of players in the game
+     * @param onComplete Callback to run when animation completes
+     */
+    public void showDealingAnimation(List<Giocatore> players, Runnable onComplete) {
+        SwingUtilities.invokeLater(() -> {
+            // Create overlay panel for the animation
+            JPanel animationOverlay = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    // Semi-transparent background
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setColor(new Color(0, 0, 0, 150));
+                    g2d.fillRect(0, 0, getWidth(), getHeight());
+                }
+            };
+            animationOverlay.setLayout(null);
+            animationOverlay.setOpaque(false);
+            animationOverlay.setBounds(0, 0, getWidth(), getHeight());
+
+            // Get glass pane and add overlay
+            JPanel glassPane = (JPanel) getGlassPane();
+            glassPane.setLayout(null);
+            glassPane.add(animationOverlay);
+            glassPane.setVisible(true);
+
+            // Center position (deck position)
+            int centerX = getWidth() / 2 - CARD_WIDTH / 2;
+            int centerY = getHeight() / 2 - CARD_HEIGHT / 2;
+
+            // Calculate target positions for each player
+            int numPlayers = players.size();
+            int[][] posBase = (numPlayers == 2) ? POS2 : (numPlayers == 3) ? POS3 : POS4;
+            int [][] targetPositions = new int[numPlayers][2];
+
+            for (int i = 0; i < numPlayers; i++) {
+                targetPositions[i][0] = posBase[i][0];
+                targetPositions[i][1] = posBase[i][1];
+            }
+
+            // Create "Distribuzione carte..." label
+            JLabel dealingLabel = new JLabel("Distribuzione carte...");
+            dealingLabel.setFont(new Font("Georgia", Font.BOLD, 28));
+            dealingLabel.setForeground(TEXT_GOLD);
+            dealingLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            int labelWidth = 400;
+            int labelHeight = 40;
+            dealingLabel.setBounds((getWidth() - labelWidth) / 2, centerY - 80, labelWidth, labelHeight);
+            animationOverlay.add(dealingLabel);
+
+            // Create deck visual in center
+            Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
+
+            // Draw deck (stack of cards)
+            for (int i = 0; i < 5; i++) {
+                JLabel deckCard = new JLabel(new ImageIcon(cardBackImg));
+                deckCard.setBounds(centerX + i * 2, centerY - i * 2, CARD_WIDTH, CARD_HEIGHT);
+                animationOverlay.add(deckCard);
+            }
+
+            animationOverlay.repaint();
+
+            // Animation parameters
+            int cardsPerPlayer = 10; // Standard Tressette hand size
+
+            Timer dealTimer = new Timer(ANIMATION_DELAY_MS, null);
+            final int[] currentCard = {0};
+            final int totalCards = numPlayers * cardsPerPlayer;
+
+            dealTimer.addActionListener(e -> {
+                if (currentCard[0] >= totalCards) {
+                    dealTimer.stop();
+
+                    // Show "Pronto!" message
+                    dealingLabel.setText("Pronto!");
+
+                    // Fade out and remove overlay after a short delay
+                    Timer fadeOutTimer = new Timer(800, evt -> {
+                        glassPane.remove(animationOverlay);
+                        glassPane.setVisible(false);
+                        glassPane.repaint();
+
+                        if (onComplete != null) {
+                            onComplete.run();
+                        }
+                    });
+                    fadeOutTimer.setRepeats(false);
+                    fadeOutTimer.start();
+                    return;
+                }
+
+                // Determine which player gets this card
+                int playerIndex = currentCard[0] % numPlayers;
+                int targetX = targetPositions[playerIndex][0];
+                int targetY = targetPositions[playerIndex][1];
+
+                // Calculate offset for multiple cards (fan effect)
+                int cardNum = currentCard[0] / numPlayers;
+                int offsetX = cardNum * 15; // Horizontal offset for card fanning
+                targetX += offsetX;
+
+                // Create flying card
+                JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
+                flyingCard.setBounds(centerX, centerY, CARD_WIDTH, CARD_HEIGHT);
+                animationOverlay.add(flyingCard);
+                animationOverlay.setComponentZOrder(flyingCard, 0);
+                animationOverlay.repaint();
+
+                // Animate card flying to target position
+                animateCardFlight(flyingCard, centerX, centerY, targetX, targetY, CARD_FLY_DURATION_MS);
+
+                currentCard[0]++;
+            });
+
+            dealTimer.start();
+        });
+    }
+
+    /**
+     * Animate a card flying from one position to another with easing.
+     */
+    private void animateCardFlight(JLabel card, int startX, int startY, int endX, int endY, int durationMs) {
+        final int steps = 15;
+        final int delay = durationMs / steps;
+
+        Timer flyTimer = new Timer(delay, null);
+        final int[] step = {0};
+
+        flyTimer.addActionListener(e -> {
+            step[0]++;
+
+            // Use ease-out cubic for smooth deceleration
+            double t = (double) step[0] / steps;
+            double easedT = 1 - Math.pow(1 - t, 3);
+
+            int currentX = (int) (startX + (endX - startX) * easedT);
+            int currentY = (int) (startY + (endY - startY) * easedT);
+
+            // Add slight arc to the motion
+            double arc = Math.sin(t * Math.PI) * CARD_ARC_HEIGHT;
+            currentY -= (int) arc;
+
+            // Scale down slightly as card flies
+            double scale = 1.0 - (t * CARD_SCALE_FACTOR);
+            int scaledWidth = (int) (CARD_WIDTH * scale);
+            int scaledHeight = (int) (CARD_HEIGHT * scale);
+
+            card.setBounds(currentX, currentY, scaledWidth, scaledHeight);
+            card.getParent().repaint();
+
+            if (step[0] >= steps) {
+                flyTimer.stop();
+            }
+        });
+
+        flyTimer.start();
     }
 
     /**

@@ -7,11 +7,9 @@ import profile.StorageUser;
 import profile.ProfileStorageSerialized;
 import profile.UserProfile;
 import menu.MenuFrame;
-import game.Engine;
-import game.GiocatoreUmano;
 import profile.GamesRecord;
 import ui.GameSetup;
-import ui.GameController;
+import controller.GameController;
 
 import javax.swing.*;
 import java.util.List;
@@ -47,7 +45,10 @@ public class JTressette {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 int selected = frame.panel.getSelectedOption();
                 switch (selected) {
-                    case 1 -> onStartGame(); // AVVIO PARTITA
+                    case 1 -> {
+                        frame.playMenuClick();
+                        onStartGame(); // AVVIO PARTITA
+                    }
                     case 2 -> {
                         LOG.info("Mostra regole...");
                         frame.showRules(); // NAVIGA alla schermata regole
@@ -56,8 +57,12 @@ public class JTressette {
                         LOG.info("Accesso al profilo...");
                         frame.showProfile(); // NAVIGA alla schermata profilo
                     }
-                    case 4 -> LOG.info("Impostazioni...");
+                    case 4 -> {
+                        frame.playMenuClick();
+                        LOG.info("Impostazioni...");
+                    }
                     case 5 -> {
+                        frame.playMenuClick();
                         LOG.info("Uscita...");
                         System.exit(0);
                     }
@@ -73,26 +78,32 @@ public class JTressette {
         List<Giocatore> players = setup.showDialogAndGetPlayers();
         if (players == null || players.isEmpty()) return;
 
-        // Nascondi il menu principale
-        frame.setVisible(false);
-
-        // Create controller with Swing-based game view
-        final GameController[] controllerHolder = new GameController[1];
-
-        controllerHolder[0] = new GameController(players, () -> {
-            // Registra il risultato nel profilo
-            GamesRecord record = controllerHolder[0].getGameRecord();
-            profileController.recordMatch(record);
-
-            // Mostra il risultato
+        // Transition menu music to game music with fade effect
+        frame.transitionToGameMusic(() -> {
             SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
-                        "Risultato", JOptionPane.INFORMATION_MESSAGE);
-                frame.setVisible(true);
+                // Nascondi il menu principale
+                frame.setVisible(false);
+
+                // Create controller with Swing-based game view
+                final GameController[] controllerHolder = new GameController[1];
+
+                controllerHolder[0] = new GameController(players, () -> {
+                    // Registra il risultato nel profilo
+                    GamesRecord record = controllerHolder[0].getGameRecord();
+                    profileController.recordMatch(record);
+
+                    // Mostra il risultato e resume menu music
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
+                                "Risultato", JOptionPane.INFORMATION_MESSAGE);
+                        frame.setVisible(true);
+                        frame.resumeMenuMusic();
+                    });
+                });
+
+                controllerHolder[0].startGame();
             });
         });
-
-        controllerHolder[0].startGame();
     }
 
     // Timer per aggiornare il pannello (~60 FPS)

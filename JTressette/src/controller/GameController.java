@@ -1,7 +1,9 @@
-package ui;
+package controller;
 
+import audio.AudioManager;
 import game.*;
 import profile.GamesRecord;
+import ui.GameView;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
@@ -15,27 +17,27 @@ import java.util.concurrent.Executors;
 
 /**
  * GameControllerSwing: Controller for the game following MVC pattern.
- * Manages game flow, player actions, and updates the view.
- * Uses Swing instead of JavaFX.
+ * Gestisce tutta la logica della partita (distribuzione, trick, pescata post trick, vincitore, UI update...).
+ * NON dipende da Engine.
  */
 public class GameController {
 
-    private final Engine engine;
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
     private final GameView view;
     private final Runnable onGameEnd;
+    private final AudioManager audioManager;
 
     private final ExecutorService gameExecutor;
     private volatile boolean gameRunning = false;
 
     public GameController(List<Giocatore> players, Runnable onGameEnd) {
         this.onGameEnd = onGameEnd;
-        this.engine = new Engine(players);
-        this.gameState = engine.getState();
+        this.gameState = new GameState(players); // Direttamente!
         this.gameExecutor = Executors.newSingleThreadExecutor();
+        this.audioManager = new AudioManager();
 
-        // Find human player
+        // Trova il player umano
         GiocatoreUmano human = null;
         for (Giocatore p : players) {
             if (!p.isBot() && p instanceof GiocatoreUmano) {
@@ -45,10 +47,10 @@ public class GameController {
         }
         this.humanPlayer = human;
 
-        // Create view
+        // Crea view
         this.view = new GameView(gameState, humanPlayer, this);
 
-        // Handle window close
+        // Handle chiusura finestra
         view.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -58,36 +60,48 @@ public class GameController {
     }
 
     /**
-     * Start the game.
+     * Avvia la partita.
      */
     public void startGame() {
         gameRunning = true;
-        gameState.deal();
-        view.setVisible(true);
-        view.refresh();
-        view.log("Partita iniziata!");
 
-        gameExecutor.submit(this::runGameLoop);
+        // Musica background
+        audioManager.setFile(AudioManager.BACKGROUND_GAME);
+        audioManager.fadeIn(800, 1.0f);
+        audioManager.loop();
+
+        // Animazione distribuzione, poi si distribuiscono 10 carte a giocatore
+        view.setVisible(true);
+        view.showDealingAnimation(gameState.getPlayers(), () -> {
+            gameState.deal(10); // Distribuisci 10 carte a ciascuno!
+            view.refresh();
+            view.log("Partita iniziata!");
+
+            // Game loop sincrono in background thread
+            gameExecutor.submit(this::runGameLoop);
+        });
     }
 
+    /**
+     * Loop principale della partita (gestisce trick, pescata, avanzamento, UI).
+     */
     private void runGameLoop() {
         try {
             while (!gameState.isFinished() && gameRunning) {
                 Giocatore current = gameState.getCurrentPlayer();
 
-                SwingUtilities.invokeLater(() -> view.refresh());
+                SwingUtilities.invokeLater(view::refresh);
 
                 int idx;
-                if (current.getName().equals(humanPlayer.getName())) {
-                    // Wait for human input
+                if (humanPlayer != null && current.getName().equals(humanPlayer.getName())) {
                     view.log("È il tuo turno - scegli una carta");
                     idx = humanPlayer.chooseCard(gameState);
                 } else {
-                    // Bot plays - delay for visual effect (in background thread, so blocking is acceptable)
-                    Thread.sleep(800);
+                    Thread.sleep(800); // Ritardo per effetto visivo bot
                     idx = current.chooseCard(gameState);
                 }
 
+                // Se non valido, gioca la prima mossa legale
                 if (idx < 0) {
                     int[] legal = gameState.getLegalMoves(current);
                     idx = (legal.length > 0) ? legal[0] : -1;
@@ -96,6 +110,8 @@ public class GameController {
                 if (idx >= 0) {
                     Cards played = gameState.playCard(current, idx);
                     if (played != null) {
+                        audioManager.playCardSound();
+
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
                         SwingUtilities.invokeLater(() -> {
@@ -104,12 +120,10 @@ public class GameController {
                             view.refresh();
                         });
 
-                        // Check if trick was just completed (all players have played)
+                        // Se la presa/trick è stata completata
                         if (gameState.isTrickJustCompleted()) {
-                            // Pause to show all cards on the table
                             Thread.sleep(1500);
 
-                            // Get the trick winner and cards won from GameState
                             final Giocatore trickWinner = gameState.getLastTrickWinner();
                             final int cardsWon = gameState.getLastTrickCardsWon();
 
@@ -118,30 +132,39 @@ public class GameController {
                                 view.log(trickWinner.getName() + " vince la presa! (+" + cardsWon + " carte)");
                             });
 
-                            // Wait for animation to complete
                             Thread.sleep(1000);
 
-                            // Clear the trick buffer after showing cards
+                            // -------------------------
+                            // LOGICA PESCATA POST-PRESA
+                            // -------------------------
+                            int winnerIndex = gameState.getPlayers().indexOf(trickWinner);
+                            List<Giocatore> players = gameState.getPlayers();
+                            for (int i = 0; i < players.size(); i++) {
+                                Giocatore p = players.get((winnerIndex + i) % players.size());
+                                Cards nuovaCarta = gameState.getDeck().draw();
+                                if (nuovaCarta != null) {
+                                    gameState.getHandMutable(p).add(nuovaCarta);
+                                }
+                            }
+                            // -------------------------
+
                             gameState.clearTrick();
 
-                            // Refresh to update the table (cards cleared) and won cards counts
-                            SwingUtilities.invokeLater(() -> view.refresh());
+                            SwingUtilities.invokeLater(view::refresh);
 
-                            // Note: currentPlayerIndex is already set to winner in playCard()
-                            // so we don't need to advance turn here
+                            // currentPlayerIndex già avanza nel playCard della presa completata
+                            // non serve advanceTurn
                         } else {
-                            // Trick not complete, advance to next player
+                            // Avanza turno nella presa corrente (non ancora completata)
                             gameState.advanceTurn();
                         }
                     }
                 }
             }
 
-            // Game finished
+            // Partita terminata!
             String result = calculateResult();
-            SwingUtilities.invokeLater(() -> {
-                view.showGameOver(result);
-            });
+            SwingUtilities.invokeLater(() -> view.showGameOver(result));
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -166,7 +189,7 @@ public class GameController {
     }
 
     /**
-     * Called when human player plays a card.
+     * Quando il giocatore umano gioca una carta (col click sulla UI).
      */
     public void onCardPlayed(int cardIndex) {
         if (humanPlayer != null) {
@@ -175,11 +198,16 @@ public class GameController {
     }
 
     /**
-     * Called when player wants to exit the game.
+     * Chiusura partita.
      */
     public void onExitGame() {
         gameRunning = false;
         gameExecutor.shutdownNow();
+
+        // Fade out musica
+        audioManager.fadeOut(500, () -> {
+            audioManager.close();
+        });
 
         SwingUtilities.invokeLater(() -> {
             view.dispose();
@@ -190,7 +218,7 @@ public class GameController {
     }
 
     /**
-     * Get the game record for profile storage.
+     * Ottieni il game record per lo storico.
      */
     public GamesRecord getGameRecord() {
         StringJoiner opponents = new StringJoiner(",");
@@ -205,5 +233,9 @@ public class GameController {
 
     public GameView getView() {
         return view;
+    }
+
+    public AudioManager getAudioManager() {
+        return audioManager;
     }
 }

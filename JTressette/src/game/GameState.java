@@ -53,17 +53,22 @@ public class GameState {
         }
     }
 
-    public void deal() {
+    public void deal(int cardsPerPlayer) {
         deck.shuffle();
-        while (!deck.isEmpty()) {
+        for (Giocatore p : players) {
+            hands.get(p).clear(); // per partite nuove
+        }
+
+        for (int i = 0; i < cardsPerPlayer; i++) {
             for (Giocatore p : players) {
                 Cards c = deck.draw();
-                if (c == null) break;
-                hands.get(p).add(c);
+                if (c != null) {
+                    hands.get(p).add(c);
+                }
             }
         }
-        // definisci il primo giocatore (puoi scegliere random o fissare il primo della lista)
-        currentPlayerIndex = 0;
+        Random rand = new Random();
+        currentPlayerIndex = rand.nextInt(players.size());
     }
 
     public boolean isFinished() {
@@ -78,6 +83,12 @@ public class GameState {
     public List<Cards> getHand(Giocatore p) {
         List<Cards> hand = hands.get(p);
         return (hand == null) ? List.of() : Collections.unmodifiableList(hand);
+    }
+
+    // prende il mazzo di carte restanti
+    public Mazzo getDeck() { return deck; }
+    public List<Cards> getHandMutable(Giocatore p) {
+        return hands.get(p);
     }
 
     public int getScore(Giocatore p) { return scores.getOrDefault(p, 0); }
@@ -176,11 +187,11 @@ public class GameState {
      * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getPriority()).
      */
     private int determineTrickWinner() {
-        Cards lead = trickCards.getFirst();
+        Cards lead = trickCards.get(0);
         Cards.Segno leadSuit = lead.getSegno();
 
         int bestIdx = 0;
-        Cards bestCard = trickCards.getFirst();
+        Cards bestCard = trickCards.get(0);
         for (int i = 1; i < trickCards.size(); i++) {
             Cards c = trickCards.get(i);
             if (c.getSegno() == leadSuit && c.getPriority() > bestCard.getPriority()) {

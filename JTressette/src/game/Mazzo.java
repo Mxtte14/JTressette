@@ -36,4 +36,8 @@ public class Mazzo {
     public List<Cards> snapshot() {
         return List.copyOf(cards);
     }
+
+    public int remaining() {
+        return cards.size();
+    }
 }

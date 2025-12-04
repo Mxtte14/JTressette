@@ -16,7 +16,6 @@ import java.util.Objects;
  * viene sbloccato chiamando submitCardChoice.
  */
 public class GameDialog extends JDialog {
-    private final Engine engine;
     private final GiocatoreUmano human;
     private final GameState state;
     private final DefaultListModel<String> handModel = new DefaultListModel<>();
@@ -30,11 +29,10 @@ public class GameDialog extends JDialog {
     private int lastHandSize = -1;
     private String lastCurrentName = null;
 
-    public GameDialog(Window owner, Engine engine, GiocatoreUmano giocatore) {
+    public GameDialog(Window owner, GameState state, GiocatoreUmano giocatore) {
         super(owner, "Partita in corso", ModalityType.MODELESS);
-        this.engine = engine;
         this.human = giocatore;
-        this.state = engine.getState();
+        this.state = state;
 
         initUI();
 
