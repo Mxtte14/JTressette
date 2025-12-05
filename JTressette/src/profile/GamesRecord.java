@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 /**
  * Rappresenta un record di partita. Reso JavaBean e Serializable per
- * compatibilità sia con ObjectOutputStream sia con XMLEncoder/XMLDecoder.
+ * compatibilità con diverse modalità di storage.
  */
 public class GamesRecord implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -13,7 +13,7 @@ public class GamesRecord implements Serializable {
     private String opponent;
     private String result;
 
-    // costruttore no-arg richiesto da XMLEncoder / JavaBeans
+    // costruttore no-arg richiesto da JavaBeans
     public GamesRecord() {
     }
 

@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Profilo utente adattato per:
- * - essere Serializable (per ProfileStorageSerialized)
- * - essere JavaBean compatibile (costruttore no-arg + getter/setter) per XMLEncoder/XMLDecoder
- * - usare List<GamesRecord> per lo storico partite (coerente con ProfileMenu)
+ * Profilo utente contenente i dati dell'utente.
+ * - Serializable per compatibilità con possibili future implementazioni
+ * - JavaBean compatibile (costruttore no-arg + getter/setter)
+ * - Usa List<GamesRecord> per lo storico partite (coerente con ProfileMenu)
  *
- * Nota: createdAt è memorizzato come epoch millis per compatibilità con XMLEncoder.
+ * Nota: createdAt è memorizzato come epoch millis per semplicità di storage.
  */
 public class UserProfile implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -23,7 +23,7 @@ public class UserProfile implements Serializable {
     private List<GamesRecord> recentGames;
     private String avatarPath;
 
-    // costruttore no-arg per XMLEncoder / deserializzazione
+    // costruttore no-arg per JavaBeans / deserializzazione
     public UserProfile() {
         this.username = "Giocatore";
         this.createdAt = Instant.now().toEpochMilli();
@@ -78,7 +78,7 @@ public class UserProfile implements Serializable {
 
     /**
      * Restituisce createdAt come epoch millis.
-     * XMLEncoder funziona meglio con tipi primari come long.
+     * L'uso di tipi primitivi come long semplifica lo storage.
      */
     public long getCreatedAt() {
         return createdAt;
@@ -116,7 +116,7 @@ public class UserProfile implements Serializable {
         this.totalWins = totalWins;
     }
 
-    // Getter/Setter per XMLEncoder/XMLDecoder
+    // Getter/Setter per JavaBeans
     public List<GamesRecord> getRecentGames() {
         if (this.recentGames == null) this.recentGames = new ArrayList<>();
         return recentGames;
