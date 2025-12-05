@@ -2,13 +2,17 @@ package game;
 
 import java.util.*;
 
-/**
- * Stato completo con:
- * - mani (Map<Player, List<Card>>)
- * - punteggi (Map<Player,Integer>) accumulati dalle prese
- * - buffer della presa corrente (lista di coppie Player->Card nell'ordine di gioco)
- * - regole legali: follow-suit obbligatorio se presente
+/*
+    Classe che mantiene lo stato della partita in corso:
+    - giocatori
+    - mani dei giocatori
+    - punteggi
+    - mazzo
+    - stato della presa corrente (trick)
+    - storico delle carte giocate
+    Fornisce metodi per eseguire mosse, distribuire carte, calcolare punteggi, determinare vincitori delle prese, ecc.
  */
+
 public class GameState {
     private final List<Giocatore> players;
     private final Map<Giocatore, List<Cards>> hands = new LinkedHashMap<>();
@@ -24,7 +28,7 @@ public class GameState {
     // storico delle carte già acquisite (carte delle prese completate)
     private final List<Cards> playedCards = new ArrayList<>();
 
-    // Store the last trick winner for UI display
+    // Dati sull'ultima presa completata
     private Giocatore lastTrickWinner = null;
     private int lastTrickCardsWon = 0;
 
@@ -43,6 +47,7 @@ public class GameState {
         CARD_POINTS = Collections.unmodifiableMap(m);
     }
 
+    // Costruttore: inizializza mani vuote e punteggi a 0
     public GameState(List<Giocatore> players) {
         this.players = new ArrayList<>(players);
         this.deck = new Mazzo();
@@ -53,6 +58,81 @@ public class GameState {
         }
     }
 
+    /**
+     * FUNZIONE PRINCIPALE: GIOCA UNA CARTA
+     * Esegue la mossa: rimuove la carta dalla mano del player e la aggiunge alla presa corrente.
+     * Se la presa viene completata (tutti i players hanno giocato), determina il vincitore,
+     * assegna i punti della presa al vincitore e svuota il buffer della presa.
+     * Ritorna la card giocata (o null se mossa invalida).
+     */
+    public Cards playCard(Giocatore p, int handIndex) {
+        // solo current player può giocare
+        if (players.isEmpty() || players.get(currentPlayerIndex) != p) {
+            return null;
+        }
+
+        List<Cards> hand = hands.get(p);
+        System.out.println(hand);
+        if (hand == null || handIndex < 0 || handIndex >= hand.size()) return null;
+
+        Cards c = hand.remove(handIndex);
+        trickCards.add(c);
+        trickPlayers.add(p);
+
+        System.out.println(players);
+        System.out.println(c);
+        System.out.println(trickCards);
+        System.out.println(trickCards.size());
+        System.out.println(players);
+        // se presa completata
+        if (trickCards.size() == players.size()) {
+            // determina vincitore della presa
+            int winnerPos = determineTrickWinner();
+            System.out.println(winnerPos);
+            Giocatore winner = trickPlayers.get(winnerPos);
+
+            // calcola punti della presa
+            int trickPoints = 0;
+            for (Cards card : trickCards) {
+                trickPoints += CARD_POINTS.getOrDefault(card.getRank(), 0);
+            }
+
+            // assegna punti
+            int prev = scores.getOrDefault(winner, 0);
+            scores.put(winner, prev + trickPoints);
+
+            // Track won cards count
+            int cardsWon = trickCards.size();
+            int prevWonCards = wonCardsCount.getOrDefault(winner, 0);
+            wonCardsCount.put(winner, prevWonCards + cardsWon);
+
+            // Store last trick winner for UI
+            lastTrickWinner = winner;
+            lastTrickCardsWon = cardsWon;
+
+            // prepara per la prossima presa: il prossimo currentPlayerIndex = index del winner nella lista players
+            int winnerPlayerIndex = players.indexOf(winner);
+            rotatePlayersOrder(winnerPlayerIndex);
+
+            // il vincitore è il primo nella lista ruotata
+            currentPlayerIndex = 0;
+            System.out.println(players);
+        } else {
+            System.out.println(currentPlayerIndex);
+            // altrimenti passa al prossimo giocatore
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+            System.out.println(currentPlayerIndex);
+            System.out.println(players.get(currentPlayerIndex));
+        }
+        return c;
+    }
+
+
+    /**
+     Funzioni utilizzate per gestire lo stato generale della partita
+     */
+
+    // Distribuisce le carte ai giocatori e sceglie casualmente il primo giocatore
     public void deal(int cardsPerPlayer) {
         deck.shuffle();
         for (Giocatore p : players) {
@@ -71,15 +151,13 @@ public class GameState {
         currentPlayerIndex = rand.nextInt(players.size());
     }
 
-    public boolean isFinished() {
-        for (List<Cards> h : hands.values()) {
-            if (!h.isEmpty()) return false;
-        }
-        return true;
-    }
+    // Controlla se la partita è finita (tutte le mani vuote) con true o false come risultato
+    public boolean isFinished() { for (List<Cards> h : hands.values()) {if (!h.isEmpty()) return false;}return true;}
 
+    // Prende la lista dei giocatori
     public List<Giocatore> getPlayers() { return Collections.unmodifiableList(players); }
 
+    // prende la mano di un giocatore (lista di carte)
     public List<Cards> getHand(Giocatore p) {
         List<Cards> hand = hands.get(p);
         return (hand == null) ? List.of() : Collections.unmodifiableList(hand);
@@ -87,24 +165,68 @@ public class GameState {
 
     // prende il mazzo di carte restanti
     public Mazzo getDeck() { return deck; }
+
+    // Prende la mano di un giocatore (per modifiche interne)
     public List<Cards> getHandMutable(Giocatore p) {
         return hands.get(p);
     }
 
+    // Prende il punteggio di un giocatore
     public int getScore(Giocatore p) { return scores.getOrDefault(p, 0); }
+
+    // Prende la mappa completa dei punteggi
     public Map<Giocatore, Integer> getScores() { return Collections.unmodifiableMap(scores); }
 
+    // Prende il giocatore corrente
     public Giocatore getCurrentPlayer() { return players.get(currentPlayerIndex); }
 
+    // Avanza al prossimo giocatore nel turno
     public void advanceTurn() {
         if (players == null || players.isEmpty()) return;
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     }
 
+
     /**
-     * Restituisce gli indici legali nella mano del player rispettando l'obbligo
-     * di seguire il seme di mano se possibile.
+        Funzioni utilizzate per raccogliere dati sul turno e il vincitore della mano.
+    */
+
+    // Determina l'indice del vincitore della presa corrente
+    private int determineTrickWinner() {
+        Cards lead = trickCards.get(0);
+        Cards.Segno leadSuit = lead.getSegno();
+
+        int bestIdx = 0;
+        Cards bestCard = trickCards.get(0);
+        for (int i = 1; i < trickCards.size(); i++) {
+            Cards c = trickCards.get(i);
+            if (c.getSegno() == leadSuit && c.getPriority() > bestCard.getPriority()) {
+                bestCard = c;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
+    }
+
+    // Prende il numero di carte vinte da un giocatore
+    public int getWonCardsCount(Giocatore p) {
+        return wonCardsCount.getOrDefault(p, 0);
+    }
+
+    // Prende il giocatore che ha vinto l'ultima presa
+    public Giocatore getLastTrickWinner() {
+        return lastTrickWinner;
+    }
+
+    // Prende il numero di carte vinte nell'ultima presa
+    public int getLastTrickCardsWon() {
+        return lastTrickCardsWon;
+    }
+
+    /**
+        Funzioni utilizzate per gestire i turni e le azioni possibili dei giocatori.
      */
+    // Restituisce gli indici delle carte legali che il giocatore può giocare
     public int[] getLegalMoves(Giocatore p) {
         List<Cards> hand = hands.get(p);
         if (hand == null || hand.isEmpty()) return new int[0];
@@ -132,74 +254,14 @@ public class GameState {
         }
     }
 
-    /**
-     * Esegue la mossa: rimuove la carta dalla mano del player e la aggiunge alla presa corrente.
-     * Se la presa viene completata (tutti i players hanno giocato), determina il vincitore,
-     * assegna i punti della presa al vincitore e svuota il buffer della presa.
-     *
-     * Ritorna la card giocata (o null se mossa invalida).
-     */
-    public Cards playCard(Giocatore p, int handIndex) {
-        List<Cards> hand = hands.get(p);
-        if (hand == null || handIndex < 0 || handIndex >= hand.size()) return null;
-
-        Cards c = hand.remove(handIndex);
-
-        trickCards.add(c);
-        trickPlayers.add(p);
-
-        // se presa completata
-        if (trickCards.size() == players.size()) {
-            // determina vincitore della presa
-            int winnerPos = determineTrickWinner();
-            Giocatore winner = trickPlayers.get(winnerPos);
-
-            // calcola punti della presa
-            int trickPoints = 0;
-            for (Cards card : trickCards) {
-                trickPoints += CARD_POINTS.getOrDefault(card.getRank(), 0);
-            }
-
-            // assegna punti
-            int prev = scores.getOrDefault(winner, 0);
-            scores.put((Giocatore) winner, prev + trickPoints);
-
-            // Track won cards count
-            int cardsWon = trickCards.size();
-            int prevWonCards = wonCardsCount.getOrDefault(winner, 0);
-            wonCardsCount.put(winner, prevWonCards + cardsWon);
-
-            // Store last trick winner for UI
-            lastTrickWinner = winner;
-            lastTrickCardsWon = cardsWon;
-
-            // prepara per la prossima presa: il prossimo currentPlayerIndex = index del winner nella lista players
-            int winnerPlayerIndex = players.indexOf(winner);
-            currentPlayerIndex = winnerPlayerIndex;
-        } else {
-            // il turno continua: il next player sarà avanzato esternamente chiamando advanceTurn()
-        }
-
-        return c;
+    // Prende le carte giocate nella presa corrente
+    public List<Cards> getTrickCards() {
+        return Collections.unmodifiableList(trickCards);
     }
 
-    /**
-     * Regola: il vincitore è la carta del seme di mano (lead suit) con valore più alto (getPriority()).
-     */
-    private int determineTrickWinner() {
-        Cards lead = trickCards.get(0);
-        Cards.Segno leadSuit = lead.getSegno();
-
-        int bestIdx = 0;
-        Cards bestCard = trickCards.get(0);
-        for (int i = 1; i < trickCards.size(); i++) {
-            Cards c = trickCards.get(i);
-            if (c.getSegno() == leadSuit && c.getPriority() > bestCard.getPriority()) {
-                bestCard = c;
-                bestIdx = i;
-            }
-        }
-        return bestIdx;
+    // Prende i giocatori nell'ordine di gioco della presa corrente
+    public List<Giocatore> getTrickPlayers() {
+        return Collections.unmodifiableList(trickPlayers);
     }
 
     // Restituisce la carta che permette la vittoria della mano con minimo valore necessario
@@ -209,76 +271,28 @@ public class GameState {
         return trickCards.get(winnerIdx);
     }
 
-    /**
-     * Returns the list of cards currently on the table for the current trick.
-     */
-    public List<Cards> getTrickCards() {
-        return Collections.unmodifiableList(trickCards);
+    // Ruota la lista di players nell'ordine di gioco della presa corrente
+    private void rotatePlayersOrder(int winnerIndex) {
+        if (winnerIndex <= 0 || winnerIndex >= players.size()) return;
+        Collections.rotate(players, -winnerIndex);
     }
 
     /**
-     * Returns the list of players who have played in the current trick, in order.
+        Funzioni utilizzate per ottenere informazioni riguardo le carte
      */
-    public List<Giocatore> getTrickPlayers() {
-        return Collections.unmodifiableList(trickPlayers);
-    }
 
-    /**
-     * Returns the number of cards won by the specified player.
-     */
-    public int getWonCardsCount(Giocatore p) {
-        return wonCardsCount.getOrDefault(p, 0);
-    }
-
-    /**
-     * Returns the map of all won cards counts.
-     */
-    public Map<Giocatore, Integer> getAllWonCardsCount() {
-        return Collections.unmodifiableMap(wonCardsCount);
-    }
-
-    /**
-     * Returns the last trick winner (or null if no trick has been completed yet).
-     */
-    public Giocatore getLastTrickWinner() {
-        return lastTrickWinner;
-    }
-
-
-    /**
-     * Returns true if a trick was just completed (cards are still on table for display).
-     */
-    public boolean isTrickJustCompleted() {
-        return lastTrickWinner != null && !trickCards.isEmpty();
-    }
-
-
-    /**
-     * Restituisce tutte le carte che sono già state prese (storico).
-     */
+    // Prende la lista delle carte già giocate (prese completate)
     public List<Cards> getPlayedCards() {
         return Collections.unmodifiableList(playedCards);
     }
 
-    /**
-     * Ritorna i punti attribuiti a una carta (0, 1 o 3) secondo la mappa interna.
-     */
+    // Prende i punti associati a una carta
     public static int getCardPoints(Cards c) {
         if (c == null) return 0;
         return CARD_POINTS.getOrDefault(c.getRank(), 0);
     }
 
-    /**
-     * Returns the number of cards won in the last trick.
-     */
-    public int getLastTrickCardsWon() {
-        return lastTrickCardsWon;
-    }
-
-    /**
-     * Clears the trick buffer after UI has displayed the cards.
-     * Should be called after showing the trick winner animation.
-     */
+    // Pulisce le liste
     public void clearTrick() {
         trickPlayers.clear();
         trickCards.clear();

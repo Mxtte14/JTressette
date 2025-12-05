@@ -89,18 +89,16 @@ public class GameController {
         try {
             while (!gameState.isFinished() && gameRunning) {
                 Giocatore current = gameState.getCurrentPlayer();
-
                 SwingUtilities.invokeLater(view::refresh);
 
                 int idx;
-                if (humanPlayer != null && current.getName().equals(humanPlayer.getName())) {
+                if (humanPlayer != null && current == humanPlayer) {
                     view.log("È il tuo turno - scegli una carta");
                     idx = humanPlayer.chooseCard(gameState);
                 } else {
-                    Thread.sleep(800); // Ritardo per effetto visivo bot
+                    Thread.sleep(600);
                     idx = current.chooseCard(gameState);
                 }
-
                 // Se non valido, gioca la prima mossa legale
                 if (idx < 0) {
                     int[] legal = gameState.getLegalMoves(current);
@@ -121,7 +119,9 @@ public class GameController {
                         });
 
                         // Se la presa/trick è stata completata
-                        if (gameState.isTrickJustCompleted()) {
+                        System.out.println("Trick cards: " + gameState.getTrickCards().size() + " / Players: " + gameState.getPlayers().size());
+                        System.out.println("players: " + gameState.getPlayers());
+                        if (gameState.getTrickCards().size() == gameState.getPlayers().size()) {
                             Thread.sleep(1500);
 
                             final Giocatore trickWinner = gameState.getLastTrickWinner();
@@ -151,9 +151,6 @@ public class GameController {
                             gameState.clearTrick();
 
                             SwingUtilities.invokeLater(view::refresh);
-
-                            // currentPlayerIndex già avanza nel playCard della presa completata
-                            // non serve advanceTurn
                         } else {
                             // Avanza turno nella presa corrente (non ancora completata)
                             gameState.advanceTurn();

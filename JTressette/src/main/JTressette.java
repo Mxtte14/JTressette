@@ -3,7 +3,6 @@ package main;
 import controller.ProfileController;
 import controller.ProfileControllerImpl;
 import game.Giocatore;
-import profile.StorageUser;
 import profile.ProfileStorageSerialized;
 import profile.UserProfile;
 import menu.MenuFrame;
@@ -27,8 +26,8 @@ public class JTressette {
 
     public JTressette() {
         // inizializza storage e controller (Model + Controller)
-        StorageUser storage = new ProfileStorageSerialized();
-        UserProfile userProfile = ((ProfileStorageSerialized) storage).loadOrCreateDefault();
+        ProfileStorageSerialized storage = new ProfileStorageSerialized();
+        UserProfile userProfile = storage.loadOrCreateDefault();
         profileController = new ProfileControllerImpl(storage, userProfile);
 
         // crea la UI (View) passando il controller
@@ -79,43 +78,41 @@ public class JTressette {
         if (players == null || players.isEmpty()) return;
 
         // Transition menu music to game music with fade effect
-        frame.transitionToGameMusic(() -> {
-            SwingUtilities.invokeLater(() -> {
-                // Nascondi il menu principale
-                frame.setVisible(false);
+        frame.transitionToGameMusic(() -> SwingUtilities.invokeLater(() -> {
+            // Nascondi il menu principale
+            frame.setVisible(false);
 
-                // Create controller with Swing-based game view
-                final GameController[] controllerHolder = new GameController[1];
+            // Create controller with Swing-based game view
+            final GameController[] controllerHolder = new GameController[1];
 
-                controllerHolder[0] = new GameController(players, () -> {
-                    // Registra il risultato nel profilo
-                    GamesRecord record = controllerHolder[0].getGameRecord();
-                    profileController.recordMatch(record);
+            controllerHolder[0] = new GameController(players, () -> {
+                // Registra il risultato nel profilo
+                GamesRecord record = controllerHolder[0].getGameRecord();
+                profileController.recordMatch(record);
 
-                    // Mostra il risultato e resume menu music
-                    SwingUtilities.invokeLater(() -> {
-                        JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
-                                "Risultato", JOptionPane.INFORMATION_MESSAGE);
-                        frame.setVisible(true);
-                        frame.resumeMenuMusic();
-                    });
+                // Mostra il risultato e resume menu music
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
+                            "Risultato", JOptionPane.INFORMATION_MESSAGE);
+                    frame.setVisible(true);
+                    frame.resumeMenuMusic();
                 });
-
-                controllerHolder[0].startGame();
             });
-        });
+
+            controllerHolder[0].startGame();
+        }));
     }
 
     // Timer per aggiornare il pannello (~60 FPS)
     private void setupRepaintTimer() {
-        Timer timer = new Timer(16, event -> frame.panel.repaint());
+        Timer timer = new Timer(16, _ -> frame.panel.repaint());
         timer.start();
     }
 
     // -------------------------------
     // PUNTO D'INGRESSO DEL PROGRAMMA
     // -------------------------------
-    public static void main(String[] args) {
+    static void main() {
         // Avvia Swing sul EDT
         SwingUtilities.invokeLater(JTressette::new);
     }

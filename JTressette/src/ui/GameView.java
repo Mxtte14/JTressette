@@ -31,16 +31,28 @@ public class GameView extends JFrame {
     private static final Color TEXT_GOLD = new Color(255, 215, 0);
     private static final Color TEXT_WHITE = Color.WHITE;
 
-    // Card dimensions
+    // Card dimensions (base)
     private static final int CARD_WIDTH = 70;
     private static final int CARD_HEIGHT = 100;
     private static final int SMALL_CARD_WIDTH = 50;
     private static final int SMALL_CARD_HEIGHT = 75;
 
+    // Hand dynamic sizing
+    private static final int HAND_GAP = 8; // gap between hand cards
+    private static final int HAND_CARD_MIN_WIDTH = 36;
+    private static final int HAND_CARD_MAX_WIDTH = 90;
+    private int handCardWidth = 56;  // default
+    private int handCardHeight = (int) Math.round(handCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
+
+    // Table sizing constraints
+    private static final int TABLE_MIN_W = 520;
+    private static final int TABLE_MIN_H = 260;
+    private static final int TABLE_MAX_W = 760;
+    private static final int TABLE_MAX_H = 420;
+
     // Animation constants
     private static final int ANIMATION_DELAY_MS = 80;
     private static final int CARD_FLY_DURATION_MS = 200;
-    private static final int PLAYER_POSITION_SPACING = 200;
     private static final double CARD_ARC_HEIGHT = 30.0;
     private static final double CARD_SCALE_FACTOR = 0.15;
 
@@ -50,13 +62,15 @@ public class GameView extends JFrame {
 
     // UI components that need updating
     private JPanel playerHandPanel;
-    private JPanel tableCardsPanel;
+    private JScrollPane handScrollPane; // new: scroll pane for the hand
+    private JPanel tableCardsPanel; // kept for compatibility if used elsewhere (not used for main table rendering)
     private JPanel opponentArea;
     private JLabel statusLabel;
     private JLabel scoreLabel;
     private JPanel logArea;
     private JButton playButton;
     private JLabel wonCardsLabel;
+    private JPanel tableOval; // actual table panel
 
     private int selectedCardIndex = -1;
     private final List<CardPanel> cardPanels = new ArrayList<>();
@@ -74,7 +88,7 @@ public class GameView extends JFrame {
     private void initUI() {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(1100, 750);
-        setResizable(false);
+        setResizable(true); // allow resize for testing; layout adapts
         setLocationRelativeTo(null);
 
         // Main panel with gradient background
@@ -99,8 +113,61 @@ public class GameView extends JFrame {
 
         setContentPane(mainPanel);
 
+        // Resize listener to recompute sizes
+        this.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                recomputeLayoutSizes();
+                refresh();
+            }
+        });
+
+        // initial sizing
+        recomputeLayoutSizes();
+
         // Initial refresh
         refresh();
+    }
+
+    private void recomputeLayoutSizes() {
+        // Compute available content area size (exclude right info panel roughly)
+        int contentW = getContentPane().getWidth();
+        int contentH = getContentPane().getHeight();
+
+        int rightPanelW = 220; // same as createInfoPanel preferred
+        int availableW = Math.max(400, contentW - rightPanelW - 60); // margin
+        int availableH = Math.max(300, contentH - 220); // top + hand area approx
+
+        // Table size attempts to occupy ~55% of available height, clamped
+        int tableW = Math.max(TABLE_MIN_W, Math.min(TABLE_MAX_W, (int) (availableW * 0.78)));
+        int tableH = Math.max(TABLE_MIN_H, Math.min(TABLE_MAX_H, (int) (availableH * 0.58)));
+
+        if (tableOval != null) {
+            tableOval.setPreferredSize(new Dimension(tableW, tableH));
+            tableOval.revalidate();
+        }
+
+        // Recompute hand card size so it fits into remaining area
+        recomputeHandCardSize();
+    }
+
+    private void recomputeHandCardSize() {
+        // figure available width inside center area (exclude info panel)
+        int contentW = getContentPane().getWidth();
+        int rightPanelW = 220;
+        int effectiveWidth = Math.max(320, contentW - rightPanelW - 80);
+
+        int handCount = Math.max(1, gameState.getHand(humanPlayer).size());
+        int maxPerCard = (effectiveWidth - (handCount + 1) * HAND_GAP) / handCount;
+
+        handCardWidth = Math.max(HAND_CARD_MIN_WIDTH, Math.min(HAND_CARD_MAX_WIDTH, maxPerCard));
+        double ratio = (double) CARD_HEIGHT / (double) CARD_WIDTH;
+        handCardHeight = (int) Math.round(handCardWidth * ratio);
+
+        if (playerHandPanel != null && handScrollPane != null) {
+            handScrollPane.setPreferredSize(new Dimension(Math.min(effectiveWidth, 1000), handCardHeight + 36));
+            playerHandPanel.revalidate();
+        }
     }
 
     // Custom panel with gradient background
@@ -157,12 +224,10 @@ public class GameView extends JFrame {
             cardsPanel.add(cardBack);
         }
 
-        // Show won cards count with small deck icon - use GameState tracking
         int wonCards = gameState.getWonCardsCount(player);
         JPanel wonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         wonPanel.setOpaque(false);
 
-        // Small deck icon for opponent
         JPanel opponentDeckIcon = createOpponentWonCardsDeckIcon(player);
         wonPanel.add(opponentDeckIcon);
 
@@ -179,9 +244,6 @@ public class GameView extends JFrame {
         return box;
     }
 
-    /**
-     * Creates a small deck icon for opponent's won cards pile.
-     */
     private JPanel createOpponentWonCardsDeckIcon(Giocatore player) {
         JPanel deckIcon = new JPanel() {
             @Override
@@ -192,27 +254,22 @@ public class GameView extends JFrame {
 
                 int wonCards = gameState.getWonCardsCount(player);
 
-                // Draw stacked cards to represent won pile (smaller for opponents)
-                int cardWidth = 18;
-                int cardHeight = 25;
+                int w = 18;
+                int h = 25;
                 int stackOffset = 1;
-                int stackSize = Math.min(wonCards / 2, 4); // Show up to 4 layers
+                int stackSize = Math.min(wonCards / 2, 4);
 
                 for (int i = 0; i <= stackSize; i++) {
                     int x = i * stackOffset;
                     int y = (stackSize - i) * stackOffset;
-
-                    // Card shadow
                     g2d.setColor(new Color(0, 0, 0, 60));
-                    g2d.fillRoundRect(x + 1, y + 1, cardWidth, cardHeight, 3, 3);
+                    g2d.fillRoundRect(x + 1, y + 1, w, h, 3, 3);
 
-                    // Card back
                     g2d.setColor(new Color(30, 60, 120));
-                    g2d.fillRoundRect(x, y, cardWidth, cardHeight, 3, 3);
+                    g2d.fillRoundRect(x, y, w, h, 3, 3);
 
-                    // Card border
                     g2d.setColor(new Color(20, 40, 80));
-                    g2d.drawRoundRect(x, y, cardWidth, cardHeight, 3, 3);
+                    g2d.drawRoundRect(x, y, w, h, 3, 3);
                 }
             }
 
@@ -225,40 +282,30 @@ public class GameView extends JFrame {
         return deckIcon;
     }
 
-    private JPanel tableOval;
-
     private JPanel createTableCenter() {
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
 
         tableOval = new TablePanel();
-        tableOval.setPreferredSize(new Dimension(700, 400)); // ingrandisci il tavolo!
-        tableOval.setMaximumSize(new Dimension(700, 400));
-        tableOval.setMinimumSize(new Dimension(700, 400));
+        // default size; recomputeLayoutSizes() may adjust
+        tableOval.setPreferredSize(new Dimension(640, 320));
         tableOval.setLayout(null);
 
-        // Mazzo visibile al centro (solo GUI, non interattivo)
-        JLabel deckLabel = createDeckImage();
-        deckLabel.setBounds(305, 150, 90, 120); // centro del tavolo (aggiusta le coordinate se serve)
-        tableOval.add(deckLabel);
-        // deckLabel.setName("MAZZO"); // puoi salvare la reference per aggiornarlo
-
-
+        // Note: Don't permanently add deckLabel here; updateTableCards will add the deck on each refresh.
         center.add(tableOval);
         return center;
     }
 
-    // metodo per creare la visualizzazione del mazzo rimasto
+
+    // Funzione attraverso la quale si crea un mazzo al centro con il numero di carte rimanenti in esso
     private JLabel createDeckImage() {
-        // Mostra il dorso delle carte e un numero di carte rimaste
-        Image cardBackImg = CardImageLoader.getScaledCardBackImage(90, 120);
+        Image cardBackImg = CardImageLoader.getScaledCardBackImage(40, 70);
         JLabel deckLabel = new JLabel(new ImageIcon(cardBackImg));
         int cardsLeft = gameState.getDeck().remaining();
         deckLabel.setToolTipText("Carte nel mazzo: " + cardsLeft);
-        // (opzionale) sovrapponi un JLabel con il numero
-        JLabel numberLabel = new JLabel("" + cardsLeft);
+        JLabel numberLabel = new JLabel("" + cardsLeft, SwingConstants.CENTER);
         numberLabel.setForeground(TEXT_GOLD);
-        numberLabel.setFont(new Font("Arial", Font.BOLD, 22));
+        numberLabel.setFont(new Font("Arial", Font.BOLD, 10));
         deckLabel.setLayout(new BorderLayout());
         deckLabel.add(numberLabel, BorderLayout.SOUTH);
         return deckLabel;
@@ -278,16 +325,16 @@ public class GameView extends JFrame {
 
             // Shadow
             g2d.setColor(new Color(0, 0, 0, 80));
-            g2d.fill(new RoundRectangle2D.Double(8, 8, getWidth() - 16, getHeight() - 16, 100, 100));
+            g2d.fill(new RoundRectangle2D.Double(6, 6, getWidth() - 12, getHeight() - 12, 90, 90));
 
             // Table fill
             g2d.setColor(new Color(35, 130, 75));
-            g2d.fill(new RoundRectangle2D.Double(4, 4, getWidth() - 8, getHeight() - 8, 100, 100));
+            g2d.fill(new RoundRectangle2D.Double(4, 4, getWidth() - 8, getHeight() - 8, 90, 90));
 
-            // Border
+            // Border (thinner)
             g2d.setColor(FELT_BORDER);
-            g2d.setStroke(new BasicStroke(8));
-            g2d.draw(new RoundRectangle2D.Double(4, 4, getWidth() - 8, getHeight() - 8, 100, 100));
+            g2d.setStroke(new BasicStroke(6));
+            g2d.draw(new RoundRectangle2D.Double(4, 4, getWidth() - 8, getHeight() - 8, 90, 90));
         }
     }
 
@@ -295,21 +342,28 @@ public class GameView extends JFrame {
         JPanel area = new JPanel();
         area.setOpaque(false);
         area.setLayout(new BoxLayout(area, BoxLayout.Y_AXIS));
-        area.setBorder(new EmptyBorder(10, 20, 20, 20));
+        area.setBorder(new EmptyBorder(6, 20, 12, 20));
 
         JLabel playerLabel = new JLabel("La tua mano - " + humanPlayer.getName());
         playerLabel.setForeground(TEXT_WHITE);
-        playerLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        playerLabel.setFont(new Font("Arial", Font.BOLD, 15));
         playerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        playerHandPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        playerHandPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, HAND_GAP, 6));
         playerHandPanel.setOpaque(false);
 
-        // Won cards indicator panel with deck icon
+        // Put handPanel in horizontal scroll pane to avoid clipping and keep proportions
+        handScrollPane = new JScrollPane(playerHandPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        handScrollPane.setOpaque(false);
+        handScrollPane.getViewport().setOpaque(false);
+        handScrollPane.setBorder(null);
+        handScrollPane.getHorizontalScrollBar().setUnitIncrement(16);
+        handScrollPane.setAlignmentX(Component.CENTER_ALIGNMENT);
+        handScrollPane.setPreferredSize(new Dimension(800, handCardHeight + 36)); // will be updated by recomputeHandCardSize()
+
+        // Won cards indicator panel
         JPanel wonCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         wonCardsPanel.setOpaque(false);
-
-        // Create a small deck icon panel
         JPanel deckIcon = createWonCardsDeckIcon();
         wonCardsPanel.add(deckIcon);
 
@@ -328,19 +382,18 @@ public class GameView extends JFrame {
         playButton.addActionListener(e -> onPlayCard());
 
         area.add(playerLabel);
-        area.add(Box.createVerticalStrut(5));
+        area.add(Box.createVerticalStrut(6));
         area.add(wonCardsPanel);
-        area.add(Box.createVerticalStrut(10));
-        area.add(playerHandPanel);
-        area.add(Box.createVerticalStrut(10));
+        area.add(Box.createVerticalStrut(8));
+        area.add(handScrollPane);
+        area.add(Box.createVerticalStrut(8));
         area.add(playButton);
 
+        // set a reasonable preferred height to avoid overlap
+        area.setPreferredSize(new Dimension(0, handCardHeight + 110));
         return area;
     }
 
-    /**
-     * Creates a small deck icon representing won cards pile.
-     */
     private JPanel createWonCardsDeckIcon() {
         JPanel deckIcon = new JPanel() {
             @Override
@@ -350,28 +403,22 @@ public class GameView extends JFrame {
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
                 int wonCards = gameState.getWonCardsCount(humanPlayer);
-
-                // Draw stacked cards to represent won pile
-                int cardWidth = 25;
-                int cardHeight = 35;
+                int w = 25;
+                int h = 35;
                 int stackOffset = 2;
-                int stackSize = Math.min(wonCards / 2, 5); // Show up to 5 layers
+                int stackSize = Math.min(wonCards / 2, 5);
 
                 for (int i = 0; i <= stackSize; i++) {
                     int x = i * stackOffset;
                     int y = (stackSize - i) * stackOffset;
-
-                    // Card shadow
                     g2d.setColor(new Color(0, 0, 0, 60));
-                    g2d.fillRoundRect(x + 2, y + 2, cardWidth, cardHeight, 5, 5);
+                    g2d.fillRoundRect(x + 2, y + 2, w, h, 5, 5);
 
-                    // Card back
                     g2d.setColor(new Color(30, 60, 120));
-                    g2d.fillRoundRect(x, y, cardWidth, cardHeight, 5, 5);
+                    g2d.fillRoundRect(x, y, w, h, 5, 5);
 
-                    // Card border
                     g2d.setColor(new Color(20, 40, 80));
-                    g2d.drawRoundRect(x, y, cardWidth, cardHeight, 5, 5);
+                    g2d.drawRoundRect(x, y, w, h, 5, 5);
                 }
             }
 
@@ -476,7 +523,7 @@ public class GameView extends JFrame {
         return panel;
     }
 
-    // Custom card panel for face-up cards using images
+    // CardPanel class supports arbitrary draw size
     private class CardPanel extends JPanel {
         private final Cards card;
         private final int index;
@@ -484,14 +531,28 @@ public class GameView extends JFrame {
         private boolean isHovered = false;
         private boolean isSelected = false;
         private Image cardImage;
+        private final int drawWidth;
+        private final int drawHeight;
 
+        /**
+         * Default constructor for hand cards: uses current handCardWidth/Height
+         */
         public CardPanel(Cards card, int index, boolean isPlayable) {
+            this(card, index, isPlayable, handCardWidth, handCardHeight);
+        }
+
+        /**
+         * Constructor with explicit draw size - useful for table cards (fixed size).
+         */
+        public CardPanel(Cards card, int index, boolean isPlayable, int drawWidth, int drawHeight) {
             this.card = card;
             this.index = index;
             this.isPlayable = isPlayable;
-            this.cardImage = CardImageLoader.getScaledCardImage(card, CARD_WIDTH, CARD_HEIGHT);
+            this.drawWidth = drawWidth;
+            this.drawHeight = drawHeight;
+            this.cardImage = CardImageLoader.getScaledCardImage(card, drawWidth, drawHeight);
             setOpaque(false);
-            setPreferredSize(new Dimension(CARD_WIDTH + 5, CARD_HEIGHT + 15));
+            setPreferredSize(new Dimension(drawWidth + 5, drawHeight + 15));
 
             if (isPlayable) {
                 addMouseListener(new MouseAdapter() {
@@ -528,59 +589,53 @@ public class GameView extends JFrame {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-            int offsetY = (isHovered || isSelected) ? 0 : 10;
+            int offsetY = (isHovered || isSelected) ? 0 : 6;
 
             // Shadow
             g2d.setColor(new Color(0, 0, 0, 80));
-            g2d.fill(new RoundRectangle2D.Double(5, 5 + offsetY, CARD_WIDTH, CARD_HEIGHT, 10, 10));
+            g2d.fill(new RoundRectangle2D.Double(4, 4 + offsetY, drawWidth, drawHeight, 10, 10));
 
             // Draw card image
             if (cardImage != null) {
-                g2d.drawImage(cardImage, 0, offsetY, CARD_WIDTH, CARD_HEIGHT, this);
+                g2d.drawImage(cardImage, 0, offsetY, drawWidth, drawHeight, this);
             } else {
-                // Fallback to drawn card if image not available
-                drawFallbackCard(g2d, offsetY);
+                drawFallbackCard(g2d, offsetY, drawWidth, drawHeight);
             }
 
             // Selection border
             if (isSelected) {
                 g2d.setColor(TEXT_GOLD);
                 g2d.setStroke(new BasicStroke(3));
-                g2d.drawRoundRect(0, offsetY, CARD_WIDTH - 1, CARD_HEIGHT - 1, 10, 10);
+                g2d.drawRoundRect(0, offsetY, drawWidth - 1, drawHeight - 1, 10, 10);
             } else if (isHovered) {
                 g2d.setColor(TEXT_GOLD);
                 g2d.setStroke(new BasicStroke(2));
-                g2d.drawRoundRect(0, offsetY, CARD_WIDTH - 1, CARD_HEIGHT - 1, 10, 10);
+                g2d.drawRoundRect(0, offsetY, drawWidth - 1, drawHeight - 1, 10, 10);
             }
         }
 
-        private void drawFallbackCard(Graphics2D g2d, int offsetY) {
-            // Card background
+        private void drawFallbackCard(Graphics2D g2d, int offsetY, int w, int h) {
             g2d.setColor(Color.WHITE);
-            g2d.fill(new RoundRectangle2D.Double(0, offsetY, CARD_WIDTH, CARD_HEIGHT, 10, 10));
+            g2d.fill(new RoundRectangle2D.Double(0, offsetY, w, h, 10, 10));
 
-            // Border
             g2d.setColor(Color.GRAY);
             g2d.setStroke(new BasicStroke(1));
-            g2d.draw(new RoundRectangle2D.Double(0, offsetY, CARD_WIDTH - 1, CARD_HEIGHT - 1, 10, 10));
+            g2d.draw(new RoundRectangle2D.Double(0, offsetY, w - 1, h - 1, 10, 10));
 
-            // Card content
             Color suitColor = getSuitColor(card.getSegno());
             g2d.setColor(suitColor);
 
-            // Rank
-            g2d.setFont(new Font("Serif", Font.BOLD, 18));
+            g2d.setFont(new Font("Serif", Font.BOLD, Math.max(12, w / 6)));
             String rank = getRankSymbol(card.getRank());
             FontMetrics fm = g2d.getFontMetrics();
             int rankWidth = fm.stringWidth(rank);
-            g2d.drawString(rank, (CARD_WIDTH - rankWidth) / 2, 30 + offsetY);
+            g2d.drawString(rank, (w - rankWidth) / 2, 30 + offsetY);
 
-            // Suit
-            g2d.setFont(new Font("Serif", Font.BOLD, 28));
+            g2d.setFont(new Font("Serif", Font.BOLD, Math.max(16, w / 3)));
             String suit = getSuitSymbol(card.getSegno());
             fm = g2d.getFontMetrics();
             int suitWidth = fm.stringWidth(suit);
-            g2d.drawString(suit, (CARD_WIDTH - suitWidth) / 2, 70 + offsetY);
+            g2d.drawString(suit, (w - suitWidth) / 2, (int) (h * 0.7) + offsetY);
         }
     }
 
@@ -616,17 +671,13 @@ public class GameView extends JFrame {
     }
 
     private void selectCard(int index) {
-        // Deselect previous
         if (selectedCardIndex >= 0 && selectedCardIndex < cardPanels.size()) {
             cardPanels.get(selectedCardIndex).setSelected(false);
         }
-
-        // Select new
         selectedCardIndex = index;
         if (index >= 0 && index < cardPanels.size()) {
             cardPanels.get(index).setSelected(true);
         }
-
         playButton.setEnabled(true);
     }
 
@@ -651,9 +702,6 @@ public class GameView extends JFrame {
         }
     }
 
-    /**
-     * Refresh the view to reflect current game state.
-     */
     public void refresh() {
         SwingUtilities.invokeLater(() -> {
             updatePlayerHand();
@@ -666,6 +714,8 @@ public class GameView extends JFrame {
     }
 
     private void updatePlayerHand() {
+        recomputeHandCardSize(); // ensure sizes up-to-date
+
         playerHandPanel.removeAll();
         cardPanels.clear();
 
@@ -683,7 +733,7 @@ public class GameView extends JFrame {
                     break;
                 }
             }
-            CardPanel cardPanel = new CardPanel(card, i, isMyTurn && isLegal);
+            CardPanel cardPanel = new CardPanel(card, i, isMyTurn && isLegal, handCardWidth, handCardHeight);
             cardPanels.add(cardPanel);
             playerHandPanel.add(cardPanel);
         }
@@ -695,85 +745,98 @@ public class GameView extends JFrame {
         playerHandPanel.repaint();
     }
 
-    private static final int[][] POS2 = {
-            {305, 320}, // basso
-            {305, 30},  // alto
-    };
-    private static final int[][] POS3 = {
-            {305, 320}, // basso
-            {55, 175},  // sinistra
-            {305, 30},  // alto
-    };
-    private static final int[][] POS4 = {
-            {305, 320}, // basso
-            {55, 175},  // sinistra
-            {305, 30},  // alto
-            {555, 175}, // destra
-    };
+    /**
+     * Compute slot positions relative to current tableOval size.
+     */
+    private int[][] computeSlotPositions() {
+        int w = tableOval.getWidth() > 0 ? tableOval.getWidth() : tableOval.getPreferredSize().width;
+        int h = tableOval.getHeight() > 0 ? tableOval.getHeight() : tableOval.getPreferredSize().height;
 
-    // ...import e variabili come nel tuo file...
+        int centerX = (w - CARD_WIDTH) / 2;
+        int centerY = (h - CARD_HEIGHT) / 2;
+
+        int[][] pos2 = {
+                {centerX, h - CARD_HEIGHT - 12}, // bottom
+                {centerX, 12}                    // top
+        };
+        int[][] pos3 = {
+                {centerX, h - CARD_HEIGHT - 12},     // bottom
+                {12, centerY - CARD_HEIGHT / 2},     // left
+                {centerX, 12}                        // top
+        };
+        int[][] pos4 = {
+                {centerX, h - CARD_HEIGHT - 12},     // bottom
+                {12, centerY - CARD_HEIGHT / 2},     // left
+                {centerX, 12},                       // top
+                {w - CARD_WIDTH - 12, centerY - CARD_HEIGHT / 2} // right
+        };
+
+        int players = gameState.getPlayers().size();
+        return players == 2 ? pos2 : (players == 3 ? pos3 : pos4);
+    }
 
     private void updateTableCards() {
         tableOval.removeAll();
 
+        // add deck centered on table
+        JLabel deck = createDeckImage();
+        int dw = deck.getPreferredSize().width;
+        int dh = deck.getPreferredSize().height;
+        int tx = (tableOval.getWidth() - dw) / 2;
+        int ty = (tableOval.getHeight() - dh) / 2;
+        deck.setBounds(Math.max(0, tx), Math.max(0, ty), dw, dh);
+        tableOval.add(deck);
+
         int nPlayers = gameState.getPlayers().size();
-        int[][] positions = (nPlayers == 2) ? POS2 : (nPlayers == 3) ? POS3 : POS4;
+        int[][] positions = computeSlotPositions();
         List<Giocatore> players = gameState.getPlayers();
 
-        // 1. Mazzo sempre visibile
-        tableOval.add(createDeckImage());
-
-        // 2. Slot per carte giocate: SOLO bordo trasparente GIALLO se è il turno di quel player
+        // slot highlights
         for (int i = 0; i < nPlayers; i++) {
             int x = positions[i][0];
             int y = positions[i][1];
-            int finalI = i; // for lambda
-
+            int finalI = i;
             JPanel slot = new JPanel() {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2d = (Graphics2D) g;
                     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    // SOLO bordo trasparente, nessun riempimento
                     if (players.get(finalI) == gameState.getCurrentPlayer()) {
-                        g2d.setColor(new Color(255,215,0,190)); // giallo trasparente
+                        g2d.setColor(new Color(255, 215, 0, 160));
                         g2d.setStroke(new BasicStroke(3));
-                        g2d.drawRoundRect(5, 5, CARD_WIDTH, CARD_HEIGHT, 14, 14);
+                        g2d.drawRoundRect(4, 4, CARD_WIDTH, CARD_HEIGHT, 12, 12);
                     }
                 }
-                @Override
-                public Dimension getPreferredSize() { return new Dimension(CARD_WIDTH+10, CARD_HEIGHT+10); }
             };
             slot.setOpaque(false);
-            slot.setBounds(x, y, CARD_WIDTH+10, CARD_HEIGHT+10);
-
+            slot.setBounds(Math.max(0, x - 6), Math.max(0, y - 6), CARD_WIDTH + 12, CARD_HEIGHT + 12);
             tableOval.add(slot);
         }
 
-        // 3. Carte giocate nei loro slot
+        // actual played cards
         List<Giocatore> trickPlayers = gameState.getTrickPlayers();
         List<Cards> trickCards = gameState.getTrickCards();
         for (int i = 0; i < trickPlayers.size(); i++) {
             Giocatore player = trickPlayers.get(i);
             int idx = players.indexOf(player);
             if (idx < 0 || idx >= positions.length) continue;
-            int x = positions[idx][0] + 5;
-            int y = positions[idx][1] + 5;
-            CardPanel cardPanel = new CardPanel(trickCards.get(i), -1, false);
+            int x = positions[idx][0];
+            int y = positions[idx][1];
+            CardPanel cardPanel = new CardPanel(trickCards.get(i), -1, false, CARD_WIDTH, CARD_HEIGHT);
             cardPanel.setBounds(x, y, CARD_WIDTH, CARD_HEIGHT);
-
             tableOval.add(cardPanel);
         }
 
-        // 4. Etichette nome giocatore sopra la loro slot (più in alto rispetto alla carta)
+        // player labels
         for (int i = 0; i < nPlayers; i++) {
             Giocatore player = players.get(i);
             JLabel name = new JLabel(player.getName());
             name.setForeground(TEXT_WHITE);
-            name.setFont(new Font("Arial", Font.BOLD, 14));
-            // Più in alto -30 pixel rispetto alla carta
-            name.setBounds(positions[i][0], positions[i][1]-26, 120, 16); // aggiusta se vuoi
+            name.setFont(new Font("Arial", Font.BOLD, 13));
+            int nx = positions[i][0] - 10;
+            int ny = Math.max(0, positions[i][1] - 20);
+            name.setBounds(Math.max(2, nx), Math.max(0, ny), 140, 18);
             tableOval.add(name);
         }
 
@@ -783,14 +846,12 @@ public class GameView extends JFrame {
 
     private void updateOpponentArea() {
         opponentArea.removeAll();
-
         for (Giocatore player : gameState.getPlayers()) {
             if (player != humanPlayer) {
                 JPanel opponentBox = createOpponentBox(player);
                 opponentArea.add(opponentBox);
             }
         }
-
         opponentArea.revalidate();
         opponentArea.repaint();
     }
@@ -811,9 +872,6 @@ public class GameView extends JFrame {
         }
     }
 
-    /**
-     * Add a log message to the info panel.
-     */
     public void log(String message) {
         SwingUtilities.invokeLater(() -> {
             JLabel logEntry = new JLabel("• " + message);
@@ -823,8 +881,7 @@ public class GameView extends JFrame {
 
             logArea.add(logEntry, 0);
 
-            // Keep only last 15 messages
-            while (logArea.getComponentCount() > 15) {
+            while (logArea.getComponentCount() > 50) {
                 logArea.remove(logArea.getComponentCount() - 1);
             }
 
@@ -833,17 +890,10 @@ public class GameView extends JFrame {
         });
     }
 
-    /**
-     * Show a card being played on the table.
-     */
     public void showCardPlayed(Giocatore player, Cards card) {
-        // ora tutta la logica di show è un refresh globale
         SwingUtilities.invokeLater(this::updateTableCards);
     }
 
-    /**
-     * Clear the table when a trick is completed.
-     */
     public void clearTable() {
         SwingUtilities.invokeLater(() -> {
             tableOval.removeAll();
@@ -852,59 +902,42 @@ public class GameView extends JFrame {
         });
     }
 
-    /**
-     * Called when a trick is won to update the won cards count and show animation.
-     * @param winner The player who won the trick
-     * @param cardsWon Number of cards won in this trick
-     */
     public void showTrickWon(Giocatore winner, int cardsWon) {
         SwingUtilities.invokeLater(() -> {
-            // Update human player's won cards label from GameState
             if (winner == humanPlayer) {
                 wonCardsLabel.setText("Carte prese: " + gameState.getWonCardsCount(humanPlayer));
             }
-
-            // Show winner indicator on the table
             showWinnerIndicator(winner);
-
-            // Animate cards moving to winner's pile
             animateCardsToWinner(winner);
         });
     }
 
-    /**
-     * Show a visual indicator of who won the trick.
-     */
     private void showWinnerIndicator(Giocatore winner) {
-        // Add a "Winner" label to the table panel
         JLabel winnerLabel = new JLabel("🏆 " + winner.getName() + " prende!");
         winnerLabel.setForeground(TEXT_GOLD);
         winnerLabel.setFont(new Font("Serif", Font.BOLD, 16));
-        winnerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        winnerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Add to parent of tableCardsPanel
-        JPanel tableOval = (JPanel) this.tableOval.getParent();
-        if (tableOval != null) {
-            tableOval.add(winnerLabel);
+        int labelW = Math.min(320, tableOval.getWidth() - 10);
+        int labelH = 26;
+        int x = (tableOval.getWidth() - labelW) / 2;
+        int y = 6;
+        winnerLabel.setBounds(Math.max(4, x), Math.max(2, y), labelW, labelH);
+
+        tableOval.add(winnerLabel);
+        tableOval.revalidate();
+        tableOval.repaint();
+
+        Timer removeTimer = new Timer(800, e -> {
+            tableOval.remove(winnerLabel);
             tableOval.revalidate();
             tableOval.repaint();
-
-            // Remove after animation
-            Timer removeTimer = new Timer(800, e -> {
-                tableOval.remove(winnerLabel);
-                tableOval.revalidate();
-                tableOval.repaint();
-            });
-            removeTimer.setRepeats(false);
-            removeTimer.start();
-        }
+        });
+        removeTimer.setRepeats(false);
+        removeTimer.start();
     }
 
-    /**
-     * Animate cards moving from table to winner's pile.
-     */
     private void animateCardsToWinner(Giocatore winner) {
-        // Simple fade-out animation for the table cards
         Timer fadeTimer = new Timer(50, null);
         final float[] alpha = {1.0f};
 
@@ -915,23 +948,16 @@ public class GameView extends JFrame {
                 clearTable();
                 refresh();
             } else {
-                // Repaint with reduced alpha
                 tableOval.repaint();
             }
         });
         fadeTimer.start();
     }
 
-    /**
-     * Animate drawing a card (visual effect when dealing).
-     */
     public void animateCardDraw() {
         SwingUtilities.invokeLater(() -> {
-            // Flash effect on player hand
             Timer flashTimer = new Timer(100, null);
             final int[] flashCount = {0};
-            final Color originalBg = playerHandPanel.getBackground();
-
             flashTimer.addActionListener(e -> {
                 flashCount[0]++;
                 if (flashCount[0] > 4) {
@@ -950,27 +976,16 @@ public class GameView extends JFrame {
         });
     }
 
-    /**
-     * Update the won cards count display.
-     */
     private void updateWonCardsDisplay() {
         int humanWonCards = gameState.getWonCardsCount(humanPlayer);
         wonCardsLabel.setText("Carte prese: " + humanWonCards);
     }
 
-    /**
-     * Show a modern card dealing animation at the start of the game.
-     * Cards fly from a central deck position to each player's position.
-     * @param players List of players in the game
-     * @param onComplete Callback to run when animation completes
-     */
     public void showDealingAnimation(List<Giocatore> players, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
-            // Create overlay panel for the animation
             JPanel animationOverlay = new JPanel() {
                 @Override
                 protected void paintComponent(Graphics g) {
-                    // Semi-transparent background
                     Graphics2D g2d = (Graphics2D) g;
                     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2d.setColor(new Color(0, 0, 0, 150));
@@ -981,27 +996,29 @@ public class GameView extends JFrame {
             animationOverlay.setOpaque(false);
             animationOverlay.setBounds(0, 0, getWidth(), getHeight());
 
-            // Get glass pane and add overlay
             JPanel glassPane = (JPanel) getGlassPane();
             glassPane.setLayout(null);
             glassPane.add(animationOverlay);
             glassPane.setVisible(true);
 
-            // Center position (deck position)
             int centerX = getWidth() / 2 - CARD_WIDTH / 2;
             int centerY = getHeight() / 2 - CARD_HEIGHT / 2;
 
-            // Calculate target positions for each player
             int numPlayers = players.size();
-            int[][] posBase = (numPlayers == 2) ? POS2 : (numPlayers == 3) ? POS3 : POS4;
-            int [][] targetPositions = new int[numPlayers][2];
+            int[][] posBase = computeSlotPositions();
+            int[][] targetPositions = new int[numPlayers][2];
+
+            // convert table-relative positions to frame coordinates:
+            Point tableOnScreen = tableOval.getLocationOnScreen();
+            Point frameOnScreen = this.getLocationOnScreen();
+            int offsetX = tableOnScreen.x - frameOnScreen.x;
+            int offsetY = tableOnScreen.y - frameOnScreen.y;
 
             for (int i = 0; i < numPlayers; i++) {
-                targetPositions[i][0] = posBase[i][0];
-                targetPositions[i][1] = posBase[i][1];
+                targetPositions[i][0] = posBase[i][0] + offsetX;
+                targetPositions[i][1] = posBase[i][1] + offsetY;
             }
 
-            // Create "Distribuzione carte..." label
             JLabel dealingLabel = new JLabel("Distribuzione carte...");
             dealingLabel.setFont(new Font("Georgia", Font.BOLD, 28));
             dealingLabel.setForeground(TEXT_GOLD);
@@ -1011,10 +1028,7 @@ public class GameView extends JFrame {
             dealingLabel.setBounds((getWidth() - labelWidth) / 2, centerY - 80, labelWidth, labelHeight);
             animationOverlay.add(dealingLabel);
 
-            // Create deck visual in center
             Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
-
-            // Draw deck (stack of cards)
             for (int i = 0; i < 5; i++) {
                 JLabel deckCard = new JLabel(new ImageIcon(cardBackImg));
                 deckCard.setBounds(centerX + i * 2, centerY - i * 2, CARD_WIDTH, CARD_HEIGHT);
@@ -1023,9 +1037,7 @@ public class GameView extends JFrame {
 
             animationOverlay.repaint();
 
-            // Animation parameters
-            int cardsPerPlayer = 10; // Standard Tressette hand size
-
+            int cardsPerPlayer = 10;
             Timer dealTimer = new Timer(ANIMATION_DELAY_MS, null);
             final int[] currentCard = {0};
             final int totalCards = numPlayers * cardsPerPlayer;
@@ -1033,45 +1045,33 @@ public class GameView extends JFrame {
             dealTimer.addActionListener(e -> {
                 if (currentCard[0] >= totalCards) {
                     dealTimer.stop();
-
-                    // Show "Pronto!" message
                     dealingLabel.setText("Pronto!");
-
-                    // Fade out and remove overlay after a short delay
                     Timer fadeOutTimer = new Timer(800, evt -> {
                         glassPane.remove(animationOverlay);
                         glassPane.setVisible(false);
                         glassPane.repaint();
-
-                        if (onComplete != null) {
-                            onComplete.run();
-                        }
+                        if (onComplete != null) onComplete.run();
                     });
                     fadeOutTimer.setRepeats(false);
                     fadeOutTimer.start();
                     return;
                 }
 
-                // Determine which player gets this card
                 int playerIndex = currentCard[0] % numPlayers;
                 int targetX = targetPositions[playerIndex][0];
                 int targetY = targetPositions[playerIndex][1];
 
-                // Calculate offset for multiple cards (fan effect)
                 int cardNum = currentCard[0] / numPlayers;
-                int offsetX = cardNum * 15; // Horizontal offset for card fanning
-                targetX += offsetX;
+                int offset = cardNum * 12;
+                targetX += offset;
 
-                // Create flying card
                 JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
                 flyingCard.setBounds(centerX, centerY, CARD_WIDTH, CARD_HEIGHT);
                 animationOverlay.add(flyingCard);
                 animationOverlay.setComponentZOrder(flyingCard, 0);
                 animationOverlay.repaint();
 
-                // Animate card flying to target position
                 animateCardFlight(flyingCard, centerX, centerY, targetX, targetY, CARD_FLY_DURATION_MS);
-
                 currentCard[0]++;
             });
 
@@ -1079,9 +1079,6 @@ public class GameView extends JFrame {
         });
     }
 
-    /**
-     * Animate a card flying from one position to another with easing.
-     */
     private void animateCardFlight(JLabel card, int startX, int startY, int endX, int endY, int durationMs) {
         final int steps = 15;
         final int delay = durationMs / steps;
@@ -1091,23 +1088,15 @@ public class GameView extends JFrame {
 
         flyTimer.addActionListener(e -> {
             step[0]++;
-
-            // Use ease-out cubic for smooth deceleration
             double t = (double) step[0] / steps;
             double easedT = 1 - Math.pow(1 - t, 3);
-
             int currentX = (int) (startX + (endX - startX) * easedT);
             int currentY = (int) (startY + (endY - startY) * easedT);
-
-            // Add slight arc to the motion
             double arc = Math.sin(t * Math.PI) * CARD_ARC_HEIGHT;
             currentY -= (int) arc;
-
-            // Scale down slightly as card flies
             double scale = 1.0 - (t * CARD_SCALE_FACTOR);
             int scaledWidth = (int) (CARD_WIDTH * scale);
             int scaledHeight = (int) (CARD_HEIGHT * scale);
-
             card.setBounds(currentX, currentY, scaledWidth, scaledHeight);
             card.getParent().repaint();
 
@@ -1119,9 +1108,6 @@ public class GameView extends JFrame {
         flyTimer.start();
     }
 
-    /**
-     * Show game over message.
-     */
     public void showGameOver(String result) {
         SwingUtilities.invokeLater(() -> {
             statusLabel.setText("<html>PARTITA TERMINATA<br>" + result + "</html>");

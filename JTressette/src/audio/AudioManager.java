@@ -82,7 +82,7 @@ public class AudioManager {
      * @param volume Volume level from 0.0 (silent) to 1.0 (full volume)
      */
     public void setVolume(float volume) {
-        currentVolume = Math.max(0.0f, Math.min(1.0f, volume));
+        currentVolume = Math.max(0.0f, Math.min(0.4f, volume));
         if (clip != null && clip.isOpen()) {
             try {
                 FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
@@ -197,7 +197,7 @@ public class AudioManager {
                 loop();
                 fadeIn(fadeDurationMs, 1.0f);
             } else {
-                setVolume(1.0f);
+                setVolume(0.5f);
                 start();
             }
         });
