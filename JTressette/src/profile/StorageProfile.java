@@ -81,7 +81,7 @@ public class StorageProfile {
             try {
                 profile.setCreatedAt(Long.parseLong(createdAtStr));
             } catch (NumberFormatException e) {
-                // Mantieni il valore di default
+                LOG.log(Level.WARNING, "Valore non valido per createdAt: " + createdAtStr + ", uso valore default");
             }
         }
 
@@ -89,6 +89,7 @@ public class StorageProfile {
         try {
             profile.setTotalGames(Integer.parseInt(totalGamesStr));
         } catch (NumberFormatException e) {
+            LOG.log(Level.WARNING, "Valore non valido per totalGames: " + totalGamesStr + ", uso 0");
             profile.setTotalGames(0);
         }
 
@@ -96,6 +97,7 @@ public class StorageProfile {
         try {
             profile.setTotalWins(Integer.parseInt(totalWinsStr));
         } catch (NumberFormatException e) {
+            LOG.log(Level.WARNING, "Valore non valido per totalWins: " + totalWinsStr + ", uso 0");
             profile.setTotalWins(0);
         }
 
@@ -117,6 +119,7 @@ public class StorageProfile {
         try {
             count = Integer.parseInt(countStr);
         } catch (NumberFormatException e) {
+            LOG.log(Level.WARNING, "Valore non valido per gamesCount: " + countStr + ", uso 0");
             count = 0;
         }
 
@@ -171,6 +174,7 @@ public class StorageProfile {
         try {
             Files.move(tmp, profileFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (AtomicMoveNotSupportedException ex) {
+            LOG.log(Level.FINE, "Atomic move non supportato, uso move standard");
             Files.move(tmp, profileFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
