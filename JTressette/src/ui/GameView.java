@@ -913,10 +913,7 @@ public class GameView extends JFrame {
     private void updateScores() {
         int score = gameState.getScore(humanPlayer);
         scoreLabel.setText("Punteggio: " + score);
-        
-        // Update visibility based on settings
-        impostazioni.MenuImpostazioni settings = impostazioni.MenuImpostazioni.getInstance();
-        scoreLabel.setVisible(settings.isShowScore());
+        // Note: Visibility is handled by updateUIVisibility() called from refresh()
     }
 
     private void updateStatus() {
