@@ -122,7 +122,7 @@ public class JTressette {
         timer.start();
     }
 
-    static void main() {
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(JTressette::new);
     }
 }
