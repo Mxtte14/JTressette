@@ -71,7 +71,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
         // Musica background - apply volume from settings
         MenuImpostazioni settings = MenuImpostazioni.getInstance();
-        float volume = settings.getVolume() / 100.0f * 0.4f;
+        float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
         audioManager.setFile(AudioManager.BACKGROUND_GAME);
         audioManager.fadeIn(800, volume);
         audioManager.loop();
@@ -251,7 +251,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     @Override
     public void onSettingsChanged(MenuImpostazioni settings) {
         // Apply volume changes to audio
-        float volume = settings.getVolume() / 100.0f * 0.4f;
+        float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
         audioManager.setVolume(volume);
         
         // Refresh view to apply UI changes (score, messages visibility)

@@ -159,8 +159,8 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
     }
     
     private void updateAudioVolume(MenuImpostazioni settings) {
-        // Convert 0-100 volume to 0.0-0.4 range (AudioManager's max)
-        float volume = settings.getVolume() / 100.0f * 0.4f;
+        // Convert 0-100 volume to 0.0-MAX_VOLUME_SCALE range (AudioManager's max safe volume)
+        float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
         audioManager.setVolume(volume);
     }
     

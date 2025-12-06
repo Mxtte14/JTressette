@@ -26,6 +26,9 @@ public class AudioManager {
     public static final int MENU_SELECTION_CLICK = 1;
     public static final int CARD_PLAYED = 2;
     public static final int BACKGROUND_GAME = 3;
+    
+    // Volume scaling constant - AudioManager max safe volume
+    public static final float MAX_VOLUME_SCALE = 0.4f;
 
     private Clip clip;
     private final URL[] soundURL = new URL[30];

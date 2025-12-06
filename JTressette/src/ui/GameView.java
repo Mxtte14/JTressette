@@ -71,6 +71,7 @@ public class GameView extends JFrame {
     private JButton playButton;
     private JLabel wonCardsLabel;
     private JPanel tableOval; // actual table panel
+    private JPanel infoPanel; // Info panel reference for visibility control
 
     private int selectedCardIndex = -1;
     private final List<CardPanel> cardPanels = new ArrayList<>();
@@ -83,20 +84,34 @@ public class GameView extends JFrame {
         // Preload card images
         CardImageLoader.preloadImages();
         initUI();
-        applyFullscreenSetting();
+        applyFullscreenSetting(impostazioni.MenuImpostazioni.getInstance());
     }
     
-    private void applyFullscreenSetting() {
-        impostazioni.MenuImpostazioni settings = impostazioni.MenuImpostazioni.getInstance();
-        if (settings.isFullscreen()) {
+    /**
+     * Apply fullscreen setting to this window.
+     * Handles both enabling and disabling fullscreen mode.
+     */
+    private void applyFullscreenSetting(impostazioni.MenuImpostazioni settings) {
+        SwingUtilities.invokeLater(() -> {
             java.awt.GraphicsDevice device = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-            if (device.isFullScreenSupported()) {
+            boolean isCurrentlyFullscreen = device.getFullScreenWindow() == this;
+            
+            if (settings.isFullscreen() && !isCurrentlyFullscreen) {
+                if (device.isFullScreenSupported()) {
+                    dispose();
+                    setUndecorated(true);
+                    device.setFullScreenWindow(this);
+                    setVisible(true);
+                }
+            } else if (!settings.isFullscreen() && isCurrentlyFullscreen) {
+                device.setFullScreenWindow(null);
                 dispose();
-                setUndecorated(true);
-                device.setFullScreenWindow(this);
+                setUndecorated(false);
+                setSize(1100, 750);
+                setLocationRelativeTo(null);
                 setVisible(true);
             }
-        }
+        });
     }
 
     private void initUI() {
@@ -449,7 +464,7 @@ public class GameView extends JFrame {
         // Check if messages should be shown based on settings
         impostazioni.MenuImpostazioni settings = impostazioni.MenuImpostazioni.getInstance();
         
-        JPanel panel = new JPanel() {
+        infoPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -459,13 +474,13 @@ public class GameView extends JFrame {
                 g2d.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 20, 20));
             }
         };
-        panel.setOpaque(false);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(new EmptyBorder(15, 15, 15, 15));
-        panel.setPreferredSize(new Dimension(220, 0));
+        infoPanel.setOpaque(false);
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        infoPanel.setPreferredSize(new Dimension(220, 0));
         
         // Hide panel if messages are disabled
-        panel.setVisible(settings.isShowMessages());
+        infoPanel.setVisible(settings.isShowMessages());
 
         JLabel titleLabel = new JLabel("Info Partita");
         titleLabel.setForeground(TEXT_GOLD);
@@ -506,19 +521,19 @@ public class GameView extends JFrame {
         backButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         backButton.addActionListener(e -> controller.onExitGame());
 
-        panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(statusLabel);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(scoreLabel);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(logTitle);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(logScroll);
-        panel.add(Box.createVerticalGlue());
-        panel.add(backButton);
+        infoPanel.add(titleLabel);
+        infoPanel.add(Box.createVerticalStrut(15));
+        infoPanel.add(statusLabel);
+        infoPanel.add(Box.createVerticalStrut(10));
+        infoPanel.add(scoreLabel);
+        infoPanel.add(Box.createVerticalStrut(15));
+        infoPanel.add(logTitle);
+        infoPanel.add(Box.createVerticalStrut(5));
+        infoPanel.add(logScroll);
+        infoPanel.add(Box.createVerticalGlue());
+        infoPanel.add(backButton);
 
-        return panel;
+        return infoPanel;
     }
 
     private JPanel createCardBack() {
@@ -743,54 +758,13 @@ public class GameView extends JFrame {
             scoreLabel.setVisible(settings.isShowScore());
         }
         
-        // Update messages panel visibility
-        Component[] components = getContentPane().getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JPanel) {
-                Component[] subComps = ((JPanel) comp).getComponents();
-                for (Component subComp : subComps) {
-                    // Find the info panel (the right panel with messages)
-                    if (subComp instanceof JPanel && ((JPanel) subComp).getComponentCount() > 0) {
-                        Component firstChild = ((JPanel) subComp).getComponent(0);
-                        if (firstChild instanceof JLabel) {
-                            JLabel label = (JLabel) firstChild;
-                            if ("Info Partita".equals(label.getText())) {
-                                subComp.setVisible(settings.isShowMessages());
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+        // Update messages panel visibility using stored reference
+        if (infoPanel != null) {
+            infoPanel.setVisible(settings.isShowMessages());
         }
         
         // Apply fullscreen changes if toggled during gameplay
-        applyFullscreenChanges(settings);
-    }
-    
-    private void applyFullscreenChanges(impostazioni.MenuImpostazioni settings) {
-        java.awt.GraphicsDevice device = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        boolean isCurrentlyFullscreen = device.getFullScreenWindow() == this;
-        
-        if (settings.isFullscreen() && !isCurrentlyFullscreen) {
-            if (device.isFullScreenSupported()) {
-                SwingUtilities.invokeLater(() -> {
-                    dispose();
-                    setUndecorated(true);
-                    device.setFullScreenWindow(this);
-                    setVisible(true);
-                });
-            }
-        } else if (!settings.isFullscreen() && isCurrentlyFullscreen) {
-            SwingUtilities.invokeLater(() -> {
-                device.setFullScreenWindow(null);
-                dispose();
-                setUndecorated(false);
-                setSize(1100, 750);
-                setLocationRelativeTo(null);
-                setVisible(true);
-            });
-        }
+        applyFullscreenSetting(settings);
     }
 
     private void updatePlayerHand() {
