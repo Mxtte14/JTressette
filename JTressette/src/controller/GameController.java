@@ -2,6 +2,7 @@ package controller;
 
 import audio.AudioManager;
 import game.*;
+import impostazioni.MenuImpostazioni;
 import profile.GamesRecord;
 import ui.GameView;
 
@@ -20,7 +21,7 @@ import java.util.concurrent.Executors;
  * Gestisce tutta la logica della partita (distribuzione, trick, pescata post trick, vincitore, UI update...).
  * NON dipende da Engine.
  */
-public class GameController {
+public class GameController implements MenuImpostazioni.SettingsListener {
 
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
@@ -36,6 +37,9 @@ public class GameController {
         this.gameState = new GameState(players); // Direttamente!
         this.gameExecutor = Executors.newSingleThreadExecutor();
         this.audioManager = new AudioManager();
+        
+        // Register as settings listener
+        MenuImpostazioni.getInstance().addListener(this);
 
         // Trova il player umano
         GiocatoreUmano human = null;
@@ -65,9 +69,11 @@ public class GameController {
     public void startGame() {
         gameRunning = true;
 
-        // Musica background
+        // Musica background - apply volume from settings
+        MenuImpostazioni settings = MenuImpostazioni.getInstance();
+        float volume = settings.getVolume() / 100.0f * 0.4f;
         audioManager.setFile(AudioManager.BACKGROUND_GAME);
-        audioManager.fadeIn(800, 1.0f);
+        audioManager.fadeIn(800, volume);
         audioManager.loop();
 
         // Animazione distribuzione, poi si distribuiscono 10 carte a giocatore
@@ -108,7 +114,10 @@ public class GameController {
                 if (idx >= 0) {
                     Cards played = gameState.playCard(current, idx);
                     if (played != null) {
-                        audioManager.playCardSound();
+                        // Play card sound only if effects are enabled
+                        if (MenuImpostazioni.getInstance().isEffects()) {
+                            audioManager.playCardSound();
+                        }
 
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
@@ -200,6 +209,9 @@ public class GameController {
     public void onExitGame() {
         gameRunning = false;
         gameExecutor.shutdownNow();
+        
+        // Unregister settings listener
+        MenuImpostazioni.getInstance().removeListener(this);
 
         // Fade out musica
         audioManager.fadeOut(500, () -> {
@@ -234,5 +246,17 @@ public class GameController {
 
     public AudioManager getAudioManager() {
         return audioManager;
+    }
+    
+    @Override
+    public void onSettingsChanged(MenuImpostazioni settings) {
+        // Apply volume changes to audio
+        float volume = settings.getVolume() / 100.0f * 0.4f;
+        audioManager.setVolume(volume);
+        
+        // Refresh view to apply UI changes (score, messages visibility)
+        if (view != null) {
+            SwingUtilities.invokeLater(() -> view.refresh());
+        }
     }
 }

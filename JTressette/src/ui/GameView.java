@@ -432,6 +432,9 @@ public class GameView extends JFrame {
     }
 
     private JPanel createInfoPanel() {
+        // Check if messages should be shown based on settings
+        impostazioni.MenuImpostazioni settings = impostazioni.MenuImpostazioni.getInstance();
+        
         JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -446,6 +449,9 @@ public class GameView extends JFrame {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(new EmptyBorder(15, 15, 15, 15));
         panel.setPreferredSize(new Dimension(220, 0));
+        
+        // Hide panel if messages are disabled
+        panel.setVisible(settings.isShowMessages());
 
         JLabel titleLabel = new JLabel("Info Partita");
         titleLabel.setForeground(TEXT_GOLD);
@@ -710,7 +716,39 @@ public class GameView extends JFrame {
             updateScores();
             updateStatus();
             updateWonCardsDisplay();
+            updateUIVisibility();
         });
+    }
+    
+    private void updateUIVisibility() {
+        // Update UI element visibility based on settings
+        impostazioni.MenuImpostazioni settings = impostazioni.MenuImpostazioni.getInstance();
+        
+        // Update score visibility
+        if (scoreLabel != null) {
+            scoreLabel.setVisible(settings.isShowScore());
+        }
+        
+        // Update messages panel visibility
+        Component[] components = getContentPane().getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                Component[] subComps = ((JPanel) comp).getComponents();
+                for (Component subComp : subComps) {
+                    // Find the info panel (the right panel with messages)
+                    if (subComp instanceof JPanel && ((JPanel) subComp).getComponentCount() > 0) {
+                        Component firstChild = ((JPanel) subComp).getComponent(0);
+                        if (firstChild instanceof JLabel) {
+                            JLabel label = (JLabel) firstChild;
+                            if ("Info Partita".equals(label.getText())) {
+                                subComp.setVisible(settings.isShowMessages());
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void updatePlayerHand() {
@@ -859,6 +897,10 @@ public class GameView extends JFrame {
     private void updateScores() {
         int score = gameState.getScore(humanPlayer);
         scoreLabel.setText("Punteggio: " + score);
+        
+        // Update visibility based on settings
+        impostazioni.MenuImpostazioni settings = impostazioni.MenuImpostazioni.getInstance();
+        scoreLabel.setVisible(settings.isShowScore());
     }
 
     private void updateStatus() {
