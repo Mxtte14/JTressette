@@ -98,6 +98,10 @@ public class MenuFrame extends JFrame {
         });
     }
 
+    public JPanel getCardsPanel() {
+        return cards;
+    }
+
     public void showSettings() {
         // Implementa la logica per mostrare le impostazioni se necessario
         audioManager.stop();

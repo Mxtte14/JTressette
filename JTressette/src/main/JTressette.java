@@ -9,35 +9,41 @@ import menu.MenuFrame;
 import profile.GamesRecord;
 import ui.GameSetup;
 import controller.GameController;
+import impostazioni.MenuImpostazioni;
+import impostazioni.ViewImpostazioni;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.logging.Logger;
+import java.awt.CardLayout;
 
-/**
- * Punto d'ingresso: all'avvio, quando si clicca "Gioca" nel menu viene mostrato il GameSetupDialog.
- * Dopo l'impostazione si avvia GameEngine in background; per la sessione umana viene mostrato GamePlayDialog.
- */
 public class JTressette {
 
     private static final Logger LOG = Logger.getLogger(JTressette.class.getName());
     private final MenuFrame frame;
     private final ProfileController profileController;
+    private final MenuImpostazioni impostazioni;
 
     public JTressette() {
-        // inizializza storage e controller (Model + Controller)
+        // Inizializza storage e controller (Model + Controller)
         StorageProfile storage = new StorageProfile();
         UserProfile userProfile = storage.loadOrCreateDefault();
         profileController = new ProfileControllerImpl(storage, userProfile);
 
-        // crea la UI (View) passando il controller
+        // Inizializza Settings (carica da file se esiste, altrimenti default)
+        impostazioni = new MenuImpostazioni();
+
+        // Crea la UI (view) passando il controller
         frame = new MenuFrame(profileController);
+
+        // Aggiungi la schermata impostazioni alle "cards" del menu
+        addSettingsPanelCard();
 
         setupMouseListener();
         setupRepaintTimer();
     }
 
-    // Gestione click del mouse sul menu (mantengo la logica di navigazione qui)
+    // Gestione click mouse menu principale
     private void setupMouseListener() {
         frame.panel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -50,15 +56,16 @@ public class JTressette {
                     }
                     case 2 -> {
                         LOG.info("Mostra regole...");
-                        frame.showRules(); // NAVIGA alla schermata regole
+                        frame.showRules(); // NAVIGA schermata regole
                     }
                     case 3 -> {
                         LOG.info("Accesso al profilo...");
-                        frame.showProfile(); // NAVIGA alla schermata profilo
+                        frame.showProfile(); // NAVIGA schermata profilo
                     }
                     case 4 -> {
                         frame.playMenuClick();
                         LOG.info("Impostazioni...");
+                        showSettings(); // <-- Mostra schermata impostazioni!
                     }
                     case 5 -> {
                         frame.playMenuClick();
@@ -70,27 +77,34 @@ public class JTressette {
         });
     }
 
+    private void addSettingsPanelCard() {
+        JPanel cards = frame.getCardsPanel(); // Usa il vero pannello card
+        ViewImpostazioni panelImpostazioni = new ViewImpostazioni(impostazioni, frame::showMenu);
+        cards.add(panelImpostazioni, "IMPOSTAZIONI");
+    }
+
+
+    private void showSettings() {
+        JPanel cards = frame.getCardsPanel();
+        CardLayout cl = (CardLayout) cards.getLayout();
+        cl.show(cards, "IMPOSTAZIONI");
+    }
+
     private void onStartGame() {
-        // mostra dialog di setup con il profilo utente per ottenere automaticamente il nome
         UserProfile profile = profileController.getProfile();
         GameSetup setup = new GameSetup(frame, profile);
         List<Giocatore> players = setup.showDialogAndGetPlayers();
         if (players == null || players.isEmpty()) return;
 
-        // Transition menu music to game music with fade effect
         frame.transitionToGameMusic(() -> SwingUtilities.invokeLater(() -> {
-            // Nascondi il menu principale
             frame.setVisible(false);
 
-            // Create controller with Swing-based game view
             final GameController[] controllerHolder = new GameController[1];
 
             controllerHolder[0] = new GameController(players, () -> {
-                // Registra il risultato nel profilo
                 GamesRecord record = controllerHolder[0].getGameRecord();
                 profileController.recordMatch(record);
 
-                // Mostra il risultato e resume menu music
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
                             "Risultato", JOptionPane.INFORMATION_MESSAGE);
@@ -103,17 +117,12 @@ public class JTressette {
         }));
     }
 
-    // Timer per aggiornare il pannello (~60 FPS)
     private void setupRepaintTimer() {
         Timer timer = new Timer(16, e -> frame.panel.repaint());
         timer.start();
     }
 
-    // -------------------------------
-    // PUNTO D'INGRESSO DEL PROGRAMMA
-    // -------------------------------
     static void main() {
-        // Avvia Swing sul EDT
         SwingUtilities.invokeLater(JTressette::new);
     }
 }
