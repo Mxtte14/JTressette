@@ -165,21 +165,25 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
     }
     
     private void updateFullscreen(MenuImpostazioni settings) {
-        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        if (settings.isFullscreen()) {
-            if (device.isFullScreenSupported()) {
-                dispose();
-                setUndecorated(true);
-                device.setFullScreenWindow(this);
-                setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            if (settings.isFullscreen()) {
+                if (device.isFullScreenSupported() && !isUndecorated()) {
+                    dispose();
+                    setUndecorated(true);
+                    device.setFullScreenWindow(this);
+                    setVisible(true);
+                }
+            } else {
+                if (device.getFullScreenWindow() == this) {
+                    device.setFullScreenWindow(null);
+                    dispose();
+                    setUndecorated(false);
+                    pack();
+                    setLocationRelativeTo(null);
+                    setVisible(true);
+                }
             }
-        } else {
-            if (device.getFullScreenWindow() == this) {
-                dispose();
-                setUndecorated(false);
-                device.setFullScreenWindow(null);
-                setVisible(true);
-            }
-        }
+        });
     }
 }

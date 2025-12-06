@@ -83,6 +83,20 @@ public class GameView extends JFrame {
         // Preload card images
         CardImageLoader.preloadImages();
         initUI();
+        applyFullscreenSetting();
+    }
+    
+    private void applyFullscreenSetting() {
+        impostazioni.MenuImpostazioni settings = impostazioni.MenuImpostazioni.getInstance();
+        if (settings.isFullscreen()) {
+            java.awt.GraphicsDevice device = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            if (device.isFullScreenSupported()) {
+                dispose();
+                setUndecorated(true);
+                device.setFullScreenWindow(this);
+                setVisible(true);
+            }
+        }
     }
 
     private void initUI() {
@@ -748,6 +762,34 @@ public class GameView extends JFrame {
                     }
                 }
             }
+        }
+        
+        // Apply fullscreen changes if toggled during gameplay
+        applyFullscreenChanges(settings);
+    }
+    
+    private void applyFullscreenChanges(impostazioni.MenuImpostazioni settings) {
+        java.awt.GraphicsDevice device = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        boolean isCurrentlyFullscreen = device.getFullScreenWindow() == this;
+        
+        if (settings.isFullscreen() && !isCurrentlyFullscreen) {
+            if (device.isFullScreenSupported()) {
+                SwingUtilities.invokeLater(() -> {
+                    dispose();
+                    setUndecorated(true);
+                    device.setFullScreenWindow(this);
+                    setVisible(true);
+                });
+            }
+        } else if (!settings.isFullscreen() && isCurrentlyFullscreen) {
+            SwingUtilities.invokeLater(() -> {
+                device.setFullScreenWindow(null);
+                dispose();
+                setUndecorated(false);
+                setSize(1100, 750);
+                setLocationRelativeTo(null);
+                setVisible(true);
+            });
         }
     }
 
