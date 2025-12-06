@@ -3,7 +3,7 @@ package main;
 import controller.ProfileController;
 import controller.ProfileControllerImpl;
 import game.Giocatore;
-import profile.ProfileStorageSerialized;
+import profile.StorageProfile;
 import profile.UserProfile;
 import menu.MenuFrame;
 import profile.GamesRecord;
@@ -26,7 +26,7 @@ public class JTressette {
 
     public JTressette() {
         // inizializza storage e controller (Model + Controller)
-        ProfileStorageSerialized storage = new ProfileStorageSerialized();
+        StorageProfile storage = new StorageProfile();
         UserProfile userProfile = storage.loadOrCreateDefault();
         profileController = new ProfileControllerImpl(storage, userProfile);
 
@@ -105,7 +105,7 @@ public class JTressette {
 
     // Timer per aggiornare il pannello (~60 FPS)
     private void setupRepaintTimer() {
-        Timer timer = new Timer(16, _ -> frame.panel.repaint());
+        Timer timer = new Timer(16, e -> frame.panel.repaint());
         timer.start();
     }
 

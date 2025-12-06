@@ -1,26 +1,25 @@
 package controller;
 
 import profile.GamesRecord;
-import profile.StorageUser;
-import profile.StorageUser;
+import profile.StorageProfile;
 import profile.UserProfile;
 
 import javax.swing.*;
-        import java.io.File;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Implementazione del controller: aggiorna il modello e salva il JSON in background.
+ * Implementazione del controller: aggiorna il modello e salva su file in background.
  * Notifica i ProfileListener su EDT.
  */
 public class ProfileControllerImpl implements ProfileController {
-    private final StorageUser storage;
+    private final StorageProfile storage;
     private final UserProfile profile;
     private final List<ProfileListener> listeners = new CopyOnWriteArrayList<>();
 
-    public ProfileControllerImpl(StorageUser storage, UserProfile profile) {
+    public ProfileControllerImpl(StorageProfile storage, UserProfile profile) {
         this.storage = storage;
         this.profile = profile;
     }

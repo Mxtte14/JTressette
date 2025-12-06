@@ -6,13 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Profilo utente adattato per:
- * - essere Serializable (per ProfileStorageSerialized)
- * - essere JavaBean compatibile (costruttore no-arg + getter/setter) per XMLEncoder/XMLDecoder
- * - usare List<GamesRecord> per lo storico partite (coerente con ProfileMenu)
- *
- * Nota: createdAt è memorizzato come epoch millis per compatibilità con XMLEncoder.
+ Profilo utente contenente i dati dell'utente.
+ * - Serializable per compatibilità con possibili future implementazioni
+ * - JavaBean compatibile (costruttore no-arg + getter/setter)
+ * - Usa List<GamesRecord> per lo storico partite (coerente con ProfileMenu)
  */
+
 public class UserProfile implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -23,7 +22,7 @@ public class UserProfile implements Serializable {
     private List<GamesRecord> recentGames;
     private String avatarPath;
 
-    // costruttore no-arg per XMLEncoder / deserializzazione
+
     public UserProfile() {
         this.username = "Giocatore";
         this.createdAt = Instant.now().toEpochMilli();
