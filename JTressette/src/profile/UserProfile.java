@@ -107,9 +107,23 @@ public class UserProfile implements Serializable {
         this.totalGames = totalGames;
     }
 
-    public int getTotalWins() {
-        return totalWins;
+    public int getWinsNumber() {
+        int wins = 0;
+        for (GamesRecord record : getRecentGames()) {
+            String r = record.getResult();
+            if (r != null) {
+                if (r.contains(username)){ wins++;
+                }
+
+            }
+            }
+            return wins;
+        }
+
+    private CharSequence toString(String username) {
+        return null;
     }
+
 
     public void setTotalWins(int totalWins) {
         this.totalWins = totalWins;

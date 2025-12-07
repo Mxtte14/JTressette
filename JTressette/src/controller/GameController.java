@@ -2,6 +2,7 @@ package controller;
 
 import audio.AudioManager;
 import game.*;
+import impostazioni.MenuImpostazioni;
 import profile.GamesRecord;
 import ui.GameView;
 
@@ -20,7 +21,7 @@ import java.util.concurrent.Executors;
  * Gestisce tutta la logica della partita (distribuzione, trick, pescata post trick, vincitore, UI update...).
  * NON dipende da Engine.
  */
-public class GameController {
+public class GameController implements MenuImpostazioni.SettingsListener {
 
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
@@ -36,6 +37,9 @@ public class GameController {
         this.gameState = new GameState(players); // Direttamente!
         this.gameExecutor = Executors.newSingleThreadExecutor();
         this.audioManager = new AudioManager();
+
+        // Register as settings listener
+        MenuImpostazioni.getInstance().addListener(this);
 
         // Trova il player umano
         GiocatoreUmano human = null;
@@ -65,9 +69,11 @@ public class GameController {
     public void startGame() {
         gameRunning = true;
 
-        // Musica background
+        // Musica background - apply volume from settings
+        MenuImpostazioni settings = MenuImpostazioni.getInstance();
+        float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
         audioManager.setFile(AudioManager.BACKGROUND_GAME);
-        audioManager.fadeIn(800, 1.0f);
+        audioManager.fadeIn(800, volume);
         audioManager.loop();
 
         // Animazione distribuzione, poi si distribuiscono 10 carte a giocatore
@@ -90,25 +96,33 @@ public class GameController {
             while (!gameState.isFinished() && gameRunning) {
                 Giocatore current = gameState.getCurrentPlayer();
                 SwingUtilities.invokeLater(view::refresh);
-
+                System.out.println(current);
                 int idx;
+                System.out.println(humanPlayer); // DEBUG
+                System.out.println(current == humanPlayer); // DEBUG
                 if (humanPlayer != null && current == humanPlayer) {
                     view.log("È il tuo turno - scegli una carta");
                     idx = humanPlayer.chooseCard(gameState);
                 } else {
-                    Thread.sleep(600);
+                    Thread.sleep(400);
+                    System.out.println("gioca il bot"); // DEBUG
                     idx = current.chooseCard(gameState);
                 }
                 // Se non valido, gioca la prima mossa legale
                 if (idx < 0) {
+                    System.out.println("Indice invalido, scelgo mossa legale");
                     int[] legal = gameState.getLegalMoves(current);
                     idx = (legal.length > 0) ? legal[0] : -1;
                 }
 
                 if (idx >= 0) {
+                    System.out.println("sto giocando la carta");
                     Cards played = gameState.playCard(current, idx);
                     if (played != null) {
-                        audioManager.playCardSound();
+                        // Play card sound only if effects are enabled
+                        if (MenuImpostazioni.getInstance().isEffects()) {
+                            audioManager.playCardSound();
+                        }
 
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
@@ -118,10 +132,12 @@ public class GameController {
                             view.refresh();
                         });
 
+
                         // Se la presa/trick è stata completata
                         System.out.println("Trick cards: " + gameState.getTrickCards().size() + " / Players: " + gameState.getPlayers().size());
                         System.out.println("players: " + gameState.getPlayers());
                         if (gameState.getTrickCards().size() == gameState.getPlayers().size()) {
+                            System.out.println("stato: presa completata!");
                             Thread.sleep(1500);
 
                             final Giocatore trickWinner = gameState.getLastTrickWinner();
@@ -201,6 +217,9 @@ public class GameController {
         gameRunning = false;
         gameExecutor.shutdownNow();
 
+        // Unregister settings listener
+        MenuImpostazioni.getInstance().removeListener(this);
+
         // Fade out musica
         audioManager.fadeOut(500, () -> {
             audioManager.close();
@@ -234,5 +253,17 @@ public class GameController {
 
     public AudioManager getAudioManager() {
         return audioManager;
+    }
+
+    @Override
+    public void onSettingsChanged(MenuImpostazioni settings) {
+        // Apply volume changes to audio
+        float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
+        audioManager.setVolume(volume);
+
+        // Refresh view to apply UI changes (score, messages visibility)
+        if (view != null) {
+            SwingUtilities.invokeLater(() -> view.refresh());
+        }
     }
 }

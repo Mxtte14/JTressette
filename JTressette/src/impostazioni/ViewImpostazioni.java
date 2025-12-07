@@ -10,7 +10,7 @@ public class ViewImpostazioni extends JPanel {
     private final JCheckBox effectsBox, showScoreBox, showMessagesBox, fullscreenBox;
 
     public ViewImpostazioni(MenuImpostazioni settings, Runnable onBack) {
-        this.settings = settings;
+        this.settings = settings != null ? settings : MenuImpostazioni.getInstance();
 
         setLayout(new GridBagLayout());
         setBackground(Color.BLACK);

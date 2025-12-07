@@ -67,7 +67,11 @@ public class GameState {
      */
     public Cards playCard(Giocatore p, int handIndex) {
         // solo current player può giocare
+        System.out.println(players.get(currentPlayerIndex));
         if (players.isEmpty() || players.get(currentPlayerIndex) != p) {
+            System.out.println("entra nell if");
+            System.out.println(p);
+
             return null;
         }
 
@@ -147,8 +151,9 @@ public class GameState {
                 }
             }
         }
-        Random rand = new Random();
-        currentPlayerIndex = rand.nextInt(players.size());
+        // Random rand = new Random();
+        // currentPlayerIndex = rand.nextInt(players.size());
+        currentPlayerIndex = 0; // sempre il primo giocatore nella lista
     }
 
     // Controlla se la partita è finita (tutte le mani vuote) con true o false come risultato
@@ -273,7 +278,7 @@ public class GameState {
 
     // Ruota la lista di players nell'ordine di gioco della presa corrente
     private void rotatePlayersOrder(int winnerIndex) {
-        if (winnerIndex <= 0 || winnerIndex >= players.size()) return;
+        if (winnerIndex < 0 || winnerIndex > players.size()) return;
         Collections.rotate(players, -winnerIndex);
     }
 

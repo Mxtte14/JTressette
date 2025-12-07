@@ -148,7 +148,7 @@ public class StorageProfile {
 
         props.setProperty(KEY_CREATED_AT, String.valueOf(profile.getCreatedAt()));
         props.setProperty(KEY_TOTAL_GAMES, String.valueOf(profile.getTotalGames()));
-        props.setProperty(KEY_TOTAL_WINS, String.valueOf(profile.getTotalWins()));
+        props.setProperty(KEY_TOTAL_WINS, String.valueOf(profile.getWinsNumber()));
 
         // Salva i game records
         List<GamesRecord> games = profile.getRecentGames();

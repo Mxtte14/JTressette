@@ -25,9 +25,10 @@ public class Bot implements Giocatore {
 
     @Override
     public int chooseCard(GameState state) {
+        System.out.println("Bot choose card"); // DEBUG
         int[] legal = state.getLegalMoves(this);
         if (legal == null || legal.length == 0) return -1;
-
+        System.out.println("entro in switch"); // DEBUG
         switch (difficulty) {
             case EASY:
                 return legal[rnd.nextInt(legal.length)];

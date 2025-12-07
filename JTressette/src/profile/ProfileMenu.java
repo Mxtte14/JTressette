@@ -158,9 +158,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
             }
 
             // Statistiche vittorie-sconfitte (es: 10-7)
-            int wins = profile.getTotalWins();
+            int wins = profile.getWinsNumber();
             int losses = profile.getTotalGames() - wins;
-            statsLabel.setText("Vittorie-Sconfitte:"
+            statsLabel.setText("Vittorie - Sconfitte: "
                     + wins + " - " + losses );
 
             tableModel.setRowCount(0);

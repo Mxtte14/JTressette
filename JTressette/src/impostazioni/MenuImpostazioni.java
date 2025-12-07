@@ -2,14 +2,18 @@ package impostazioni;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
  * Gestione persistente delle impostazioni utente.
+ * Singleton pattern per accesso globale.
  */
 public class MenuImpostazioni {
     private static final String DIR_NAME = ".jtressette";
     private static final String FILE_NAME = "settings.properties";
+    private static MenuImpostazioni instance;
 
     // Impostazioni principali
     private int volume = 50;
@@ -22,24 +26,76 @@ public class MenuImpostazioni {
     private final Path settingsDir;
     private final Path settingsFile;
 
-    public MenuImpostazioni() {
+    // Listeners per notificare cambiamenti
+    private final List<SettingsListener> listeners = new ArrayList<>();
+
+    private MenuImpostazioni() {
         String home = System.getProperty("user.home");
         settingsDir = Paths.get(home, DIR_NAME);
         settingsFile = settingsDir.resolve(FILE_NAME);
         load();
     }
 
+    /**
+     * Ottieni l'istanza singleton delle impostazioni.
+     */
+    public static synchronized MenuImpostazioni getInstance() {
+        if (instance == null) {
+            instance = new MenuImpostazioni();
+        }
+        return instance;
+    }
+
     // ----- Getters & Setters -----
     public int getVolume() { return volume; }
-    public void setVolume(int v) { volume = Math.max(0, Math.min(v, 100)); }
+    public void setVolume(int v) {
+        volume = Math.max(0, Math.min(v, 100));
+        notifyListeners();
+    }
     public boolean isEffects() { return effects; }
-    public void setEffects(boolean eff) { effects = eff; }
+    public void setEffects(boolean eff) {
+        effects = eff;
+        notifyListeners();
+    }
     public boolean isShowScore() { return showScore; }
-    public void setShowScore(boolean sel) { showScore = sel; }
+    public void setShowScore(boolean sel) {
+        showScore = sel;
+        notifyListeners();
+    }
     public boolean isShowMessages() { return showMessages; }
-    public void setShowMessages(boolean sel) { showMessages = sel; }
+    public void setShowMessages(boolean sel) {
+        showMessages = sel;
+        notifyListeners();
+    }
     public boolean isFullscreen() { return fullscreen; }
-    public void setFullscreen(boolean fs) { fullscreen = fs; }
+    public void setFullscreen(boolean fs) {
+        fullscreen = fs;
+        notifyListeners();
+    }
+
+    // ----- Listener Management -----
+    public void addListener(SettingsListener listener) {
+        if (listener != null && !listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+
+    public void removeListener(SettingsListener listener) {
+        listeners.remove(listener);
+    }
+
+    private void notifyListeners() {
+        for (SettingsListener listener : listeners) {
+            listener.onSettingsChanged(this);
+        }
+    }
+
+    /**
+     * Interfaccia per listener dei cambiamenti delle impostazioni.
+     */
+    public interface SettingsListener {
+        void onSettingsChanged(MenuImpostazioni settings);
+    }
 
     // ----- Persistance -----
     public void load() {

@@ -1,6 +1,7 @@
 package menu;
 
 import controller.ProfileController;
+import impostazioni.MenuImpostazioni;
 import profile.ProfileMenu;
 import rules.RulesPage;
 
@@ -12,7 +13,7 @@ import java.awt.*;
  * MenuFrame: contiene le card e gestisce la navigazione.
  * Ora è "View" e riceve il ProfileController per passarlo alle sottoview.
  */
-public class MenuFrame extends JFrame {
+public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListener {
 
     public final HomeMenu panel; // mantiene nome e visibilità originale per compatibilità
     private final JPanel cards;
@@ -23,8 +24,13 @@ public class MenuFrame extends JFrame {
     public MenuFrame(ProfileController controller) {
         super("JTressette");
 
-        // Start menu background music with loop
+        // Register as settings listener
+        MenuImpostazioni settings = MenuImpostazioni.getInstance();
+        settings.addListener(this);
+
+        // Start menu background music with loop and apply volume
         audioManager.setFile(AudioManager.BACKGROUND_MENU);
+        updateAudioVolume(settings);
         audioManager.loop();
 
         // pannello principale (home menu) che riceve il controller
@@ -68,7 +74,10 @@ public class MenuFrame extends JFrame {
      * Play menu selection click sound.
      */
     public void playMenuClick() {
-        audioManager.playMenuClick();
+        // Only play if sound effects are enabled
+        if (MenuImpostazioni.getInstance().isEffects()) {
+            audioManager.playMenuClick();
+        }
     }
 
     /**
@@ -138,5 +147,43 @@ public class MenuFrame extends JFrame {
         if (!audioManager.isPlaying()) {
             resumeMenuMusic();
         }
+    }
+
+    @Override
+    public void onSettingsChanged(MenuImpostazioni settings) {
+        // Apply volume changes
+        updateAudioVolume(settings);
+
+        // Apply fullscreen changes
+        updateFullscreen(settings);
+    }
+
+    private void updateAudioVolume(MenuImpostazioni settings) {
+        // Convert 0-100 volume to 0.0-MAX_VOLUME_SCALE range (AudioManager's max safe volume)
+        float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
+        audioManager.setVolume(volume);
+    }
+
+    private void updateFullscreen(MenuImpostazioni settings) {
+        SwingUtilities.invokeLater(() -> {
+            GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            if (settings.isFullscreen()) {
+                if (device.isFullScreenSupported() && !isUndecorated()) {
+                    dispose();
+                    setUndecorated(true);
+                    device.setFullScreenWindow(this);
+                    setVisible(true);
+                }
+            } else {
+                if (device.getFullScreenWindow() == this) {
+                    device.setFullScreenWindow(null);
+                    dispose();
+                    setUndecorated(false);
+                    pack();
+                    setLocationRelativeTo(null);
+                    setVisible(true);
+                }
+            }
+        });
     }
 }

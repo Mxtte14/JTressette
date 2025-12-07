@@ -31,7 +31,7 @@ public class JTressette {
         profileController = new ProfileControllerImpl(storage, userProfile);
 
         // Inizializza Settings (carica da file se esiste, altrimenti default)
-        impostazioni = new MenuImpostazioni();
+        impostazioni = MenuImpostazioni.getInstance();
 
         // Crea la UI (view) passando il controller
         frame = new MenuFrame(profileController);
@@ -122,7 +122,7 @@ public class JTressette {
         timer.start();
     }
 
-    static void main() {
+    public static void main(String[] args) {
         SwingUtilities.invokeLater(JTressette::new);
     }
 }
