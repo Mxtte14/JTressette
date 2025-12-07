@@ -51,9 +51,4 @@ public class Cursor {
         x = 50;
         y = mp.options[selectedIndex].y - 24;
     }
-
-    public void draw(Graphics g) {
-        // L'indicatore di selezione viene ora disegnato in MenuOption
-        // Questo metodo viene mantenuto per compatibilita ma non disegna piu nulla
-    }
 }

@@ -55,10 +55,6 @@ public class ProfileControllerImpl implements ProfileController {
         listeners.add(l);
     }
 
-    @Override
-    public void removeListener(ProfileListener l) {
-        listeners.remove(l);
-    }
 
     private void saveAsync() {
         SwingWorker<Void, Void> w = new SwingWorker<>() {

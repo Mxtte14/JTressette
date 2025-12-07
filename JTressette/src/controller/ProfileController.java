@@ -13,6 +13,5 @@ public interface ProfileController {
     void setName(String newName);
     void setAvatar(File imageFile);
     void addListener(ProfileListener l);
-    void removeListener(ProfileListener l);
     void recordMatch(profile.GamesRecord game);
 }

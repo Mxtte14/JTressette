@@ -13,9 +13,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static javax.swing.UIManager.getString;
+
 /**
  * Utility class for loading and caching card images.
- * Supports both IntelliJ and Eclipse resource loading.
  */
 public class CardImageLoader {
 
@@ -23,29 +24,13 @@ public class CardImageLoader {
     private static final Map<String, BufferedImage> imageCache = new HashMap<>();
     private static BufferedImage cardBackImage;
 
-    // Card dimensions for scaling
-    public static final int CARD_WIDTH = 70;
-    public static final int CARD_HEIGHT = 100;
-    public static final int SMALL_CARD_WIDTH = 50;
-    public static final int SMALL_CARD_HEIGHT = 75;
 
-    /**
-     * Get the image for a specific card.
-     * @param card The card to get the image for
-     * @return Scaled BufferedImage of the card, or null if not found
-     */
     public static BufferedImage getCardImage(Cards card) {
         String imageName = getCardImageName(card);
         return getCardImage(imageName);
     }
 
-    /**
-     * Get a scaled card image for display.
-     * @param card The card to get the image for
-     * @param width Target width
-     * @param height Target height
-     * @return Scaled Image
-     */
+
     public static Image getScaledCardImage(Cards card, int width, int height) {
         BufferedImage original = getCardImage(card);
         if (original == null) {
@@ -210,18 +195,7 @@ public class CardImageLoader {
     }
 
     private static String getRankSymbol(Cards.Rank rank) {
-        return switch (rank) {
-            case ASSO -> "A";
-            case DUE -> "2";
-            case TRE -> "3";
-            case QUATTRO -> "4";
-            case CINQUE -> "5";
-            case SEI -> "6";
-            case SETTE -> "7";
-            case ALFIERE -> "J";
-            case CAVALLO -> "Q";
-            case RE -> "K";
-        };
+        return getString(rank);
     }
 
     private static String getSuitSymbol(Cards.Segno segno) {

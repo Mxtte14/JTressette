@@ -45,6 +45,9 @@ public class GameState {
         m.put(Cards.Rank.ALFIERE, 1);
         // le altre rimangono a 0
         CARD_POINTS = Collections.unmodifiableMap(m);
+
+        // rende in scala i punti delle carte ovvero 3 = 1, 1 = 1/3, 2= 2/3 e cosi via anche per i multipli
+
     }
 
     // Costruttore: inizializza mani vuote e punteggi a 0
@@ -121,12 +124,6 @@ public class GameState {
             // il vincitore è il primo nella lista ruotata
             currentPlayerIndex = 0;
             System.out.println(players);
-        } else {
-            System.out.println(currentPlayerIndex);
-            // altrimenti passa al prossimo giocatore
-            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-            System.out.println(currentPlayerIndex);
-            System.out.println(players.get(currentPlayerIndex));
         }
         return c;
     }
@@ -191,6 +188,19 @@ public class GameState {
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     }
 
+
+    /**
+     * Funzioni utilizzate per gestire i punteggi scalati in 1 e 1/3 e cosi via
+     */
+
+    // Punteggio come stringa "1 2/3"
+    public String getScaledScoreString(Giocatore p) {
+        int rawScore = getScore(p);
+        int punti = rawScore / 3;
+        int frazione = rawScore % 3;
+        if (frazione == 0) return String.valueOf(punti);
+        return punti + " " + frazione + "/3";
+    }
 
     /**
         Funzioni utilizzate per raccogliere dati sul turno e il vincitore della mano.

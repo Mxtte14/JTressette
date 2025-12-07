@@ -3,6 +3,7 @@ package controller;
 import audio.AudioManager;
 import game.*;
 import impostazioni.MenuImpostazioni;
+import menu.HomeMenu;
 import profile.GamesRecord;
 import ui.GameView;
 
@@ -127,7 +128,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
                         SwingUtilities.invokeLater(() -> {
-                            view.showCardPlayed(finalCurrent, finalPlayed);
+                            view.showCardPlayed();
                             view.log(finalCurrent.getName() + " ha giocato " + finalPlayed);
                             view.refresh();
                         });
@@ -144,7 +145,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                             final int cardsWon = gameState.getLastTrickCardsWon();
 
                             SwingUtilities.invokeLater(() -> {
-                                view.showTrickWon(trickWinner, cardsWon);
+                                view.showTrickWon(trickWinner);
                                 view.log(trickWinner.getName() + " vince la presa! (+" + cardsWon + " carte)");
                             });
 
@@ -211,6 +212,19 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
+     * Permette di tornare al menu terminata la partita
+     */
+    public void onReturnToMenu() {
+        if (view != null) {
+            view.setVisible(false);
+            view.dispose(); // chiude la finestra della partita
+        }
+        // Richiama o crea la schermata iniziale/menù principale
+        HomeMenu mainMenu = new HomeMenu((ProfileController) this);
+        mainMenu.setVisible(true);
+    }
+
+    /**
      * Chiusura partita.
      */
     public void onExitGame() {
@@ -221,9 +235,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         MenuImpostazioni.getInstance().removeListener(this);
 
         // Fade out musica
-        audioManager.fadeOut(500, () -> {
-            audioManager.close();
-        });
+        audioManager.fadeOut(500, audioManager::close);
 
         SwingUtilities.invokeLater(() -> {
             view.dispose();

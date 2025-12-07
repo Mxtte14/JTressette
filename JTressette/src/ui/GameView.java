@@ -62,8 +62,7 @@ public class GameView extends JFrame {
 
     // UI components that need updating
     private JPanel playerHandPanel;
-    private JScrollPane handScrollPane; // new: scroll pane for the hand
-    private JPanel tableCardsPanel; // kept for compatibility if used elsewhere (not used for main table rendering)
+    private JScrollPane handScrollPane;
     private JPanel opponentArea;
     private JLabel statusLabel;
     private JLabel scoreLabel;
@@ -171,16 +170,16 @@ public class GameView extends JFrame {
     }
 
     // Custom panel with gradient background
-    private class GradientPanel extends JPanel {
+    private static class GradientPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            GradientPaint gp = new GradientPaint(0, 0, FELT_DARK, 0, getHeight() / 2, FELT_GREEN);
+            GradientPaint gp = new GradientPaint(0, 0, FELT_DARK, 0, (float) getHeight() / 2, FELT_GREEN);
             g2d.setPaint(gp);
             g2d.fillRect(0, 0, getWidth(), getHeight() / 2);
-            GradientPaint gp2 = new GradientPaint(0, getHeight() / 2, FELT_GREEN, 0, getHeight(), FELT_DARK);
+            GradientPaint gp2 = new GradientPaint(0, (float) getHeight() / 2, FELT_GREEN, 0, getHeight(), FELT_DARK);
             g2d.setPaint(gp2);
             g2d.fillRect(0, getHeight() / 2, getWidth(), getHeight() / 2);
         }
@@ -312,7 +311,7 @@ public class GameView extends JFrame {
     }
 
     // Custom table panel with oval shape
-    private class TablePanel extends JPanel {
+    private static class TablePanel extends JPanel {
         public TablePanel() {
             setOpaque(false);
         }
@@ -379,7 +378,7 @@ public class GameView extends JFrame {
         playButton.setFocusPainted(false);
         playButton.setEnabled(false);
         playButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        playButton.addActionListener(e -> onPlayCard());
+        playButton.addActionListener(_ -> onPlayCard());
 
         area.add(playerLabel);
         area.add(Box.createVerticalStrut(6));
@@ -432,20 +431,7 @@ public class GameView extends JFrame {
     }
 
     private JPanel createInfoPanel() {
-        JPanel panel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(new Color(0, 0, 0, 128));
-                g2d.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 20, 20));
-            }
-        };
-        panel.setOpaque(false);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(new EmptyBorder(15, 15, 15, 15));
-        panel.setPreferredSize(new Dimension(220, 0));
+        JPanel panel = getJPanel();
 
         JLabel titleLabel = new JLabel("Info Partita");
         titleLabel.setForeground(TEXT_GOLD);
@@ -484,7 +470,7 @@ public class GameView extends JFrame {
         backButton.setForeground(Color.WHITE);
         backButton.setFocusPainted(false);
         backButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        backButton.addActionListener(e -> controller.onExitGame());
+        backButton.addActionListener(_ -> controller.onExitGame());
 
         panel.add(titleLabel);
         panel.add(Box.createVerticalStrut(15));
@@ -501,53 +487,38 @@ public class GameView extends JFrame {
         return panel;
     }
 
-    private JPanel createCardBack() {
-        Image cardBackImg = CardImageLoader.getScaledCardBackImage(SMALL_CARD_WIDTH, SMALL_CARD_HEIGHT);
-        JLabel card = new JLabel(new ImageIcon(cardBackImg));
+    private static JPanel getJPanel() {
         JPanel panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Shadow
-                g2d.setColor(new Color(0, 0, 0, 80));
-                g2d.fill(new RoundRectangle2D.Double(3, 3, SMALL_CARD_WIDTH, SMALL_CARD_HEIGHT, 8, 8));
+                g2d.setColor(new Color(0, 0, 0, 128));
+                g2d.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 20, 20));
             }
         };
         panel.setOpaque(false);
-        panel.setLayout(new BorderLayout());
-        panel.add(card, BorderLayout.CENTER);
-        panel.setPreferredSize(new Dimension(SMALL_CARD_WIDTH + 5, SMALL_CARD_HEIGHT + 5));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        panel.setPreferredSize(new Dimension(220, 0));
         return panel;
     }
 
     // CardPanel class supports arbitrary draw size
     private class CardPanel extends JPanel {
         private final Cards card;
-        private final int index;
-        private final boolean isPlayable;
         private boolean isHovered = false;
         private boolean isSelected = false;
-        private Image cardImage;
+        private final Image cardImage;
         private final int drawWidth;
         private final int drawHeight;
-
-        /**
-         * Default constructor for hand cards: uses current handCardWidth/Height
-         */
-        public CardPanel(Cards card, int index, boolean isPlayable) {
-            this(card, index, isPlayable, handCardWidth, handCardHeight);
-        }
 
         /**
          * Constructor with explicit draw size - useful for table cards (fixed size).
          */
         public CardPanel(Cards card, int index, boolean isPlayable, int drawWidth, int drawHeight) {
             this.card = card;
-            this.index = index;
-            this.isPlayable = isPlayable;
             this.drawWidth = drawWidth;
             this.drawHeight = drawHeight;
             this.cardImage = CardImageLoader.getScaledCardImage(card, drawWidth, drawHeight);
@@ -640,6 +611,10 @@ public class GameView extends JFrame {
     }
 
     private String getRankSymbol(Cards.Rank rank) {
+        return getString(rank);
+    }
+
+    public static String getString(Cards.Rank rank) {
         return switch (rank) {
             case ASSO -> "A";
             case DUE -> "2";
@@ -782,9 +757,9 @@ public class GameView extends JFrame {
         JLabel deck = createDeckImage();
         int dw = deck.getPreferredSize().width;
         int dh = deck.getPreferredSize().height;
-        int tx = (tableOval.getWidth() - dw) / 2;
-        int ty = (tableOval.getHeight() - dh) / 2;
-        deck.setBounds(Math.max(0, tx), Math.max(0, ty), dw, dh);
+        int deckX = Math.max(0, (int)(tableOval.getWidth() * 0.13));   // 13% da sinistra
+        int deckY = (tableOval.getHeight() - dh) / 2;
+        deck.setBounds(deckX, deckY, dw, dh);
         tableOval.add(deck);
 
         int nPlayers = gameState.getPlayers().size();
@@ -835,8 +810,13 @@ public class GameView extends JFrame {
             name.setForeground(TEXT_WHITE);
             name.setFont(new Font("Arial", Font.BOLD, 13));
             int nx = positions[i][0] - 10;
-            int ny = Math.max(0, positions[i][1] - 20);
-            name.setBounds(Math.max(2, nx), Math.max(0, ny), 140, 18);
+            int ny;
+            if (player == humanPlayer) {
+                ny = positions[i][1] + CARD_HEIGHT + 8; // SOTTO la carta per l'umano
+            } else {
+                ny = positions[i][1] + CARD_HEIGHT + 8; // SOTTO la carta giocata per il bot!
+            }
+            name.setBounds(Math.max(2, nx), ny, 140, 18);
             tableOval.add(name);
         }
 
@@ -857,7 +837,7 @@ public class GameView extends JFrame {
     }
 
     private void updateScores() {
-        int score = gameState.getScore(humanPlayer);
+        String score = gameState.getScaledScoreString(humanPlayer);
         scoreLabel.setText("Punteggio: " + score);
     }
 
@@ -890,7 +870,7 @@ public class GameView extends JFrame {
         });
     }
 
-    public void showCardPlayed(Giocatore player, Cards card) {
+    public void showCardPlayed() {
         SwingUtilities.invokeLater(this::updateTableCards);
     }
 
@@ -902,13 +882,13 @@ public class GameView extends JFrame {
         });
     }
 
-    public void showTrickWon(Giocatore winner, int cardsWon) {
+    public void showTrickWon(Giocatore winner) {
         SwingUtilities.invokeLater(() -> {
             if (winner == humanPlayer) {
                 wonCardsLabel.setText("Carte prese: " + gameState.getWonCardsCount(humanPlayer));
             }
             showWinnerIndicator(winner);
-            animateCardsToWinner(winner);
+            animateCardsToWinner();
         });
     }
 
@@ -920,15 +900,15 @@ public class GameView extends JFrame {
 
         int labelW = Math.min(320, tableOval.getWidth() - 10);
         int labelH = 26;
-        int x = (tableOval.getWidth() - labelW) / 2;
-        int y = 6;
-        winnerLabel.setBounds(Math.max(4, x), Math.max(2, y), labelW, labelH);
+        int x = tableOval.getWidth() - labelW - 28; // 28px dal bordo destro
+        int y = 18;
+        winnerLabel.setBounds(x, y, labelW, labelH);
 
         tableOval.add(winnerLabel);
         tableOval.revalidate();
         tableOval.repaint();
 
-        Timer removeTimer = new Timer(800, e -> {
+        Timer removeTimer = new Timer(800, _ -> {
             tableOval.remove(winnerLabel);
             tableOval.revalidate();
             tableOval.repaint();
@@ -937,11 +917,11 @@ public class GameView extends JFrame {
         removeTimer.start();
     }
 
-    private void animateCardsToWinner(Giocatore winner) {
+    private void animateCardsToWinner() {
         Timer fadeTimer = new Timer(50, null);
         final float[] alpha = {1.0f};
 
-        fadeTimer.addActionListener(e -> {
+        fadeTimer.addActionListener(_ -> {
             alpha[0] -= 0.1f;
             if (alpha[0] <= 0) {
                 fadeTimer.stop();
@@ -954,33 +934,12 @@ public class GameView extends JFrame {
         fadeTimer.start();
     }
 
-    public void animateCardDraw() {
-        SwingUtilities.invokeLater(() -> {
-            Timer flashTimer = new Timer(100, null);
-            final int[] flashCount = {0};
-            flashTimer.addActionListener(e -> {
-                flashCount[0]++;
-                if (flashCount[0] > 4) {
-                    flashTimer.stop();
-                    playerHandPanel.setOpaque(false);
-                    playerHandPanel.repaint();
-                } else {
-                    playerHandPanel.setOpaque(flashCount[0] % 2 == 1);
-                    if (flashCount[0] % 2 == 1) {
-                        playerHandPanel.setBackground(new Color(255, 215, 0, 50));
-                    }
-                    playerHandPanel.repaint();
-                }
-            });
-            flashTimer.start();
-        });
-    }
-
     private void updateWonCardsDisplay() {
         int humanWonCards = gameState.getWonCardsCount(humanPlayer);
         wonCardsLabel.setText("Carte prese: " + humanWonCards);
     }
 
+    // Animazione di distribuzione delle carte
     public void showDealingAnimation(List<Giocatore> players, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
             JPanel animationOverlay = new JPanel() {
@@ -1042,11 +1001,11 @@ public class GameView extends JFrame {
             final int[] currentCard = {0};
             final int totalCards = numPlayers * cardsPerPlayer;
 
-            dealTimer.addActionListener(e -> {
+            dealTimer.addActionListener(_ -> {
                 if (currentCard[0] >= totalCards) {
                     dealTimer.stop();
                     dealingLabel.setText("Pronto!");
-                    Timer fadeOutTimer = new Timer(800, evt -> {
+                    Timer fadeOutTimer = new Timer(800, _ -> {
                         glassPane.remove(animationOverlay);
                         glassPane.setVisible(false);
                         glassPane.repaint();
@@ -1071,7 +1030,7 @@ public class GameView extends JFrame {
                 animationOverlay.setComponentZOrder(flyingCard, 0);
                 animationOverlay.repaint();
 
-                animateCardFlight(flyingCard, centerX, centerY, targetX, targetY, CARD_FLY_DURATION_MS);
+                animateCardFlight(flyingCard, centerX, centerY, targetX, targetY);
                 currentCard[0]++;
             });
 
@@ -1079,14 +1038,15 @@ public class GameView extends JFrame {
         });
     }
 
-    private void animateCardFlight(JLabel card, int startX, int startY, int endX, int endY, int durationMs) {
+    // Animazione del volo della carta verso il giocatore vincitore
+    private void animateCardFlight(JLabel card, int startX, int startY, int endX, int endY) {
         final int steps = 15;
-        final int delay = durationMs / steps;
+        final int delay = GameView.CARD_FLY_DURATION_MS / steps;
 
         Timer flyTimer = new Timer(delay, null);
         final int[] step = {0};
 
-        flyTimer.addActionListener(e -> {
+        flyTimer.addActionListener(_ -> {
             step[0]++;
             double t = (double) step[0] / steps;
             double easedT = 1 - Math.pow(1 - t, 3);
@@ -1110,10 +1070,94 @@ public class GameView extends JFrame {
 
     public void showGameOver(String result) {
         SwingUtilities.invokeLater(() -> {
-            statusLabel.setText("<html>PARTITA TERMINATA<br>" + result + "</html>");
-            statusLabel.setForeground(TEXT_GOLD);
+            // Crea overlay trasparente sopra la finestra
+            JPanel overlay = new JPanel() {
+                float alpha = 0f; // Per fade-in
+
+                {
+                    // Effetto fade-in
+                    Timer fadeIn = new Timer(18, null);
+                    fadeIn.addActionListener(_ -> {
+                        alpha += 0.07f;
+                        if (alpha >= 1f) {
+                            alpha = 1f;
+                            fadeIn.stop();
+                        }
+                        repaint();
+                    });
+                    fadeIn.start();
+                }
+
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha) * 0.92f));
+                    g2.setColor(new Color(0,0,0,210));
+                    g2.fillRect(0, 0, getWidth(), getHeight());
+                    g2.dispose();
+                }
+            };
+            overlay.setLayout(new GridBagLayout());
+            overlay.setOpaque(false);
+            overlay.setBounds(0, 0, getWidth(), getHeight());
+
+            // Contenuto centrale
+            JPanel content = new JPanel();
+            content.setOpaque(false);
+            content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+            content.setBorder(BorderFactory.createEmptyBorder(28, 44, 28, 44));
+
+            JLabel title = new JLabel("🏁 Partita Terminata");
+            title.setForeground(TEXT_GOLD);
+            title.setFont(new Font("Serif", Font.BOLD, 33));
+            title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JLabel resLabel = new JLabel("<html><div style='text-align:center;'>" + result + "</div></html>");
+            resLabel.setForeground(Color.WHITE);
+            resLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+            resLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            resLabel.setBorder(BorderFactory.createEmptyBorder(15, 5, 25, 5));
+
+            JButton backButton = new JButton("Torna al Menu");
+            backButton.setFont(new Font("Arial", Font.BOLD, 18));
+            backButton.setBackground(new Color(27, 155, 95));
+            backButton.setForeground(Color.WHITE);
+            backButton.setFocusPainted(false);
+            backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+            backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+            // Gestione click
+            backButton.addActionListener(_ -> {
+                // Fade-out veloce
+                Timer fadeOut = new Timer(16, null);
+                fadeOut.addActionListener(_ -> {
+                    overlay.setVisible(false);
+                    getGlassPane().setVisible(false);
+                    // Richiama evento controller
+                    controller.onReturnToMenu();
+                    fadeOut.stop();
+                });
+                fadeOut.start();
+            });
+
+            content.add(title);
+            content.add(resLabel);
+            content.add(Box.createVerticalStrut(24));
+            content.add(backButton);
+
+            overlay.add(content, new GridBagConstraints());
+            JPanel glass = (JPanel) getGlassPane();
+            glass.setLayout(null);
+            glass.removeAll();
+            glass.add(overlay);
+            glass.setVisible(true);
+            overlay.setVisible(true);
+            overlay.repaint();
+
+            // Disabilita altre interazioni
             playButton.setEnabled(false);
-            log("Partita terminata: " + result);
+            statusLabel.setText("");
         });
     }
 }
