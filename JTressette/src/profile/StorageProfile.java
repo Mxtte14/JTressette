@@ -120,7 +120,8 @@ public class StorageProfile {
             String date = props.getProperty(prefix + "date", "");
             String opponent = props.getProperty(prefix + "opponent", "");
             String result = props.getProperty(prefix + "result", "");
-            games.add(new GamesRecord(date, opponent, result));
+            String scaledScore = props.getProperty(prefix + "scaledScore", "");
+            games.add(new GamesRecord(date, opponent, result, scaledScore ));
         }
         return games;
     }
@@ -156,9 +157,11 @@ public class StorageProfile {
         for (int i = 0; i < games.size(); i++) {
             GamesRecord g = games.get(i);
             String prefix = KEY_GAME_PREFIX + i + ".";
-            props.setProperty(prefix + "date", g.getDate() != null ? g.getDate() : "");
+            props.setProperty(prefix + "date", g.getFormattedDate() != null ? g.getDate() : "");
             props.setProperty(prefix + "opponent", g.getOpponent() != null ? g.getOpponent() : "");
             props.setProperty(prefix + "result", g.getResult() != null ? g.getResult() : "");
+            props.setProperty(prefix + "scaledScore", g.getScaledScore() != null ? g.getScaledScore() : "");
+
         }
 
         // Scrivi su file temporaneo e poi rinomina per evitare corruzione

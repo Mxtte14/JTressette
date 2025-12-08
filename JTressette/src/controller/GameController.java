@@ -197,7 +197,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                 .orElse(null);
 
         if (winner != null) {
-            return "Vincitore: " + winner.getName() + " (punti: " + gameState.getScore(winner) + ")";
+            return "Vincitore: " + winner.getName() + " (punti: " + gameState.getScaledScoreString(winner) + ")";
         }
         return "Pareggio";
     }
@@ -256,7 +256,8 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
         String date = Instant.now().toString();
         String result = calculateResult();
-        return new GamesRecord(date, opponents.toString(), result);
+        String scaledScore = gameState.getScaledScoreString(humanPlayer);
+        return new GamesRecord(date, opponents.toString(), result, scaledScore);
     }
 
     public GameView getView() {

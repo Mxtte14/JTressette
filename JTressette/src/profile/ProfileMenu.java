@@ -166,8 +166,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
             tableModel.setRowCount(0);
             List<GamesRecord> history = profile.getHistory();
             for (GamesRecord m : history) {
-                tableModel.addRow(new Object[]{m.getDate(), m.getOpponent(), m.getResult()});
+                tableModel.addRow(new Object[]{m.getFormattedDate(), m.getOpponent(), m.getResult(), m.getScaledScore()});
             }
+            System.out.println(history);
         });
     }
 

@@ -12,40 +12,50 @@ public class GamesRecord implements Serializable {
     private String date;
     private String opponent;
     private String result;
+    private String scaledScore;
 
     // costruttore no-arg richiesto da JavaBeans
     public GamesRecord() {
     }
 
-    public GamesRecord(String date, String opponent, String result) {
+    public GamesRecord(String date, String opponent, String result, String scaledScore) {
         this.date = date;
         this.opponent = opponent;
         this.result = result;
+        this.scaledScore = scaledScore;
     }
 
     public String getDate() {
         return date;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public String getFormattedDate() {
+        if (date == null || date.isEmpty()) return "";
+        try {
+            java.time.ZonedDateTime zdt = java.time.ZonedDateTime.parse(date);
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            return zdt.format(formatter);
+        } catch (Exception e) {
+            // fallback se formato non ISO
+            return date;
+        }
     }
 
     public String getOpponent() {
         return opponent;
     }
 
-    public void setOpponent(String opponent) {
-        this.opponent = opponent;
-    }
-
     public String getResult() {
         return result;
     }
 
-    public void setResult(String result) {
-        this.result = result;
+    public String getScaledScore(int res) {
+        int punti = res / 3;
+        int frazione = res % 3;
+        if (frazione == 0) return String.valueOf(punti);
+        return punti + " " + frazione + "/3";
     }
+
 
     @Override
     public String toString() {
@@ -53,6 +63,7 @@ public class GamesRecord implements Serializable {
                 "date='" + date + '\'' +
                 ", opponent='" + opponent + '\'' +
                 ", result='" + result + '\'' +
+                ", scaledScore='" + scaledScore + '\'' +
                 '}';
     }
 }
