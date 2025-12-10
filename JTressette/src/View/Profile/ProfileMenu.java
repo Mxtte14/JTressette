@@ -202,41 +202,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         infoPanel.add(Box.createVerticalStrut(5));
 
         // Custom experience progress bar
-        expBar = new JProgressBar(0, 100);
-        expBar.setStringPainted(false);
-        expBar.setPreferredSize(new Dimension(400, 25));
-        expBar.setMaximumSize(new Dimension(400, 25));
-        expBar.setAlignmentX(Component.LEFT_ALIGNMENT);
-        expBar.setForeground(EXP_BAR_COLOR);
-        expBar.setBackground(new Color(236, 240, 241));
-        expBar.setBorder(new LineBorder(BORDER_COLOR, 1, true));
-        expBar.setUI(new javax.swing.plaf.basic.BasicProgressBarUI() {
-            @Override
-            protected void paintDeterminate(Graphics g, JComponent c) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                int width = expBar.getWidth();
-                int height = expBar.getHeight();
-                int fillWidth = (int) (width * (expBar.getPercentComplete()));
-                
-                // Background
-                g2d.setColor(expBar.getBackground());
-                g2d.fillRoundRect(0, 0, width, height, 12, 12);
-                
-                // Fill
-                if (fillWidth > 0) {
-                    GradientPaint gradient = new GradientPaint(
-                        0, 0, EXP_BAR_COLOR,
-                        fillWidth, 0, new Color(39, 174, 96)
-                    );
-                    g2d.setPaint(gradient);
-                    g2d.fillRoundRect(1, 1, fillWidth - 1, height - 2, 11, 11);
-                }
-                
-                g2d.dispose();
-            }
-        });
+        expBar = createExperienceBar();
         infoPanel.add(expBar);
         infoPanel.add(Box.createVerticalStrut(5));
 
@@ -309,6 +275,45 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         panel.add(sp, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private JProgressBar createExperienceBar() {
+        JProgressBar bar = new JProgressBar(0, 100);
+        bar.setStringPainted(false);
+        bar.setPreferredSize(new Dimension(400, 25));
+        bar.setMaximumSize(new Dimension(400, 25));
+        bar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        bar.setForeground(EXP_BAR_COLOR);
+        bar.setBackground(new Color(236, 240, 241));
+        bar.setBorder(new LineBorder(BORDER_COLOR, 1, true));
+        bar.setUI(new javax.swing.plaf.basic.BasicProgressBarUI() {
+            @Override
+            protected void paintDeterminate(Graphics g, JComponent c) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                int width = bar.getWidth();
+                int height = bar.getHeight();
+                int fillWidth = (int) (width * (bar.getPercentComplete()));
+                
+                // Background
+                g2d.setColor(bar.getBackground());
+                g2d.fillRoundRect(0, 0, width, height, 12, 12);
+                
+                // Fill with gradient
+                if (fillWidth > 0) {
+                    GradientPaint gradient = new GradientPaint(
+                        0, 0, EXP_BAR_COLOR,
+                        fillWidth, 0, new Color(39, 174, 96)
+                    );
+                    g2d.setPaint(gradient);
+                    g2d.fillRoundRect(1, 1, fillWidth - 1, height - 2, 11, 11);
+                }
+                
+                g2d.dispose();
+            }
+        });
+        return bar;
     }
 
     /**

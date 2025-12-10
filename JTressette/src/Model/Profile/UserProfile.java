@@ -137,12 +137,17 @@ public class UserProfile implements Serializable {
      * @param xp Experience points to add
      */
     public void addExperience(int xp) {
+        if (xp < 0) return; // Ignore negative XP
         this.experience += xp;
         
-        // Check for level up
-        while (this.experience >= getExperienceToNextLevel()) {
-            this.experience -= getExperienceToNextLevel();
+        // Check for level up (with safety limit to prevent infinite loops)
+        int maxLevelUps = 100; // Safety limit
+        while (this.experience >= getExperienceToNextLevel() && maxLevelUps > 0) {
+            int xpNeeded = getExperienceToNextLevel();
+            if (xpNeeded <= 0) break; // Safety check
+            this.experience -= xpNeeded;
             this.level++;
+            maxLevelUps--;
         }
     }
 
