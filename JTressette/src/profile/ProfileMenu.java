@@ -125,10 +125,11 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         historyLabel.setBorder(new EmptyBorder(0,4,12,4));
         historyPanel.add(historyLabel, BorderLayout.NORTH);
 
-        String[] cols = {"Data", "Avversario", "Risultato"};
+        String[] cols = {"Data", "Avversario", "Vincitore", "Punteggio"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
+
         historyTable = new JTable(tableModel);
         historyTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         historyTable.setRowHeight(26);
@@ -166,9 +167,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
             tableModel.setRowCount(0);
             List<GamesRecord> history = profile.getHistory();
             for (GamesRecord m : history) {
+                // mostra la stringa scaledScore (può essere vuota se record vecchio)
                 tableModel.addRow(new Object[]{m.getFormattedDate(), m.getOpponent(), m.getResult(), m.getScaledScore()});
             }
-            System.out.println(history);
         });
     }
 

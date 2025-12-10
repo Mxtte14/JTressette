@@ -103,7 +103,6 @@ public class StorageProfile {
 
     /**
      * Carica i game records dalle proprietà.
-     * Formato: game.0.date, game.0.opponent, game.0.result, ecc.
      */
     private List<GamesRecord> loadGamesFromProperties(Properties props) {
         List<GamesRecord> games = new ArrayList<>();
@@ -119,7 +118,7 @@ public class StorageProfile {
             String prefix = KEY_GAME_PREFIX + i + ".";
             String date = props.getProperty(prefix + "date", "");
             String opponent = props.getProperty(prefix + "opponent", "");
-            String result = props.getProperty(prefix + "result", "");
+            String result = props.getProperty(prefix + "winner", "");
             String scaledScore = props.getProperty(prefix + "scaledScore", "");
             games.add(new GamesRecord(date, opponent, result, scaledScore ));
         }
@@ -152,17 +151,20 @@ public class StorageProfile {
         props.setProperty(KEY_TOTAL_WINS, String.valueOf(profile.getWinsNumber()));
 
         // Salva i game records
+        // (solo la parte modificata: dentro save(...), nel loop che salva i game records)
+        // Salva i game records
         List<GamesRecord> games = profile.getRecentGames();
         props.setProperty(KEY_GAMES_COUNT, String.valueOf(games.size()));
         for (int i = 0; i < games.size(); i++) {
             GamesRecord g = games.get(i);
             String prefix = KEY_GAME_PREFIX + i + ".";
-            props.setProperty(prefix + "date", g.getFormattedDate() != null ? g.getDate() : "");
+            props.setProperty(prefix + "date", g.getDate() != null ? g.getDate() : "");
             props.setProperty(prefix + "opponent", g.getOpponent() != null ? g.getOpponent() : "");
-            props.setProperty(prefix + "result", g.getResult() != null ? g.getResult() : "");
+            props.setProperty(prefix + "winner", g.getResult() != null ? g.getResult() : "");
+            // Salva anche lo scaledScore (stringa)
             props.setProperty(prefix + "scaledScore", g.getScaledScore() != null ? g.getScaledScore() : "");
-
         }
+
 
         // Scrivi su file temporaneo e poi rinomina per evitare corruzione
         Path tmp = profileDir.resolve(FILE_NAME + ".tmp");

@@ -215,13 +215,20 @@ public class GameController implements MenuImpostazioni.SettingsListener {
      * Permette di tornare al menu terminata la partita
      */
     public void onReturnToMenu() {
-        if (view != null) {
-            view.setVisible(false);
-            view.dispose(); // chiude la finestra della partita
-        }
-        // Richiama o crea la schermata iniziale/menù principale
-        HomeMenu mainMenu = new HomeMenu((ProfileController) this);
-        mainMenu.setVisible(true);
+        // pulizie
+        gameRunning = false;
+        gameExecutor.shutdownNow();
+        MenuImpostazioni.getInstance().removeListener(this);
+        audioManager.fadeOut(300, audioManager::close);
+
+        SwingUtilities.invokeLater(() -> {
+            if (view != null) {
+                view.dispose();
+            }
+            if (onGameEnd != null) {
+                onGameEnd.run(); // DELEGA chi ha creato il GameController
+            }
+        });
     }
 
     /**

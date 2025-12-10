@@ -99,20 +99,37 @@ public class JTressette {
         frame.transitionToGameMusic(() -> SwingUtilities.invokeLater(() -> {
             frame.setVisible(false);
 
+            // user final holder to allow reference inside lambda
             final GameController[] controllerHolder = new GameController[1];
 
-            controllerHolder[0] = new GameController(players, () -> {
-                GamesRecord record = controllerHolder[0].getGameRecord();
-                profileController.recordMatch(record);
-
+            // onGameEnd: verrà chiamato da GameController.onReturnToMenu()
+            Runnable onGameEnd = () -> {
+                // Esegui su EDT per essere sicuri di aggiornare UI
                 SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(frame, "Partita terminata:\n" + record.getResult(),
-                            "Risultato", JOptionPane.INFORMATION_MESSAGE);
+                    // registra partita se possibile (se controller esiste)
+                    if (controllerHolder[0] != null) {
+                        try {
+                            GamesRecord record = controllerHolder[0].getGameRecord();
+                            profileController.recordMatch(record);
+
+                            // opzionale: mostra dialog con risultato (puoi personalizzare)
+                            JOptionPane.showMessageDialog(frame,
+                                    "Partita terminata:\n" + record.getResult(),
+                                    "Risultato", JOptionPane.INFORMATION_MESSAGE);
+                        } catch (Exception ex) {
+                            // logga ma non bloccare la UI
+                            LOG.warning("Impossibile ottenere o registrare game record: " + ex.getMessage());
+                        }
+                    }
+
+                    // Riporta l'app alla schermata principale
                     frame.setVisible(true);
                     frame.resumeMenuMusic();
                 });
-            });
+            };
 
+            // Crea il controller della partita passando la lambda onGameEnd
+            controllerHolder[0] = new GameController(players, onGameEnd);
             controllerHolder[0].startGame();
         }));
     }

@@ -49,21 +49,21 @@ public class GamesRecord implements Serializable {
         return result;
     }
 
-    public String getScaledScore(int res) {
-        int punti = res / 3;
-        int frazione = res % 3;
-        if (frazione == 0) return String.valueOf(punti);
-        return punti + " " + frazione + "/3";
+    /**
+     * Restituisce la stringa del punteggio già calcolata (es. "1 2/3").
+     */
+    public String getScaledScore() {
+        return scaledScore;
     }
 
 
     @Override
     public String toString() {
         return "GamesRecord{" +
-                "date='" + date + '\'' +
-                ", opponent='" + opponent + '\'' +
-                ", result='" + result + '\'' +
-                ", scaledScore='" + scaledScore + '\'' +
+                "date ='" + date + '\'' +
+                ", opponent ='" + opponent + '\'' +
+                ", winner ='" + result + '\'' +
+                ", your scaledScore ='" + scaledScore + '\'' +
                 '}';
     }
 }

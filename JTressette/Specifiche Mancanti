@@ -1,0 +1,41 @@
+Progetto JTressette 👌
+- Specifiche Mancanti:
+	- livello utente
+	- Utilizzo di stream
+	- Riduzione di audio sample
+	- Animazioni varie
+
+- Carenze attuali progetto:
+	- Audio nel gioco:
+		- Cambiare audio Home
+		- Gestire audio Home quando si torna
+		- Implementare audio per carte date
+		- Implementare audio per click di pulsanti
+		- Implementare audio per vittoria/ sconfitta
+
+	- Livello:
+		- Implementazione esperienza per partita
+		- Implementazione livello basato su esperienza
+
+	- Partita:
+		- Migliorie grafiche quali:
+			- mano del giocatore,
+			- gestione pagina per 2 o più giocatori
+			- implementazione per scelta su impostazioni se
+		  	- mostrare chat e punteggi
+			- mazzo
+			- carte prese(?)
+			-
+
+	- Profilo:
+		- Migliorie grafiche per:
+			- visualizzazione storico partite
+			- visualizzazione schermata
+			- immagine profilo
+			- colore sfondo (?)
+		- Implementazione nello storage dell'esperienza utente
+		- Implementazione grafica barra livello ed esperienza
+		- Modifica punteggi storico partite, utilizzando il punteggio scalato
+
+	- Impostazioni:
+		-
