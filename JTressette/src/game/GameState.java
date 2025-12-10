@@ -118,11 +118,7 @@ public class GameState {
             lastTrickCardsWon = cardsWon;
 
             // prepara per la prossima presa: il prossimo currentPlayerIndex = index del winner nella lista players
-            int winnerPlayerIndex = players.indexOf(winner);
-            rotatePlayersOrder(winnerPlayerIndex);
-
-            // il vincitore è il primo nella lista ruotata
-            currentPlayerIndex = 0;
+            currentPlayerIndex = players.indexOf(winner);
             System.out.println(players);
         }
         return c;
@@ -286,11 +282,7 @@ public class GameState {
         return trickCards.get(winnerIdx);
     }
 
-    // Ruota la lista di players nell'ordine di gioco della presa corrente
-    private void rotatePlayersOrder(int winnerIndex) {
-        if (winnerIndex < 0 || winnerIndex > players.size()) return;
-        Collections.rotate(players, -winnerIndex);
-    }
+
 
     /**
         Funzioni utilizzate per ottenere informazioni riguardo le carte

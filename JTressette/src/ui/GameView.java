@@ -35,10 +35,10 @@ public class GameView extends JFrame {
     private static final int SMALL_CARD_HEIGHT = 75;
 
     // Hand dynamic sizing
-    private static final int HAND_GAP = 8; // gap between hand cards
-    private static final int HAND_CARD_MIN_WIDTH = 36;
-    private static final int HAND_CARD_MAX_WIDTH = 90;
-    private int handCardWidth = 56;  // default
+    private static final int HAND_GAP = 5; // gap between hand cards
+    private static final int HAND_CARD_MIN_WIDTH = 45;
+    private static final int HAND_CARD_MAX_WIDTH = 85;
+    private int handCardWidth = 60;  // default
     private int handCardHeight = (int) Math.round(handCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
     // Table sizing constraints
@@ -68,7 +68,6 @@ public class GameView extends JFrame {
     private JLabel wonCardsLabel;
     private JPanel tableOval; // actual table panel
 
-    private int selectedCardIndex = -1;
     private final List<CardPanel> cardPanels = new ArrayList<>();
     private List<Giocatore> players;
 
@@ -153,17 +152,22 @@ public class GameView extends JFrame {
         // figure available width inside center area (exclude info panel)
         int contentW = getContentPane().getWidth();
         int rightPanelW = 220;
-        int effectiveWidth = Math.max(320, contentW - rightPanelW - 80);
+        int effectiveWidth = Math.max(320, contentW - rightPanelW - 60);
 
         int handCount = Math.max(1, gameState.getHand(humanPlayer).size());
-        int maxPerCard = (effectiveWidth - (handCount + 1) * HAND_GAP) / handCount;
+        // Calculate card width to fit all cards without scrolling
+        int totalGaps = (handCount + 1) * HAND_GAP;
+        int availableForCards = effectiveWidth - totalGaps - 40; // extra margin
+        int maxPerCard = availableForCards / handCount;
 
         handCardWidth = Math.max(HAND_CARD_MIN_WIDTH, Math.min(HAND_CARD_MAX_WIDTH, maxPerCard));
         double ratio = (double) CARD_HEIGHT / (double) CARD_WIDTH;
         handCardHeight = (int) Math.round(handCardWidth * ratio);
 
         if (playerHandPanel != null && handScrollPane != null) {
-            handScrollPane.setPreferredSize(new Dimension(Math.min(effectiveWidth, 1000), handCardHeight + 36));
+            // Disable scrolling - all cards should fit
+            handScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            handScrollPane.setPreferredSize(new Dimension(effectiveWidth, handCardHeight + 30));
             playerHandPanel.revalidate();
         }
     }
@@ -187,38 +191,34 @@ public class GameView extends JFrame {
     private JPanel createOpponentArea() {
         JPanel area = new JPanel();
         area.setOpaque(false);
-        area.setLayout(new FlowLayout(FlowLayout.CENTER, 40, 10));
+        area.setLayout(null); // Use null layout for precise positioning
         area.setBorder(new EmptyBorder(20, 20, 10, 20));
-
-        for (Giocatore player : this.players) {
-            if (player != humanPlayer) {
-                JPanel opponentBox = createOpponentBox(player);
-                area.add(opponentBox);
-            }
-        }
-
+        area.setPreferredSize(new Dimension(0, 150));
         return area;
     }
 
-    private JPanel createOpponentBox(Giocatore player) {
+    private JPanel createOpponentBox(Giocatore player, boolean isVertical) {
         JPanel box = new JPanel();
         box.setOpaque(false);
-        box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+        box.setLayout(new BoxLayout(box, isVertical ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS));
 
         JLabel nameLabel = new JLabel(player.getName());
         nameLabel.setForeground(TEXT_WHITE);
         nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        nameLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
         // Face-down cards panel using card back images
-        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, -20, 0));
+        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, isVertical ? 0 : -20, isVertical ? -20 : 0));
         cardsPanel.setOpaque(false);
 
         List<Cards> hand = gameState.getHand(player);
-        Image cardBackImg = CardImageLoader.getScaledCardBackImage(SMALL_CARD_WIDTH, SMALL_CARD_HEIGHT);
+        int cardWidth = isVertical ? SMALL_CARD_HEIGHT : SMALL_CARD_WIDTH;
+        int cardHeight = isVertical ? SMALL_CARD_WIDTH : SMALL_CARD_HEIGHT;
+        Image cardBackImg = CardImageLoader.getScaledCardBackImage(cardWidth, cardHeight);
         for (int i = 0; i < hand.size(); i++) {
             JLabel cardBack = new JLabel(new ImageIcon(cardBackImg));
-            cardBack.setPreferredSize(new Dimension(SMALL_CARD_WIDTH + 5, SMALL_CARD_HEIGHT + 5));
+            cardBack.setPreferredSize(new Dimension(cardWidth + 5, cardHeight + 5));
             cardsPanel.add(cardBack);
         }
 
@@ -234,11 +234,20 @@ public class GameView extends JFrame {
         wonLabel.setFont(new Font("Arial", Font.PLAIN, 10));
         wonPanel.add(wonLabel);
 
-        box.add(nameLabel);
-        box.add(Box.createVerticalStrut(5));
-        box.add(cardsPanel);
-        box.add(Box.createVerticalStrut(3));
-        box.add(wonPanel);
+        if (isVertical) {
+            box.add(Box.createHorizontalStrut(5));
+            box.add(nameLabel);
+            box.add(Box.createHorizontalStrut(5));
+            box.add(cardsPanel);
+            box.add(Box.createHorizontalStrut(5));
+            box.add(wonPanel);
+        } else {
+            box.add(nameLabel);
+            box.add(Box.createVerticalStrut(5));
+            box.add(cardsPanel);
+            box.add(Box.createVerticalStrut(3));
+            box.add(wonPanel);
+        }
         return box;
     }
 
@@ -350,14 +359,13 @@ public class GameView extends JFrame {
         playerHandPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, HAND_GAP, 6));
         playerHandPanel.setOpaque(false);
 
-        // Put handPanel in horizontal scroll pane to avoid clipping and keep proportions
-        handScrollPane = new JScrollPane(playerHandPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        // Put handPanel in a wrapper - no scroll needed as cards auto-size
+        handScrollPane = new JScrollPane(playerHandPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         handScrollPane.setOpaque(false);
         handScrollPane.getViewport().setOpaque(false);
         handScrollPane.setBorder(null);
-        handScrollPane.getHorizontalScrollBar().setUnitIncrement(16);
         handScrollPane.setAlignmentX(Component.CENTER_ALIGNMENT);
-        handScrollPane.setPreferredSize(new Dimension(800, handCardHeight + 36)); // will be updated by recomputeHandCardSize()
+        handScrollPane.setPreferredSize(new Dimension(800, handCardHeight + 30)); // will be updated by recomputeHandCardSize()
 
         // Won cards indicator panel
         JPanel wonCardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
@@ -370,14 +378,10 @@ public class GameView extends JFrame {
         wonCardsLabel.setFont(new Font("Arial", Font.BOLD, 12));
         wonCardsPanel.add(wonCardsLabel);
 
+        // Play button no longer needed - cards play on click
         playButton = new JButton("Gioca Carta");
-        playButton.setFont(new Font("Arial", Font.BOLD, 14));
-        playButton.setBackground(new Color(200, 160, 0));
-        playButton.setForeground(Color.WHITE);
-        playButton.setFocusPainted(false);
+        playButton.setVisible(false); // Hide the button
         playButton.setEnabled(false);
-        playButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        playButton.addActionListener(_ -> onPlayCard());
 
         area.add(playerLabel);
         area.add(Box.createVerticalStrut(6));
@@ -385,7 +389,6 @@ public class GameView extends JFrame {
         area.add(Box.createVerticalStrut(8));
         area.add(handScrollPane);
         area.add(Box.createVerticalStrut(8));
-        area.add(playButton);
 
         // set a reasonable preferred height to avoid overlap
         area.setPreferredSize(new Dimension(0, handCardHeight + 110));
@@ -469,7 +472,7 @@ public class GameView extends JFrame {
         backButton.setForeground(Color.WHITE);
         backButton.setFocusPainted(false);
         backButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        backButton.addActionListener(_ -> controller.onExitGame());
+        backButton.addActionListener(e -> controller.onExitGame());
 
         panel.add(titleLabel);
         panel.add(Box.createVerticalStrut(15));
@@ -508,7 +511,6 @@ public class GameView extends JFrame {
     private class CardPanel extends JPanel {
         private final Cards card;
         private boolean isHovered = false;
-        private boolean isSelected = false;
         private final Image cardImage;
         private final int drawWidth;
         private final int drawHeight;
@@ -522,7 +524,7 @@ public class GameView extends JFrame {
             this.drawHeight = drawHeight;
             this.cardImage = CardImageLoader.getScaledCardImage(card, drawWidth, drawHeight);
             setOpaque(false);
-            setPreferredSize(new Dimension(drawWidth + 5, drawHeight + 15));
+            setPreferredSize(new Dimension(drawWidth + 5, drawHeight + 10));
 
             if (isPlayable) {
                 addMouseListener(new MouseAdapter() {
@@ -540,16 +542,25 @@ public class GameView extends JFrame {
 
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        selectCard(index);
+                        // Play card directly on click
+                        int[] legalMoves = gameState.getLegalMoves(humanPlayer);
+                        boolean isLegal = false;
+                        for (int legal : legalMoves) {
+                            if (legal == index) {
+                                isLegal = true;
+                                break;
+                            }
+                        }
+                        
+                        if (isLegal) {
+                            controller.onCardPlayed(index);
+                        } else {
+                            log("Mossa non valida! Devi seguire il seme se possibile.");
+                        }
                     }
                 });
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
-        }
-
-        public void setSelected(boolean selected) {
-            this.isSelected = selected;
-            repaint();
         }
 
         @Override
@@ -559,11 +570,11 @@ public class GameView extends JFrame {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-            int offsetY = (isHovered || isSelected) ? 0 : 6;
+            int offsetY = isHovered ? -8 : 0; // Lift card on hover
 
             // Shadow
             g2d.setColor(new Color(0, 0, 0, 80));
-            g2d.fill(new RoundRectangle2D.Double(4, 4 + offsetY, drawWidth, drawHeight, 10, 10));
+            g2d.fill(new RoundRectangle2D.Double(3, 3 + offsetY, drawWidth, drawHeight, 10, 10));
 
             // Draw card image
             if (cardImage != null) {
@@ -572,14 +583,10 @@ public class GameView extends JFrame {
                 drawFallbackCard(g2d, offsetY, drawWidth, drawHeight);
             }
 
-            // Selection border
-            if (isSelected) {
+            // Highlight border on hover
+            if (isHovered) {
                 g2d.setColor(TEXT_GOLD);
                 g2d.setStroke(new BasicStroke(3));
-                g2d.drawRoundRect(0, offsetY, drawWidth - 1, drawHeight - 1, 10, 10);
-            } else if (isHovered) {
-                g2d.setColor(TEXT_GOLD);
-                g2d.setStroke(new BasicStroke(2));
                 g2d.drawRoundRect(0, offsetY, drawWidth - 1, drawHeight - 1, 10, 10);
             }
         }
@@ -644,37 +651,7 @@ public class GameView extends JFrame {
         };
     }
 
-    private void selectCard(int index) {
-        if (selectedCardIndex >= 0 && selectedCardIndex < cardPanels.size()) {
-            cardPanels.get(selectedCardIndex).setSelected(false);
-        }
-        selectedCardIndex = index;
-        if (index >= 0 && index < cardPanels.size()) {
-            cardPanels.get(index).setSelected(true);
-        }
-        playButton.setEnabled(true);
-    }
 
-    private void onPlayCard() {
-        if (selectedCardIndex >= 0) {
-            int[] legalMoves = gameState.getLegalMoves(humanPlayer);
-            boolean isLegal = false;
-            for (int legal : legalMoves) {
-                if (legal == selectedCardIndex) {
-                    isLegal = true;
-                    break;
-                }
-            }
-
-            if (isLegal) {
-                controller.onCardPlayed(selectedCardIndex);
-                selectedCardIndex = -1;
-                playButton.setEnabled(false);
-            } else {
-                log("Mossa non valida! Devi seguire il seme se possibile.");
-            }
-        }
-    }
 
     public void refresh() {
         SwingUtilities.invokeLater(() -> {
@@ -712,15 +689,13 @@ public class GameView extends JFrame {
             playerHandPanel.add(cardPanel);
         }
 
-        selectedCardIndex = -1;
-        playButton.setEnabled(false);
-
         playerHandPanel.revalidate();
         playerHandPanel.repaint();
     }
 
     /**
      * Compute slot positions relative to current tableOval size.
+     * Returns positions for all players in their FIXED order.
      */
     private int[][] computeSlotPositions() {
         int w = tableOval.getWidth() > 0 ? tableOval.getWidth() : tableOval.getPreferredSize().width;
@@ -729,24 +704,49 @@ public class GameView extends JFrame {
         int centerX = (w - CARD_WIDTH) / 2;
         int centerY = (h - CARD_HEIGHT) / 2;
 
-        int[][] pos2 = {
-                {centerX, h - CARD_HEIGHT - 12}, // bottom
-                {centerX, 12}                    // top
-        };
-        int[][] pos3 = {
-                {centerX, h - CARD_HEIGHT - 12},     // bottom
-                {12, centerY - CARD_HEIGHT / 2},     // left
-                {centerX, 12}                        // top
-        };
-        int[][] pos4 = {
-                {centerX, h - CARD_HEIGHT - 12},     // bottom
-                {12, centerY - CARD_HEIGHT / 2},     // left
-                {centerX, 12},                       // top
-                {w - CARD_WIDTH - 12, centerY - CARD_HEIGHT / 2} // right
-        };
-
-        int numplayers = this.players.size();
-        return numplayers == 2 ? pos2 : (numplayers == 3 ? pos3 : pos4);
+        int numPlayers = this.players.size();
+        int humanIndex = players.indexOf(humanPlayer);
+        
+        int[][] positions = new int[numPlayers][2];
+        
+        if (numPlayers == 2) {
+            // Human at bottom, opponent at top
+            for (int i = 0; i < numPlayers; i++) {
+                if (i == humanIndex) {
+                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - 12}; // bottom
+                } else {
+                    positions[i] = new int[]{centerX, 12}; // top
+                }
+            }
+        } else if (numPlayers == 3) {
+            // Fixed positions: human bottom, left, top (based on index)
+            for (int i = 0; i < numPlayers; i++) {
+                int relativePos = (i - humanIndex + 3) % 3;
+                if (relativePos == 0) {
+                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - 12}; // bottom (human)
+                } else if (relativePos == 1) {
+                    positions[i] = new int[]{12, centerY - CARD_HEIGHT / 2}; // left
+                } else {
+                    positions[i] = new int[]{centerX, 12}; // top
+                }
+            }
+        } else if (numPlayers == 4) {
+            // Fixed positions: human bottom, left, top, right
+            for (int i = 0; i < numPlayers; i++) {
+                int relativePos = (i - humanIndex + 4) % 4;
+                if (relativePos == 0) {
+                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - 12}; // bottom (human)
+                } else if (relativePos == 1) {
+                    positions[i] = new int[]{12, centerY - CARD_HEIGHT / 2}; // left
+                } else if (relativePos == 2) {
+                    positions[i] = new int[]{centerX, 12}; // top
+                } else {
+                    positions[i] = new int[]{w - CARD_WIDTH - 12, centerY - CARD_HEIGHT / 2}; // right
+                }
+            }
+        }
+        
+        return positions;
     }
 
     private void updateTableCards() {
@@ -821,12 +821,66 @@ public class GameView extends JFrame {
 
     private void updateOpponentArea() {
         opponentArea.removeAll();
-        for (Giocatore player : gameState.getPlayers()) {
-            if (player != humanPlayer) {
-                JPanel opponentBox = createOpponentBox(player);
-                opponentArea.add(opponentBox);
+        
+        int numPlayers = players.size();
+        int areaWidth = opponentArea.getWidth() > 0 ? opponentArea.getWidth() : 1000;
+        int areaHeight = opponentArea.getHeight() > 0 ? opponentArea.getHeight() : 150;
+        
+        // Find human player index
+        int humanIndex = players.indexOf(humanPlayer);
+        
+        // Position opponents based on fixed positions
+        for (int i = 0; i < numPlayers; i++) {
+            if (i == humanIndex) continue; // Skip human player
+            
+            Giocatore player = players.get(i);
+            boolean isVertical = false;
+            int x = 0, y = 0;
+            
+            if (numPlayers == 2) {
+                // Top center
+                isVertical = false;
+                x = areaWidth / 2 - 80;
+                y = 10;
+            } else if (numPlayers == 3) {
+                // Arrange as: left, top, bottom (excluding human at bottom)
+                if (i == (humanIndex + 1) % 3) {
+                    // Left player - vertical cards
+                    isVertical = true;
+                    x = 20;
+                    y = areaHeight / 2 - 60;
+                } else {
+                    // Top player - horizontal cards
+                    isVertical = false;
+                    x = areaWidth / 2 - 80;
+                    y = 10;
+                }
+            } else if (numPlayers == 4) {
+                // Arrange as: left, top, right (excluding human at bottom)
+                int relativePos = (i - humanIndex + 4) % 4;
+                if (relativePos == 1) {
+                    // Left player - vertical cards
+                    isVertical = true;
+                    x = 20;
+                    y = areaHeight / 2 - 60;
+                } else if (relativePos == 2) {
+                    // Top player - horizontal cards
+                    isVertical = false;
+                    x = areaWidth / 2 - 80;
+                    y = 10;
+                } else if (relativePos == 3) {
+                    // Right player - vertical cards
+                    isVertical = true;
+                    x = areaWidth - 180;
+                    y = areaHeight / 2 - 60;
+                }
             }
+            
+            JPanel opponentBox = createOpponentBox(player, isVertical);
+            opponentBox.setBounds(x, y, isVertical ? 180 : 200, isVertical ? 120 : 150);
+            opponentArea.add(opponentBox);
         }
+        
         opponentArea.revalidate();
         opponentArea.repaint();
     }
@@ -903,7 +957,7 @@ public class GameView extends JFrame {
         tableOval.revalidate();
         tableOval.repaint();
 
-        Timer removeTimer = new Timer(800, _ -> {
+        Timer removeTimer = new Timer(800, evt -> {
             tableOval.remove(winnerLabel);
             tableOval.revalidate();
             tableOval.repaint();
@@ -916,7 +970,7 @@ public class GameView extends JFrame {
         Timer fadeTimer = new Timer(50, null);
         final float[] alpha = {1.0f};
 
-        fadeTimer.addActionListener(_ -> {
+        fadeTimer.addActionListener(evt -> {
             alpha[0] -= 0.1f;
             if (alpha[0] <= 0) {
                 fadeTimer.stop();
@@ -996,11 +1050,11 @@ public class GameView extends JFrame {
             final int[] currentCard = {0};
             final int totalCards = numPlayers * cardsPerPlayer;
 
-            dealTimer.addActionListener(_ -> {
+            dealTimer.addActionListener(evt -> {
                 if (currentCard[0] >= totalCards) {
                     dealTimer.stop();
                     dealingLabel.setText("Pronto!");
-                    Timer fadeOutTimer = new Timer(800, _ -> {
+                    Timer fadeOutTimer = new Timer(800, evt2 -> {
                         glassPane.remove(animationOverlay);
                         glassPane.setVisible(false);
                         glassPane.repaint();
@@ -1041,7 +1095,7 @@ public class GameView extends JFrame {
         Timer flyTimer = new Timer(delay, null);
         final int[] step = {0};
 
-        flyTimer.addActionListener(_ -> {
+        flyTimer.addActionListener(evt -> {
             step[0]++;
             double t = (double) step[0] / steps;
             double easedT = 1 - Math.pow(1 - t, 3);
@@ -1072,7 +1126,7 @@ public class GameView extends JFrame {
                 {
                     // Effetto fade-in
                     Timer fadeIn = new Timer(18, null);
-                    fadeIn.addActionListener(_ -> {
+                    fadeIn.addActionListener(evt -> {
                         alpha += 0.07f;
                         if (alpha >= 1f) {
                             alpha = 1f;
@@ -1123,10 +1177,10 @@ public class GameView extends JFrame {
             backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             // Gestione click
-            backButton.addActionListener(_ -> {
+            backButton.addActionListener(e -> {
                 // Fade-out veloce
                 Timer fadeOut = new Timer(16, null);
-                fadeOut.addActionListener(_ -> {
+                fadeOut.addActionListener(evt -> {
                     overlay.setVisible(false);
                     getGlassPane().setVisible(false);
                     // Richiama evento controller
