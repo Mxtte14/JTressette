@@ -1,10 +1,7 @@
 package ui;
 
 import controller.GameController;
-import game.Cards;
-import game.Giocatore;
-import game.GiocatoreUmano;
-import game.GameState;
+import game.*;
 import util.CardImageLoader;
 
 import javax.swing.*;
@@ -73,12 +70,14 @@ public class GameView extends JFrame {
 
     private int selectedCardIndex = -1;
     private final List<CardPanel> cardPanels = new ArrayList<>();
+    private List<Giocatore> players;
 
     public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller) {
         super("JTressette - Partita in Corso");
         this.gameState = gameState;
         this.humanPlayer = humanPlayer;
         this.controller = controller;
+        this.players = gameState.getPlayers();
         // Preload card images
         CardImageLoader.preloadImages();
         initUI();
@@ -191,7 +190,7 @@ public class GameView extends JFrame {
         area.setLayout(new FlowLayout(FlowLayout.CENTER, 40, 10));
         area.setBorder(new EmptyBorder(20, 20, 10, 20));
 
-        for (Giocatore player : gameState.getPlayers()) {
+        for (Giocatore player : this.players) {
             if (player != humanPlayer) {
                 JPanel opponentBox = createOpponentBox(player);
                 area.add(opponentBox);
@@ -746,27 +745,26 @@ public class GameView extends JFrame {
                 {w - CARD_WIDTH - 12, centerY - CARD_HEIGHT / 2} // right
         };
 
-        int players = gameState.getPlayers().size();
-        return players == 2 ? pos2 : (players == 3 ? pos3 : pos4);
+        int numplayers = this.players.size();
+        return numplayers == 2 ? pos2 : (numplayers == 3 ? pos3 : pos4);
     }
 
     private void updateTableCards() {
         tableOval.removeAll();
 
-        // add deck centered on table
+        // Deck image al centro del tavolo (come prima)
         JLabel deck = createDeckImage();
         int dw = deck.getPreferredSize().width;
         int dh = deck.getPreferredSize().height;
-        int deckX = Math.max(0, (int)(tableOval.getWidth() * 0.13));   // 13% da sinistra
+        int deckX = Math.max(0, (int)(tableOval.getWidth() * 0.13));
         int deckY = (tableOval.getHeight() - dh) / 2;
         deck.setBounds(deckX, deckY, dw, dh);
         tableOval.add(deck);
 
-        int nPlayers = gameState.getPlayers().size();
+        int nPlayers = this.players.size();
         int[][] positions = computeSlotPositions();
-        List<Giocatore> players = gameState.getPlayers();
 
-        // slot highlights
+        // Slot highlights (bordo giallo SOLO sul turno, posizioni fisse)
         for (int i = 0; i < nPlayers; i++) {
             int x = positions[i][0];
             int y = positions[i][1];
@@ -777,7 +775,7 @@ public class GameView extends JFrame {
                     super.paintComponent(g);
                     Graphics2D g2d = (Graphics2D) g;
                     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    if (players.get(finalI) == gameState.getCurrentPlayer()) {
+                    if (GameView.this.players.get(finalI) == gameState.getCurrentPlayer()) {
                         g2d.setColor(new Color(255, 215, 0, 160));
                         g2d.setStroke(new BasicStroke(3));
                         g2d.drawRoundRect(4, 4, CARD_WIDTH, CARD_HEIGHT, 12, 12);
@@ -789,33 +787,30 @@ public class GameView extends JFrame {
             tableOval.add(slot);
         }
 
-        // actual played cards
+        // Carte giocate: sempre nella posizione fissa del proprio giocatore
         List<Giocatore> trickPlayers = gameState.getTrickPlayers();
         List<Cards> trickCards = gameState.getTrickCards();
-        for (int i = 0; i < trickPlayers.size(); i++) {
-            Giocatore player = trickPlayers.get(i);
-            int idx = players.indexOf(player);
-            if (idx < 0 || idx >= positions.length) continue;
-            int x = positions[idx][0];
-            int y = positions[idx][1];
-            CardPanel cardPanel = new CardPanel(trickCards.get(i), -1, false, CARD_WIDTH, CARD_HEIGHT);
-            cardPanel.setBounds(x, y, CARD_WIDTH, CARD_HEIGHT);
-            tableOval.add(cardPanel);
+
+        for (int i = 0; i < nPlayers; i++) {
+            Giocatore player = this.players.get(i);
+            int cardIndex = trickPlayers.indexOf(player);
+            if (cardIndex >= 0 && cardIndex < trickCards.size()) {
+                int x = positions[i][0];
+                int y = positions[i][1];
+                CardPanel cardPanel = new CardPanel(trickCards.get(cardIndex), -1, false, CARD_WIDTH, CARD_HEIGHT);
+                cardPanel.setBounds(x, y, CARD_WIDTH, CARD_HEIGHT);
+                tableOval.add(cardPanel);
+            }
         }
 
-        // player labels
+        // Etichette con nomi
         for (int i = 0; i < nPlayers; i++) {
-            Giocatore player = players.get(i);
+            Giocatore player = this.players.get(i);
             JLabel name = new JLabel(player.getName());
             name.setForeground(TEXT_WHITE);
             name.setFont(new Font("Arial", Font.BOLD, 13));
             int nx = positions[i][0] - 10;
-            int ny;
-            if (player == humanPlayer) {
-                ny = positions[i][1] + CARD_HEIGHT + 8; // SOTTO la carta per l'umano
-            } else {
-                ny = positions[i][1] + CARD_HEIGHT + 8; // SOTTO la carta giocata per il bot!
-            }
+            int ny = positions[i][1] + CARD_HEIGHT + 8;
             name.setBounds(Math.max(2, nx), ny, 140, 18);
             tableOval.add(name);
         }

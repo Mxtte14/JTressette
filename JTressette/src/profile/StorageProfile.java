@@ -1,7 +1,5 @@
 package profile;
 
-
-
 import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
@@ -9,11 +7,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-/**
- *
- * @author andre
- *
- */
+
 public class StorageProfile {
     private static final Logger LOG = Logger.getLogger(StorageProfile.class.getName());
     private static final String DIR_NAME = ".jtressette";
@@ -35,8 +29,7 @@ public class StorageProfile {
         String userHome = System.getProperty("user.home");
         this.profileDir = Paths.get(userHome, DIR_NAME);
         this.profileFile = profileDir.resolve(FILE_NAME);
-    }// Map of game data
-
+    }
 
     public UserProfile loadOrCreateDefault() {
         try {
@@ -94,7 +87,7 @@ public class StorageProfile {
             profile.setTotalWins(0);
         }
 
-        // Carica i game records
+        // Carica i game records (MINIMALISTA)
         List<GamesRecord> games = loadGamesFromProperties(props);
         profile.setRecentGames(games);
 
@@ -102,7 +95,7 @@ public class StorageProfile {
     }
 
     /**
-     * Carica i game records dalle proprietà.
+     * Carica i game records dalle proprietà (solo dati essenziali).
      */
     private List<GamesRecord> loadGamesFromProperties(Properties props) {
         List<GamesRecord> games = new ArrayList<>();
@@ -118,21 +111,16 @@ public class StorageProfile {
             String prefix = KEY_GAME_PREFIX + i + ".";
             String date = props.getProperty(prefix + "date", "");
             String opponent = props.getProperty(prefix + "opponent", "");
-            String result = props.getProperty(prefix + "winner", "");
-            String scaledScore = props.getProperty(prefix + "scaledScore", "");
-            games.add(new GamesRecord(date, opponent, result, scaledScore ));
+            String winner = props.getProperty(prefix + "winner", "");
+            String winnerScore = props.getProperty(prefix + "winnerScore", "");
+            String myScore = props.getProperty(prefix + "myScore", "");
+            games.add(new GamesRecord(date, opponent, winner, winnerScore, myScore));
         }
         return games;
     }
 
     /**
-     * Salva il profilo nel file properties.
-     */
-
-    /**
      * Salva il profilo utente su file.
-     * @param profile Il profilo da salvare
-     * @throws IOException Se si verifica un errore durante il salvataggio
      */
     public synchronized void save(UserProfile profile) throws IOException {
         if (Files.notExists(profileDir)) {
@@ -150,9 +138,7 @@ public class StorageProfile {
         props.setProperty(KEY_TOTAL_GAMES, String.valueOf(profile.getTotalGames()));
         props.setProperty(KEY_TOTAL_WINS, String.valueOf(profile.getWinsNumber()));
 
-        // Salva i game records
-        // (solo la parte modificata: dentro save(...), nel loop che salva i game records)
-        // Salva i game records
+        // Salva i game records (solo dati fondamentali)
         List<GamesRecord> games = profile.getRecentGames();
         props.setProperty(KEY_GAMES_COUNT, String.valueOf(games.size()));
         for (int i = 0; i < games.size(); i++) {
@@ -160,13 +146,11 @@ public class StorageProfile {
             String prefix = KEY_GAME_PREFIX + i + ".";
             props.setProperty(prefix + "date", g.getDate() != null ? g.getDate() : "");
             props.setProperty(prefix + "opponent", g.getOpponent() != null ? g.getOpponent() : "");
-            props.setProperty(prefix + "winner", g.getResult() != null ? g.getResult() : "");
-            // Salva anche lo scaledScore (stringa)
-            props.setProperty(prefix + "scaledScore", g.getScaledScore() != null ? g.getScaledScore() : "");
+            props.setProperty(prefix + "winner", g.getWinner() != null ? g.getWinner() : "");
+            props.setProperty(prefix + "winnerScore", g.getWinnerScore() != null ? g.getWinnerScore() : "");
+            props.setProperty(prefix + "myScore", g.getMyScore() != null ? g.getMyScore() : "");
         }
 
-
-        // Scrivi su file temporaneo e poi rinomina per evitare corruzione
         Path tmp = profileDir.resolve(FILE_NAME + ".tmp");
         try (OutputStream os = Files.newOutputStream(tmp, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             props.store(os, "JTressette User Profile");
@@ -180,10 +164,6 @@ public class StorageProfile {
         }
     }
 
-    /**
-     * Restituisce il percorso del file di profilo.
-     * @return Path del file di profilo
-     */
     public Path getProfileFilePath() {
         return profileFile;
     }

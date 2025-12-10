@@ -112,10 +112,6 @@ public class JTressette {
                             GamesRecord record = controllerHolder[0].getGameRecord();
                             profileController.recordMatch(record);
 
-                            // opzionale: mostra dialog con risultato (puoi personalizzare)
-                            JOptionPane.showMessageDialog(frame,
-                                    "Partita terminata:\n" + record.getResult(),
-                                    "Risultato", JOptionPane.INFORMATION_MESSAGE);
                         } catch (Exception ex) {
                             // logga ma non bloccare la UI
                             LOG.warning("Impossibile ottenere o registrare game record: " + ex.getMessage());

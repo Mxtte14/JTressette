@@ -6,22 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- Profilo utente contenente i dati dell'utente.
- * - Serializable per compatibilità con possibili future implementazioni
- * - JavaBean compatibile (costruttore no-arg + getter/setter)
- * - Usa List<GamesRecord> per lo storico partite (coerente con ProfileMenu)
+ * Profilo utente minimale. Tiene solo lo storico partite e dati essenziali.
  */
-
 public class UserProfile implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String username;
-    private long createdAt; // epoch millis
+    private long createdAt;
     private int totalGames;
     private int totalWins;
     private List<GamesRecord> recentGames;
     private String avatarPath;
-
 
     public UserProfile() {
         this.username = "Giocatore";
@@ -43,23 +38,20 @@ public class UserProfile implements Serializable {
 
     /**
      * Aggiunge un record alle recentGames (in testa). Mantiene al massimo 50 record.
-     * Incrementa totalGames. Se il campo result contiene "win" o "vitt" (case-insensitive)
-     * incrementa totalWins.
+     * Aggiorna totalGames e totalWins.
      */
     public void addGameRecord(GamesRecord summary) {
         if (summary == null) return;
         if (this.recentGames == null) this.recentGames = new ArrayList<>();
         this.recentGames.add(0, summary); // ultima prima
         if (this.recentGames.size() > 50) this.recentGames.remove(this.recentGames.size() - 1);
+
         this.totalGames++;
-        String r = summary.getResult();
-        if (r != null) {
-            String lr = r.toLowerCase();
-            if (lr.contains("win") || lr.contains("vitt")) this.totalWins++;
+        if (summary.getWinner() != null && summary.getWinner().equals(username)) {
+            this.totalWins++;
         }
     }
 
-    // Compatibilità con ProfileMenu (usa getHistory())
     public List<GamesRecord> getHistory() {
         if (this.recentGames == null) this.recentGames = new ArrayList<>();
         return recentGames;
@@ -67,85 +59,49 @@ public class UserProfile implements Serializable {
 
     // --- JavaBean getters/setters ---
 
-    public String getUsername() {
-        return username;
-    }
+    public String getUsername() { return username; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public void setUsername(String username) { this.username = username; }
 
-    /**
-     * Restituisce createdAt come epoch millis.
-     * XMLEncoder funziona meglio con tipi primari come long.
-     */
-    public long getCreatedAt() {
-        return createdAt;
-    }
+    public long getCreatedAt() { return createdAt; }
 
-    public void setCreatedAt(long createdAt) {
-        this.createdAt = createdAt;
-    }
+    public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
 
-    /**
-     * Helper per usare Instant se necessario.
-     */
-    public Instant getCreatedAtInstant() {
-        return Instant.ofEpochMilli(createdAt);
-    }
+    public Instant getCreatedAtInstant() { return Instant.ofEpochMilli(createdAt); }
 
     public void setCreatedAtInstant(Instant instant) {
-        if (instant == null) this.createdAt = Instant.now().toEpochMilli();
-        else this.createdAt = instant.toEpochMilli();
+        this.createdAt = (instant != null) ? instant.toEpochMilli() : Instant.now().toEpochMilli();
     }
 
-    public int getTotalGames() {
-        return totalGames;
-    }
+    public int getTotalGames() { return totalGames; }
 
-    public void setTotalGames(int totalGames) {
-        this.totalGames = totalGames;
-    }
+    public void setTotalGames(int totalGames) { this.totalGames = totalGames; }
 
+    /**
+     * Restituisce il conteggio delle vittorie in base allo storico.
+     */
     public int getWinsNumber() {
         int wins = 0;
         for (GamesRecord record : getRecentGames()) {
-            String r = record.getResult();
-            if (r != null) {
-                if (r.contains(username)){ wins++;
-                }
-
+            if (record.getWinner() != null && record.getWinner().equals(username)) {
+                wins++;
             }
-            }
-            return wins;
         }
-
-    private CharSequence toString(String username) {
-        return null;
+        return wins;
     }
 
+    public void setTotalWins(int totalWins) { this.totalWins = totalWins; }
 
-    public void setTotalWins(int totalWins) {
-        this.totalWins = totalWins;
-    }
-
-    // Getter/Setter per XMLEncoder/XMLDecoder
     public List<GamesRecord> getRecentGames() {
         if (this.recentGames == null) this.recentGames = new ArrayList<>();
         return recentGames;
     }
 
-    public void setRecentGames(List<GamesRecord> recentGames) {
-        this.recentGames = recentGames;
-    }
+    public void setRecentGames(List<GamesRecord> recentGames) { this.recentGames = recentGames; }
 
-    public String getAvatarPath() {
-        return avatarPath;
-    }
+    public String getAvatarPath() { return avatarPath; }
 
-    public void setAvatarPath(String avatarPath) {
-        this.avatarPath = avatarPath;
-    }
+    public void setAvatarPath(String avatarPath) { this.avatarPath = avatarPath; }
 
     @Override
     public String toString() {
@@ -158,5 +114,4 @@ public class UserProfile implements Serializable {
                 ", avatarPath='" + avatarPath + '\'' +
                 '}';
     }
-
 }

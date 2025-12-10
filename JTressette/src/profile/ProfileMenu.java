@@ -162,13 +162,21 @@ public class ProfileMenu extends JPanel implements ProfileListener {
             int wins = profile.getWinsNumber();
             int losses = profile.getTotalGames() - wins;
             statsLabel.setText("Vittorie - Sconfitte: "
-                    + wins + " - " + losses );
+                    + wins + " - " + losses);
 
             tableModel.setRowCount(0);
             List<GamesRecord> history = profile.getHistory();
             for (GamesRecord m : history) {
-                // mostra la stringa scaledScore (può essere vuota se record vecchio)
-                tableModel.addRow(new Object[]{m.getFormattedDate(), m.getOpponent(), m.getResult(), m.getScaledScore()});
+                // Vincitore: Nome + (punteggio vincitore)
+                String winnerCell = m.getWinner();
+                if (m.getWinnerScore() != null && !m.getWinnerScore().isEmpty())
+                    winnerCell += " (" + m.getWinnerScore() + ")";
+
+                tableModel.addRow(new Object[]{
+                        m.getFormattedDate(),
+                        m.getOpponent(),
+                        winnerCell,
+                        m.getMyScore()});
             }
         });
     }

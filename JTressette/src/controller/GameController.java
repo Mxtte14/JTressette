@@ -256,15 +256,28 @@ public class GameController implements MenuImpostazioni.SettingsListener {
      * Ottieni il game record per lo storico.
      */
     public GamesRecord getGameRecord() {
-        StringJoiner opponents = new StringJoiner(",");
-        for (Giocatore p : gameState.getPlayers()) {
-            if (p.isBot()) opponents.add(p.getName());
-        }
-
         String date = Instant.now().toString();
-        String result = calculateResult();
-        String scaledScore = gameState.getScaledScoreString(humanPlayer);
-        return new GamesRecord(date, opponents.toString(), result, scaledScore);
+
+        // Opponenti: tutti tranne l'umano!
+        StringJoiner opponentsJoiner = new StringJoiner(",");
+        for (Giocatore p : gameState.getPlayers()) {
+            if (p != humanPlayer) {
+                opponentsJoiner.add(p.getName());
+            }
+        }
+        String opponentNames = opponentsJoiner.toString();
+
+        // Vincitore e punteggi
+        var scores = gameState.getScores();
+        var winner = scores.entrySet().stream()
+                .max(Comparator.comparingInt(java.util.Map.Entry::getValue))
+                .map(java.util.Map.Entry::getKey)
+                .orElse(null);
+        String winnerName = (winner != null) ? winner.getName() : "";
+        String winnerScore = (winner != null) ? gameState.getScaledScoreString(winner) : "";
+        String myScore = gameState.getScaledScoreString(humanPlayer);
+
+        return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore);
     }
 
     public GameView getView() {

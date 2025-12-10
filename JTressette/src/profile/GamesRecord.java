@@ -3,31 +3,29 @@ package profile;
 import java.io.Serializable;
 
 /**
- * Rappresenta un record di partita. Reso JavaBean e Serializable per
- * compatibilità con diverse modalità di storage.
+ * Rappresenta un record di partita compatto.
+ * Ogni record rappresenta la partita dal punto di vista dell’utente loggato.
  */
 public class GamesRecord implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String date;
-    private String opponent;
-    private String result;
-    private String scaledScore;
+    private String date;         // Data ISO
+    private String opponent;     // Avversario
+    private String winner;       // Vincitore della partita
+    private String winnerScore;  // Punteggio del vincitore (es: 2/3)
+    private String myScore;      // Punteggio dell’utente (es: 1 2/3)
 
-    // costruttore no-arg richiesto da JavaBeans
-    public GamesRecord() {
-    }
+    public GamesRecord() {}
 
-    public GamesRecord(String date, String opponent, String result, String scaledScore) {
+    public GamesRecord(String date, String opponent, String winner, String winnerScore, String myScore) {
         this.date = date;
         this.opponent = opponent;
-        this.result = result;
-        this.scaledScore = scaledScore;
+        this.winner = winner;
+        this.winnerScore = winnerScore;
+        this.myScore = myScore;
     }
 
-    public String getDate() {
-        return date;
-    }
+    public String getDate() { return date; }
 
     public String getFormattedDate() {
         if (date == null || date.isEmpty()) return "";
@@ -41,29 +39,23 @@ public class GamesRecord implements Serializable {
         }
     }
 
-    public String getOpponent() {
-        return opponent;
-    }
+    public String getOpponent() { return opponent; }
 
-    public String getResult() {
-        return result;
-    }
+    public String getWinner() { return winner; }
+
+    public String getWinnerScore() { return winnerScore; }
 
     /**
-     * Restituisce la stringa del punteggio già calcolata (es. "1 2/3").
+     * Punteggio dell’utente loggato in questa partita.
      */
-    public String getScaledScore() {
-        return scaledScore;
-    }
-
+    public String getMyScore() { return myScore; }
 
     @Override
     public String toString() {
-        return "GamesRecord{" +
-                "date ='" + date + '\'' +
-                ", opponent ='" + opponent + '\'' +
-                ", winner ='" + result + '\'' +
-                ", your scaledScore ='" + scaledScore + '\'' +
-                '}';
+        return "GamesRecord{date='" + date +
+                "', opponent='" + opponent +
+                "', winner='" + winner +
+                "', winnerScore='" + winnerScore +
+                "', myScore='" + myScore + "'}";
     }
 }
