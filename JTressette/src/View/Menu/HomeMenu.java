@@ -70,6 +70,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
     // Campi per profilo utente
     private JLabel avatarSmallLabel;
     private JLabel nameSmallLabel;
+    private JLabel levelBadgeLabel;
     private final ProfileController controller;
     private Runnable onProfileClick;
 
@@ -128,7 +129,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         topPanel.setOpaque(false);
 
-        // Avatar con bordo arrotondato
+        // Avatar con bordo arrotondato e level badge
+        JPanel avatarContainer = new JPanel(null); // null layout for absolute positioning
+        avatarContainer.setPreferredSize(new Dimension(52, 52));
+        avatarContainer.setOpaque(false);
+        
         avatarSmallLabel = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -147,8 +152,36 @@ public class HomeMenu extends JPanel implements ProfileListener {
                 super.paintComponent(g);
             }
         };
-        avatarSmallLabel.setPreferredSize(new Dimension(52, 52));
+        avatarSmallLabel.setBounds(0, 0, 52, 52);
         avatarSmallLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Level badge in bottom-right corner
+        levelBadgeLabel = new JLabel("1", SwingConstants.CENTER) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw circular badge
+                g2d.setColor(new Color(231, 76, 60)); // Red badge
+                g2d.fillOval(0, 0, getWidth(), getHeight());
+                
+                // Border
+                g2d.setColor(TITLE_GOLD);
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawOval(1, 1, getWidth() - 2, getHeight() - 2);
+                
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+        levelBadgeLabel.setBounds(36, 36, 20, 20); // Bottom-right corner
+        levelBadgeLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        levelBadgeLabel.setForeground(Color.WHITE);
+        levelBadgeLabel.setOpaque(false);
+        
+        avatarContainer.add(avatarSmallLabel);
+        avatarContainer.add(levelBadgeLabel);
 
         // Nome utente con stile
         nameSmallLabel = new JLabel();
@@ -161,7 +194,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
         clickable.setOpaque(false);
         clickable.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         clickable.add(nameSmallLabel);
-        clickable.add(avatarSmallLabel);
+        clickable.add(avatarContainer);
         clickable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -220,6 +253,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         SwingUtilities.invokeLater(() -> {
             String n = profile.getUsername() == null || profile.getUsername().isBlank() ? "Giocatore" : profile.getUsername();
             nameSmallLabel.setText(n);
+
+            // Update level badge
+            if (levelBadgeLabel != null) {
+                levelBadgeLabel.setText(String.valueOf(profile.getLevel()));
+            }
 
             Image icon = null;
             if (profile.getAvatarPath() != null) {

@@ -267,8 +267,12 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         String winnerName = (winner != null) ? winner.getName() : "";
         String winnerScore = (winner != null) ? gameState.getScaledScoreString(winner) : "";
         String myScore = gameState.getScaledScoreString(humanPlayer);
+        
+        // Get raw points and cards won for experience calculation
+        int myPoints = gameState.getScore(humanPlayer);
+        int myCardsWon = gameState.getWonCardsCount(humanPlayer);
 
-        return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore);
+        return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore, myPoints, myCardsWon);
     }
 
     public GameView getView() {
