@@ -1,16 +1,16 @@
 package main;
 
-import controller.ProfileController;
-import controller.ProfileControllerImpl;
-import game.Giocatore;
-import profile.StorageProfile;
-import profile.UserProfile;
-import menu.MenuFrame;
-import profile.GamesRecord;
-import ui.GameSetup;
-import controller.GameController;
-import impostazioni.MenuImpostazioni;
-import impostazioni.ViewImpostazioni;
+import Controller.Profile.ProfileController;
+import Controller.Profile.ProfileControllerImpl;
+import Model.Game.Giocatore;
+import Model.Profile.StorageProfile;
+import Model.Profile.UserProfile;
+import View.Menu.MenuFrame;
+import Model.Profile.GamesRecord;
+import View.Game.GameSetup;
+import Controller.Game.GameController;
+import Model.Impostazioni.MenuImpostazioni;
+import View.Impostazioni.ViewImpostazioni;
 
 import javax.swing.*;
 import java.util.List;
