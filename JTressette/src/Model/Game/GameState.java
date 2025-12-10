@@ -70,32 +70,21 @@ public class GameState {
      */
     public Cards playCard(Giocatore p, int handIndex) {
         // solo current player può giocare
-        System.out.println(players.get(currentPlayerIndex));
         if (players.isEmpty() || players.get(currentPlayerIndex) != p) {
-            System.out.println("entra nell if");
-            System.out.println(p);
-
             return null;
         }
 
         List<Cards> hand = hands.get(p);
-        System.out.println(hand);
         if (hand == null || handIndex < 0 || handIndex >= hand.size()) return null;
 
         Cards c = hand.remove(handIndex);
         trickCards.add(c);
         trickPlayers.add(p);
 
-        System.out.println(players);
-        System.out.println(c);
-        System.out.println(trickCards);
-        System.out.println(trickCards.size());
-        System.out.println(players);
         // se presa completata
         if (trickCards.size() == players.size()) {
             // determina vincitore della presa
             int winnerPos = determineTrickWinner();
-            System.out.println(winnerPos);
             Giocatore winner = trickPlayers.get(winnerPos);
 
             // calcola punti della presa
@@ -119,7 +108,6 @@ public class GameState {
 
             // prepara per la prossima presa: il prossimo currentPlayerIndex = index del winner nella lista players
             currentPlayerIndex = players.indexOf(winner);
-            System.out.println(players);
         }
         return c;
     }

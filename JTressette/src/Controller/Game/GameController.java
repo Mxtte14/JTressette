@@ -97,27 +97,21 @@ public class GameController implements MenuImpostazioni.SettingsListener {
             while (!gameState.isFinished() && gameRunning) {
                 Giocatore current = gameState.getCurrentPlayer();
                 SwingUtilities.invokeLater(view::refresh);
-                System.out.println(current);
                 int idx;
-                System.out.println(humanPlayer); // DEBUG
-                System.out.println(current == humanPlayer); // DEBUG
                 if (humanPlayer != null && current == humanPlayer) {
                     view.log("È il tuo turno - scegli una carta");
                     idx = humanPlayer.chooseCard(gameState);
                 } else {
                     Thread.sleep(400);
-                    System.out.println("gioca il bot"); // DEBUG
                     idx = current.chooseCard(gameState);
                 }
                 // Se non valido, gioca la prima mossa legale
                 if (idx < 0) {
-                    System.out.println("Indice invalido, scelgo mossa legale");
                     int[] legal = gameState.getLegalMoves(current);
                     idx = (legal.length > 0) ? legal[0] : -1;
                 }
 
                 if (idx >= 0) {
-                    System.out.println("sto giocando la carta");
                     Cards played = gameState.playCard(current, idx);
                     if (played != null) {
                         // Play card sound only if effects are enabled
@@ -135,10 +129,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
 
                         // Se la presa/trick è stata completata
-                        System.out.println("Trick cards: " + gameState.getTrickCards().size() + " / Players: " + gameState.getPlayers().size());
-                        System.out.println("players: " + gameState.getPlayers());
                         if (gameState.getTrickCards().size() == gameState.getPlayers().size()) {
-                            System.out.println("stato: presa completata!");
                             Thread.sleep(1500);
 
                             final Giocatore trickWinner = gameState.getLastTrickWinner();
