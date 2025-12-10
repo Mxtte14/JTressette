@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static javax.swing.UIManager.getString;
+
 
 /**
  * Utility class for loading and caching card images.
@@ -195,7 +195,18 @@ public class CardImageLoader {
     }
 
     private static String getRankSymbol(Cards.Rank rank) {
-        return getString(rank);
+        return switch (rank) {
+            case ASSO -> "A";
+            case DUE -> "2";
+            case TRE -> "3";
+            case QUATTRO -> "4";
+            case CINQUE -> "5";
+            case SEI -> "6";
+            case SETTE -> "7";
+            case ALFIERE -> "J";
+            case CAVALLO -> "Q";
+            case RE -> "K";
+        };
     }
 
     private static String getSuitSymbol(Cards.Segno segno) {
