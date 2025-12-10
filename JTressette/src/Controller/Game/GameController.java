@@ -151,8 +151,14 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                                 Giocatore p = players.get((winnerIndex + i) % players.size());
                                 Cards nuovaCarta = gameState.getDeck().draw();
                                 if (nuovaCarta != null) {
+                                    view.showDrawAnimationToPlayerHand(p, () -> {
+                                    view.refresh();
+                                    if (p == humanPlayer) {
+                                        audioManager.playDrawSound(); // suono
+                                    }});
                                     gameState.getHandMutable(p).add(nuovaCarta);
                                 }
+                                Thread.sleep(200);
                             }
                             // -------------------------
 
@@ -268,7 +274,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         String winnerScore = (winner != null) ? gameState.getScaledScoreString(winner) : "";
         String myScore = gameState.getScaledScoreString(humanPlayer);
 
-        return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore);
+        // Get raw points and cards won for experience calculation
+        int myPoints = gameState.getScore(humanPlayer);
+        int myCardsWon = gameState.getWonCardsCount(humanPlayer);
+
+        return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore, myPoints, myCardsWon);
     }
 
     public GameView getView() {

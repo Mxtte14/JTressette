@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import Model.Audio.AudioManager;
 
 public class Mazzo {
     private final List<Cards> cards;
     private final Random rand = new Random();
+    private final AudioManager audioManager = new AudioManager();
 
     public Mazzo() {
         cards = new ArrayList<>(52);

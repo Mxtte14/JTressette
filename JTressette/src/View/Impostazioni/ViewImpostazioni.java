@@ -41,7 +41,6 @@ public class ViewImpostazioni extends JPanel {
         volumeSlider.setPaintLabels(true);
         volumeSlider.setPreferredSize(new Dimension(210,35));
         volumeSlider.addChangeListener(e -> { settings.setVolume(volumeSlider.getValue()); settings.save(); });
-
         gbc.gridy=1; gbc.gridwidth=1; card.add(vlabel, gbc);
         gbc.gridx=1; card.add(volumeSlider, gbc);
 

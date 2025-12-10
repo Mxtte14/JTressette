@@ -26,6 +26,8 @@ public class AudioManager {
     public static final int MENU_SELECTION_CLICK = 1;
     public static final int CARD_PLAYED = 2;
     public static final int BACKGROUND_GAME = 3;
+    public static final int CARD_DRAW = 4;
+    public static final int CARD_DEALING = 5;
 
     // Volume scaling constant - AudioManager max safe volume
     public static final float MAX_VOLUME_SCALE = 0.4f;
@@ -38,9 +40,11 @@ public class AudioManager {
 
     public AudioManager() {
         soundURL[BACKGROUND_MENU] = getClass().getResource("/res/audio/backgroundMenu.wav");
-        soundURL[MENU_SELECTION_CLICK] = getClass().getResource("/res/audio/MenuSelectionClick.wav");
+        soundURL[MENU_SELECTION_CLICK] = getClass().getResource("/res/audio/SelectionClick.wav");
         soundURL[CARD_PLAYED] = getClass().getResource("/res/audio/cardPlayed.wav");
         soundURL[BACKGROUND_GAME] = getClass().getResource("/res/audio/backGame.wav");
+        soundURL[CARD_DRAW] = getClass().getResource("/res/audio/cardDraw.wav");
+        soundURL[CARD_DEALING] = getClass().getResource("/res/audio/dealing.wav");
     }
 
     public void setFile(int i) {
@@ -186,25 +190,6 @@ public class AudioManager {
         fadeTimer.start();
     }
 
-    /**
-     * Transition from current audio to a new audio file with crossfade effect.
-     * @param newFileIndex Index of the new audio file
-     * @param fadeDurationMs Duration of the fade in milliseconds
-     * @param loopNew Whether to loop the new audio
-     */
-    public void transitionTo(int newFileIndex, int fadeDurationMs, boolean loopNew) {
-        fadeOut(fadeDurationMs, () -> {
-            setFile(newFileIndex);
-            if (loopNew) {
-                setVolume(0);
-                loop();
-                fadeIn(fadeDurationMs, 1.0f);
-            } else {
-                setVolume(0.5f);
-                start();
-            }
-        });
-    }
 
     /**
      * Play a one-shot sound effect without interrupting the main audio.
@@ -242,6 +227,19 @@ public class AudioManager {
     }
 
     /**
+     * Play the card dealing sound effect.
+     */
+    public void playDealingSound() {
+        playSoundEffect(CARD_DEALING);
+    }
+
+    /**
+     * Play the draw effect sound.
+     */
+    public void playDrawSound() {
+        playSoundEffect(CARD_DRAW);
+    }
+    /**
      * Play the card played sound effect.
      */
     public void playCardSound() {
@@ -253,14 +251,6 @@ public class AudioManager {
             fadeTimer.stop();
         }
         isFading = false;
-    }
-
-    /**
-     * Check if audio is currently fading.
-     * @return true if fading, false otherwise
-     */
-    public boolean isFading() {
-        return isFading;
     }
 
     /**

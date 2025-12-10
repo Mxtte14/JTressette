@@ -1,6 +1,7 @@
 package Model.Game;
 
 import java.util.*;
+import Model.Audio.AudioManager;
 
 /*
     Classe che mantiene lo stato della partita in corso:
@@ -20,7 +21,7 @@ public class GameState {
     private final Map<Giocatore, Integer> wonCardsCount = new LinkedHashMap<>();
     private final Mazzo deck;
     private int currentPlayerIndex = 0;
-
+    private final AudioManager audioManager;
     // trick buffer: mantiene l'ordine dei giocatori in questa presa
     private final List<Giocatore> trickPlayers = new ArrayList<>();
     private final List<Cards> trickCards = new ArrayList<>();
@@ -59,6 +60,7 @@ public class GameState {
             scores.put(p, 0);
             wonCardsCount.put(p, 0);
         }
+        this.audioManager = new AudioManager();
     }
 
     /**
@@ -132,6 +134,7 @@ public class GameState {
                 }
             }
         }
+        audioManager.playDrawSound();
         // Random rand = new Random();
         // currentPlayerIndex = rand.nextInt(players.size());
         currentPlayerIndex = 0; // sempre il primo giocatore nella lista

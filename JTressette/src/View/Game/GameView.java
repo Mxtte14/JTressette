@@ -104,7 +104,9 @@ public class GameView extends JFrame {
         JPanel bottomArea = createPlayerArea();
         mainPanel.add(bottomArea, BorderLayout.SOUTH);
 
-        // Right: Log/info panel
+        // Right: Log/info panel\
+        // Crea il pannello delle informazioni solo se abilitato nelle impostazioni
+
         JPanel rightPanel = createInfoPanel();
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
@@ -445,6 +447,8 @@ public class GameView extends JFrame {
         statusLabel.setFont(new Font("Arial", Font.PLAIN, 13));
         statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // Mostra punteggio solo se abilitato nelle impostazioni
+
         scoreLabel = new JLabel("Punteggio: 0");
         scoreLabel.setForeground(TEXT_WHITE);
         scoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
@@ -551,7 +555,7 @@ public class GameView extends JFrame {
                                 break;
                             }
                         }
-                        
+
                         if (isLegal) {
                             controller.onCardPlayed(index);
                         } else {
@@ -579,8 +583,6 @@ public class GameView extends JFrame {
             // Draw card image
             if (cardImage != null) {
                 g2d.drawImage(cardImage, 0, offsetY, drawWidth, drawHeight, this);
-            } else {
-                drawFallbackCard(g2d, offsetY, drawWidth, drawHeight);
             }
 
             // Highlight border on hover
@@ -591,29 +593,6 @@ public class GameView extends JFrame {
             }
         }
 
-        private void drawFallbackCard(Graphics2D g2d, int offsetY, int w, int h) {
-            g2d.setColor(Color.WHITE);
-            g2d.fill(new RoundRectangle2D.Double(0, offsetY, w, h, 10, 10));
-
-            g2d.setColor(Color.GRAY);
-            g2d.setStroke(new BasicStroke(1));
-            g2d.draw(new RoundRectangle2D.Double(0, offsetY, w - 1, h - 1, 10, 10));
-
-            Color suitColor = getSuitColor(card.getSegno());
-            g2d.setColor(suitColor);
-
-            g2d.setFont(new Font("Serif", Font.BOLD, Math.max(12, w / 6)));
-            String rank = getRankSymbol(card.getRank());
-            FontMetrics fm = g2d.getFontMetrics();
-            int rankWidth = fm.stringWidth(rank);
-            g2d.drawString(rank, (w - rankWidth) / 2, 30 + offsetY);
-
-            g2d.setFont(new Font("Serif", Font.BOLD, Math.max(16, w / 3)));
-            String suit = getSuitSymbol(card.getSegno());
-            fm = g2d.getFontMetrics();
-            int suitWidth = fm.stringWidth(suit);
-            g2d.drawString(suit, (w - suitWidth) / 2, (int) (h * 0.7) + offsetY);
-        }
     }
 
     private String getRankSymbol(Cards.Rank rank) {
@@ -706,9 +685,9 @@ public class GameView extends JFrame {
 
         int numPlayers = this.players.size();
         int humanIndex = players.indexOf(humanPlayer);
-        
+
         int[][] positions = new int[numPlayers][2];
-        
+
         if (numPlayers == 2) {
             // Human at bottom, opponent at top
             for (int i = 0; i < numPlayers; i++) {
@@ -745,7 +724,7 @@ public class GameView extends JFrame {
                 }
             }
         }
-        
+
         return positions;
     }
 
@@ -821,22 +800,22 @@ public class GameView extends JFrame {
 
     private void updateOpponentArea() {
         opponentArea.removeAll();
-        
+
         int numPlayers = players.size();
         int areaWidth = opponentArea.getWidth() > 0 ? opponentArea.getWidth() : 1000;
         int areaHeight = opponentArea.getHeight() > 0 ? opponentArea.getHeight() : 150;
-        
+
         // Find human player index
         int humanIndex = players.indexOf(humanPlayer);
-        
+
         // Position opponents based on fixed positions
         for (int i = 0; i < numPlayers; i++) {
             if (i == humanIndex) continue; // Skip human player
-            
+
             Giocatore player = players.get(i);
             boolean isVertical = false;
             int x = 0, y = 0;
-            
+
             if (numPlayers == 2) {
                 // Top center
                 isVertical = false;
@@ -875,12 +854,12 @@ public class GameView extends JFrame {
                     y = areaHeight / 2 - 60;
                 }
             }
-            
+
             JPanel opponentBox = createOpponentBox(player, isVertical);
             opponentBox.setBounds(x, y, isVertical ? 180 : 200, isVertical ? 120 : 150);
             opponentArea.add(opponentBox);
         }
-        
+
         opponentArea.revalidate();
         opponentArea.repaint();
     }
@@ -1087,6 +1066,71 @@ public class GameView extends JFrame {
         });
     }
 
+    public void showDrawAnimationToPlayerHand(Giocatore player, Runnable onComplete) {
+        SwingUtilities.invokeLater(() -> {
+            // 1. Trova il mazzo sul tavolo
+            JLabel deckLabel = null;
+            for (Component comp : tableOval.getComponents()) {
+                if (comp instanceof JLabel && ((JLabel) comp).getToolTipText() != null
+                        && ((JLabel) comp).getToolTipText().contains("Carte nel mazzo")) {
+                    deckLabel = (JLabel) comp;
+                    break;
+                }
+            }
+            if (deckLabel == null) {
+                if (onComplete != null) onComplete.run();
+                return;
+            }
+
+            // 2. Calcola posizione partenza (mazzo)
+            Point tableOnScreen = tableOval.getLocationOnScreen();
+            Point deckOnScreen = deckLabel.getLocationOnScreen();
+            int deckX = deckOnScreen.x - tableOnScreen.x + deckLabel.getWidth() / 2 - CARD_WIDTH / 2;
+            int deckY = deckOnScreen.y - tableOnScreen.y + deckLabel.getHeight() / 2 - CARD_HEIGHT / 2;
+
+            // 3. Calcola destinazione: se umano, la sua mano, altrimenti posizione tavolo
+            int destX, destY;
+
+            // Se è l'umano, vola verso la mano
+            if (player == humanPlayer) {
+                Point handOnScreen = playerHandPanel.getLocationOnScreen();
+                destX = handOnScreen.x - tableOnScreen.x + playerHandPanel.getWidth() / 2 - CARD_WIDTH / 2;
+                destY = handOnScreen.y - tableOnScreen.y + playerHandPanel.getHeight() / 2 - CARD_HEIGHT / 2;
+            } else {
+                // Per gli altri giocatori, usa le posizioni slot sul tavolo
+                int idx = players.indexOf(player);
+                int[][] positions = computeSlotPositions();
+                destX = positions[idx][0];
+                destY = positions[idx][1];
+            }
+
+            // 4. Overlay e carta volante
+            JPanel overlay = new JPanel(null);
+            overlay.setOpaque(false);
+            overlay.setBounds(0, 0, tableOval.getWidth(), tableOval.getHeight());
+
+            Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
+            JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
+            flyingCard.setBounds(deckX, deckY, CARD_WIDTH, CARD_HEIGHT);
+            overlay.add(flyingCard);
+
+            tableOval.add(overlay, 0);
+            tableOval.setComponentZOrder(overlay, 0);
+            tableOval.repaint();
+
+            // 5. Animazione
+            animateCardFlight(flyingCard, deckX, deckY, destX, destY);
+
+            Timer cleanup = new Timer(CARD_FLY_DURATION_MS + 40, e -> {
+                tableOval.remove(overlay);
+                tableOval.repaint();
+                if (onComplete != null) onComplete.run();
+            });
+            cleanup.setRepeats(false);
+            cleanup.start();
+        });
+    }
+
     // Animazione del volo della carta verso il giocatore vincitore
     private void animateCardFlight(JLabel card, int startX, int startY, int endX, int endY) {
         final int steps = 15;
@@ -1116,6 +1160,8 @@ public class GameView extends JFrame {
 
         flyTimer.start();
     }
+
+
 
     public void showGameOver(String result) {
         SwingUtilities.invokeLater(() -> {

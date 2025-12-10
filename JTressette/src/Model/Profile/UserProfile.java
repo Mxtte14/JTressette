@@ -18,6 +18,17 @@ public class UserProfile implements Serializable {
     private List<GamesRecord> recentGames;
     private String avatarPath;
 
+    // Level system fields
+    private int level;
+    private int experience;
+
+    // Constants for level system
+    private static final int XP_PER_LEVEL = 500;
+    private static final int XP_PER_POINT = 7; // 5-10 per point
+    private static final int XP_PER_CARD = 2;
+    private static final int XP_WIN_BONUS = 50;
+    private static final int XP_LOSS_BONUS = 20;
+
     public UserProfile() {
         this.username = "Giocatore";
         this.createdAt = Instant.now().toEpochMilli();
@@ -25,6 +36,8 @@ public class UserProfile implements Serializable {
         this.totalWins = 0;
         this.recentGames = new ArrayList<>();
         this.avatarPath = null;
+        this.level = 1;
+        this.experience = 0;
     }
 
     public UserProfile(String username) {
@@ -34,11 +47,14 @@ public class UserProfile implements Serializable {
         this.totalWins = 0;
         this.recentGames = new ArrayList<>();
         this.avatarPath = null;
+        this.level = 1;
+        this.experience = 0;
     }
 
     /**
      * Aggiunge un record alle recentGames (in testa). Mantiene al massimo 50 record.
      * Aggiorna totalGames e totalWins.
+     * Calcola e aggiunge esperienza basata sulle statistiche della partita.
      */
     public void addGameRecord(GamesRecord summary) {
         if (summary == null) return;
@@ -47,9 +63,13 @@ public class UserProfile implements Serializable {
         if (this.recentGames.size() > 50) this.recentGames.remove(this.recentGames.size() - 1);
 
         this.totalGames++;
-        if (summary.getWinner() != null && summary.getWinner().equals(username)) {
+        boolean won = summary.getWinner() != null && summary.getWinner().equals(username);
+        if (won) {
             this.totalWins++;
         }
+
+        // Add experience based on game performance
+        addGameExperience(summary.getMyPoints(), summary.getMyCardsWon(), won);
     }
 
     public List<GamesRecord> getHistory() {
@@ -103,6 +123,69 @@ public class UserProfile implements Serializable {
 
     public void setAvatarPath(String avatarPath) { this.avatarPath = avatarPath; }
 
+    // Level system getters/setters
+    public int getLevel() { return level; }
+
+    public void setLevel(int level) { this.level = level; }
+
+    public int getExperience() { return experience; }
+
+    public void setExperience(int experience) { this.experience = experience; }
+
+    /**
+     * Adds experience points and automatically levels up if threshold is reached.
+     * @param xp Experience points to add
+     */
+    public void addExperience(int xp) {
+        if (xp < 0) return; // Ignore negative XP
+        this.experience += xp;
+
+        // Check for level up (with safety limit to prevent infinite loops)
+        int maxLevelUps = 100; // Safety limit
+        while (this.experience >= getExperienceToNextLevel() && maxLevelUps > 0) {
+            int xpNeeded = getExperienceToNextLevel();
+            if (xpNeeded <= 0) break; // Safety check
+            this.experience -= xpNeeded;
+            this.level++;
+            maxLevelUps--;
+        }
+    }
+
+    /**
+     * Calculates experience needed for the next level.
+     */
+    public int getExperienceToNextLevel() {
+        return XP_PER_LEVEL;
+    }
+
+    /**
+     * Returns progress percentage towards next level (0-100).
+     */
+    public double getProgressPercentage() {
+        return (experience * 100.0) / getExperienceToNextLevel();
+    }
+
+    /**
+     * Adds experience based on game statistics.
+     * @param pointsScored Points scored in the game
+     * @param cardsWon Number of cards won
+     * @param won Whether the game was won
+     */
+    public void addGameExperience(int pointsScored, int cardsWon, boolean won) {
+        int xpGained = 0;
+
+        // XP from points scored
+        xpGained += pointsScored * XP_PER_POINT;
+
+        // XP from cards won
+        xpGained += cardsWon * XP_PER_CARD;
+
+        // Win/loss bonus
+        xpGained += won ? XP_WIN_BONUS : XP_LOSS_BONUS;
+
+        addExperience(xpGained);
+    }
+
     @Override
     public String toString() {
         return "UserProfile{" +
@@ -112,6 +195,8 @@ public class UserProfile implements Serializable {
                 ", totalWins=" + totalWins +
                 ", recentGames=" + recentGames +
                 ", avatarPath='" + avatarPath + '\'' +
+                ", level=" + level +
+                ", experience=" + experience +
                 '}';
     }
 }
