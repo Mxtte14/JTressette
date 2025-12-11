@@ -162,11 +162,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Draw circular badge
-                g2d.setColor(new Color(231, 76, 60)); // Red badge
+                // Draw circular badge with black background
+                g2d.setColor(new Color(20, 20, 20)); // Black badge background
                 g2d.fillOval(0, 0, getWidth(), getHeight());
 
-                // Border
+                // Gold border
                 g2d.setColor(TITLE_GOLD);
                 g2d.setStroke(new BasicStroke(2));
                 g2d.drawOval(1, 1, getWidth() - 2, getHeight() - 2);
@@ -177,7 +177,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
         };
         levelBadgeLabel.setBounds(36, 36, 20, 20); // Bottom-right corner
         levelBadgeLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        levelBadgeLabel.setForeground(Color.WHITE);
+        levelBadgeLabel.setForeground(TITLE_GOLD); // Gold text
         levelBadgeLabel.setOpaque(false);
 
         avatarContainer.add(avatarSmallLabel);
@@ -317,9 +317,31 @@ public class HomeMenu extends JPanel implements ProfileListener {
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
-        // Sfondo
+        // Sfondo - scale to fill entire panel
         if (background != null) {
-            g2d.drawImage(background, 0, 0, screenWidth, screenHeight, null);
+            // Scale image to cover the entire panel while maintaining aspect ratio
+            int imgWidth = background.getWidth();
+            int imgHeight = background.getHeight();
+            double imgRatio = (double) imgWidth / imgHeight;
+            double panelRatio = (double) getWidth() / getHeight();
+            
+            int drawWidth, drawHeight, drawX, drawY;
+            
+            if (panelRatio > imgRatio) {
+                // Panel is wider than image - scale to width
+                drawWidth = getWidth();
+                drawHeight = (int) (getWidth() / imgRatio);
+                drawX = 0;
+                drawY = (getHeight() - drawHeight) / 2;
+            } else {
+                // Panel is taller than image - scale to height
+                drawHeight = getHeight();
+                drawWidth = (int) (getHeight() * imgRatio);
+                drawX = (getWidth() - drawWidth) / 2;
+                drawY = 0;
+            }
+            
+            g2d.drawImage(background, drawX, drawY, drawWidth, drawHeight, null);
         }
 
         // Overlay scuro leggero per migliorare leggibilita

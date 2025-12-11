@@ -99,9 +99,20 @@ public class GameView extends JFrame {
         JPanel mainPanel = new GradientPanel();
         mainPanel.setLayout(new BorderLayout(10, 10));
 
-        // Top: Opponent area (face-down cards)
+        // Top: Opponent area (face-down cards) with exit button overlay
+        JPanel topContainer = new JPanel(new BorderLayout());
+        topContainer.setOpaque(false);
         opponentArea = createOpponentArea();
-        mainPanel.add(opponentArea, BorderLayout.NORTH);
+        topContainer.add(opponentArea, BorderLayout.CENTER);
+        
+        // Add exit button in top-right corner
+        JPanel exitButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        exitButtonPanel.setOpaque(false);
+        JButton exitButton = createExitButton();
+        exitButtonPanel.add(exitButton);
+        topContainer.add(exitButtonPanel, BorderLayout.NORTH);
+        
+        mainPanel.add(topContainer, BorderLayout.NORTH);
 
         // Center: Table with played cards
         JPanel tableCenter = createTableCenter();
@@ -238,6 +249,33 @@ public class GameView extends JFrame {
             g2d.setPaint(gp2);
             g2d.fillRect(0, getHeight() / 2, getWidth(), getHeight() / 2);
         }
+    }
+
+    private JButton createExitButton() {
+        JButton exitButton = new JButton("✕ Abbandona Partita");
+        exitButton.setBackground(new Color(180, 40, 40));
+        exitButton.setForeground(Color.WHITE);
+        exitButton.setFont(new Font("Arial", Font.BOLD, 13));
+        exitButton.setFocusPainted(false);
+        exitButton.setBorderPainted(false);
+        exitButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        exitButton.setPreferredSize(new Dimension(180, 35));
+        
+        // Add hover effect
+        exitButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                exitButton.setBackground(new Color(200, 50, 50));
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                exitButton.setBackground(new Color(180, 40, 40));
+            }
+        });
+        
+        exitButton.addActionListener(e -> controller.onExitGame());
+        return exitButton;
     }
 
     private JPanel createOpponentArea() {
@@ -387,13 +425,14 @@ public class GameView extends JFrame {
 
     // Funzione attraverso la quale si crea un mazzo al centro con il numero di carte rimanenti in esso
     private JLabel createDeckImage() {
-        Image cardBackImg = CardImageLoader.getScaledCardBackImage(40, 70);
+        // Use same size as cards on table for consistency
+        Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
         JLabel deckLabel = new JLabel(new ImageIcon(cardBackImg));
         int cardsLeft = gameState.getDeck().remaining();
         deckLabel.setToolTipText("Carte nel mazzo: " + cardsLeft);
         JLabel numberLabel = new JLabel("" + cardsLeft, SwingConstants.CENTER);
         numberLabel.setForeground(TEXT_GOLD);
-        numberLabel.setFont(new Font("Arial", Font.BOLD, 10));
+        numberLabel.setFont(new Font("Arial", Font.BOLD, 12));
         deckLabel.setLayout(new BorderLayout());
         deckLabel.add(numberLabel, BorderLayout.SOUTH);
         return deckLabel;
@@ -560,13 +599,6 @@ public class GameView extends JFrame {
         logScroll.setPreferredSize(new Dimension(190, 200));
         logScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton backButton = new JButton("Esci dalla Partita");
-        backButton.setBackground(new Color(139, 0, 0));
-        backButton.setForeground(Color.WHITE);
-        backButton.setFocusPainted(false);
-        backButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        backButton.addActionListener(e -> controller.onExitGame());
-
         panel.add(titleLabel);
         panel.add(Box.createVerticalStrut(15));
         panel.add(statusLabel);
@@ -586,7 +618,6 @@ public class GameView extends JFrame {
         }
 
         panel.add(Box.createVerticalGlue());
-        panel.add(backButton);
 
         return panel;
     }
@@ -613,6 +644,8 @@ public class GameView extends JFrame {
     private class CardPanel extends JPanel {
         private final Cards card;
         private boolean isHovered = false;
+        private boolean isAnimating = false;
+        private float animationProgress = 0f;
         private final Image cardImage;
         private final int drawWidth;
         private final int drawHeight;
@@ -644,7 +677,7 @@ public class GameView extends JFrame {
 
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        // Play card directly on click
+                        // Play card directly on click with animation
                         int[] legalMoves = gameState.getLegalMoves(humanPlayer);
                         boolean isLegal = false;
                         for (int legal : legalMoves) {
@@ -655,7 +688,8 @@ public class GameView extends JFrame {
                         }
 
                         if (isLegal) {
-                            controller.onCardPlayed(index);
+                            // Start animation before playing card
+                            animateCardSelection(() -> controller.onCardPlayed(index));
                         } else {
                             log("Mossa non valida! Devi seguire il seme se possibile.");
                         }
@@ -665,6 +699,31 @@ public class GameView extends JFrame {
             }
         }
 
+        /**
+         * Animate card selection before playing
+         */
+        private void animateCardSelection(Runnable onComplete) {
+            if (isAnimating) return;
+            
+            isAnimating = true;
+            animationProgress = 0f;
+            
+            Timer animTimer = new Timer(16, null);
+            animTimer.addActionListener(e -> {
+                animationProgress += 0.15f;
+                if (animationProgress >= 1.0f) {
+                    animationProgress = 1.0f;
+                    animTimer.stop();
+                    isAnimating = false;
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
+                }
+                repaint();
+            });
+            animTimer.start();
+        }
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -672,22 +731,48 @@ public class GameView extends JFrame {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
+            // Calculate position and scale based on hover and animation state
             int offsetY = isHovered ? -8 : 0; // Lift card on hover
-
-            // Shadow
-            g2d.setColor(new Color(0, 0, 0, 80));
-            g2d.fill(new RoundRectangle2D.Double(3, 3 + offsetY, drawWidth, drawHeight, 10, 10));
-
-            // Draw card image
-            if (cardImage != null) {
-                g2d.drawImage(cardImage, 0, offsetY, drawWidth, drawHeight, this);
-            }
-
-            // Highlight border on hover
-            if (isHovered) {
-                g2d.setColor(TEXT_GOLD);
+            
+            // Animation effect: move card up and slightly scale
+            if (isAnimating) {
+                offsetY -= (int)(20 * animationProgress);
+                float scale = 1.0f + (0.1f * animationProgress);
+                int scaledWidth = (int)(drawWidth * scale);
+                int scaledHeight = (int)(drawHeight * scale);
+                int offsetX = (drawWidth - scaledWidth) / 2;
+                
+                // Shadow
+                g2d.setColor(new Color(0, 0, 0, 80));
+                g2d.fill(new RoundRectangle2D.Double(3 + offsetX, 3 + offsetY, scaledWidth, scaledHeight, 10, 10));
+                
+                // Draw scaled card image
+                if (cardImage != null) {
+                    g2d.drawImage(cardImage, offsetX, offsetY, scaledWidth, scaledHeight, this);
+                }
+                
+                // Highlight border with animation glow
+                int alpha = (int)(255 * animationProgress);
+                g2d.setColor(new Color(255, 215, 0, alpha));
                 g2d.setStroke(new BasicStroke(3));
-                g2d.drawRoundRect(0, offsetY, drawWidth - 1, drawHeight - 1, 10, 10);
+                g2d.drawRoundRect(offsetX, offsetY, scaledWidth - 1, scaledHeight - 1, 10, 10);
+            } else {
+                // Normal rendering
+                // Shadow
+                g2d.setColor(new Color(0, 0, 0, 80));
+                g2d.fill(new RoundRectangle2D.Double(3, 3 + offsetY, drawWidth, drawHeight, 10, 10));
+
+                // Draw card image
+                if (cardImage != null) {
+                    g2d.drawImage(cardImage, 0, offsetY, drawWidth, drawHeight, this);
+                }
+
+                // Highlight border on hover
+                if (isHovered) {
+                    g2d.setColor(TEXT_GOLD);
+                    g2d.setStroke(new BasicStroke(3));
+                    g2d.drawRoundRect(0, offsetY, drawWidth - 1, drawHeight - 1, 10, 10);
+                }
             }
         }
 
@@ -829,11 +914,12 @@ public class GameView extends JFrame {
     private void updateTableCards() {
         tableOval.removeAll();
 
-        // Deck image al centro del tavolo (come prima)
+        // Deck image more centered on table
         JLabel deck = createDeckImage();
         int dw = deck.getPreferredSize().width;
         int dh = deck.getPreferredSize().height;
-        int deckX = Math.max(0, (int)(tableOval.getWidth() * 0.13));
+        // Position deck more centered (20% from left instead of 13%)
+        int deckX = Math.max(0, (int)(tableOval.getWidth() * 0.20));
         int deckY = (tableOval.getHeight() - dh) / 2;
         deck.setBounds(deckX, deckY, dw, dh);
         tableOval.add(deck);

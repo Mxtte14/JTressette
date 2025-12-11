@@ -116,11 +116,6 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                 if (idx >= 0) {
                     Cards played = gameState.playCard(current, idx);
                     if (played != null) {
-                        // Play card sound only if effects are enabled
-                        if (MenuImpostazioni.getInstance().isEffects()) {
-                            audioManager.playCardSound();
-                        }
-
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
                         SwingUtilities.invokeLater(() -> {
@@ -128,6 +123,14 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                             view.log(finalCurrent.getName() + " ha giocato " + finalPlayed);
                             view.refresh();
                         });
+
+                        // Add delay before playing card sound to prevent overlap with draw sound
+                        Thread.sleep(150);
+                        
+                        // Play card sound only if effects are enabled
+                        if (MenuImpostazioni.getInstance().isEffects()) {
+                            audioManager.playCardSound();
+                        }
 
 
                         // Se la presa/trick è stata completata
@@ -155,12 +158,13 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                                 if (nuovaCarta != null) {
                                     view.showDrawAnimationToPlayerHand(p, () -> {
                                         view.refresh();
-                                        if (p == humanPlayer) {
+                                        if (p == humanPlayer && MenuImpostazioni.getInstance().isEffects()) {
                                             audioManager.playDrawSound(); // suono
                                         }});
                                     gameState.getHandMutable(p).add(nuovaCarta);
                                 }
-                                Thread.sleep(200);
+                                // Increased delay between card draws for better audio separation
+                                Thread.sleep(300);
                             }
                             // -------------------------
 
