@@ -162,13 +162,15 @@ public class UserProfile implements Serializable {
         // Aggiorna totale partite
         this.totalGames++;
         
+        // Verifica se l'utente ha vinto
+        boolean won = record.getWinner() != null && record.getWinner().equals(username);
+        
         // Aggiorna vittorie se l'utente ha vinto
-        if (record.getWinner() != null && record.getWinner().equals(username)) {
+        if (won) {
             this.totalWins++;
         }
         
         // Calcola e aggiungi esperienza basata sui dati della partita
-        boolean won = record.getWinner() != null && record.getWinner().equals(username);
         int xpGained = 0;
         xpGained += record.getMyPoints() * XP_PER_POINT;
         xpGained += record.getMyCardsWon() * XP_PER_CARD;
