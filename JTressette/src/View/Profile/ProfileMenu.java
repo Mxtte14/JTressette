@@ -30,17 +30,17 @@ public class ProfileMenu extends JPanel implements ProfileListener {
     private JProgressBar expBar;
     private JLabel expLabel;
 
-    // Modern colors
-    private static final Color BACKGROUND_COLOR = new Color(240, 242, 245);
-    private static final Color PANEL_BG_COLOR = new Color(255, 255, 255);
-    private static final Color PRIMARY_COLOR = new Color(41, 128, 185);
-    private static final Color ACCENT_COLOR = new Color(52, 152, 219);
-    private static final Color TEXT_COLOR = new Color(44, 62, 80);
-    private static final Color SECONDARY_TEXT_COLOR = new Color(127, 140, 141);
-    private static final Color SUCCESS_COLOR = new Color(46, 204, 113);
-    private static final Color BORDER_COLOR = new Color(189, 195, 199);
-    private static final Color LEVEL_BADGE_BG = new Color(231, 76, 60);
-    private static final Color EXP_BAR_COLOR = new Color(46, 204, 113);
+    // Modern colors - Updated to match HomeMenu style (green, gold, black)
+    private static final Color BACKGROUND_COLOR = new Color(10, 25, 15); // Dark green background
+    private static final Color PANEL_BG_COLOR = new Color(20, 50, 30, 200); // Semi-transparent dark green
+    private static final Color PRIMARY_COLOR = new Color(35, 130, 75); // Poker table green
+    private static final Color ACCENT_COLOR = new Color(46, 160, 90); // Lighter green for hover
+    private static final Color TEXT_COLOR = new Color(255, 248, 220); // Light gold text
+    private static final Color SECONDARY_TEXT_COLOR = new Color(200, 200, 180); // Dimmer gold
+    private static final Color SUCCESS_COLOR = new Color(46, 204, 113); // Bright green
+    private static final Color BORDER_COLOR = new Color(255, 215, 0, 100); // Gold border
+    private static final Color LEVEL_BADGE_BG = new Color(231, 76, 60); // Red badge
+    private static final Color EXP_BAR_COLOR = new Color(255, 215, 0); // Gold progress bar
 
     public ProfileMenu(JPanel cards, ProfileController controller) {
         this.cards = cards;
@@ -57,7 +57,30 @@ public class ProfileMenu extends JPanel implements ProfileListener {
 
     private void init() {
         setLayout(new BorderLayout());
+        setOpaque(true);
         setBackground(BACKGROUND_COLOR);
+
+        // Add background panel with gradient
+        JPanel backgroundPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                
+                // Create a gradient background similar to GameView
+                GradientPaint gp = new GradientPaint(0, 0, new Color(18, 85, 47), 
+                                                      0, (float) getHeight() / 2, new Color(26, 117, 65));
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, getWidth(), getHeight() / 2);
+                
+                GradientPaint gp2 = new GradientPaint(0, (float) getHeight() / 2, new Color(26, 117, 65), 
+                                                       0, getHeight(), new Color(18, 85, 47));
+                g2d.setPaint(gp2);
+                g2d.fillRect(0, getHeight() / 2, getWidth(), getHeight() / 2);
+            }
+        };
+        backgroundPanel.setOpaque(true);
 
         // Top panel: back button
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 15));
@@ -69,7 +92,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         });
         top.add(back);
 
-        add(top, BorderLayout.NORTH);
+        backgroundPanel.add(top, BorderLayout.NORTH);
 
         // Main content panel
         JPanel mainContent = new JPanel(new BorderLayout(0, 20));
@@ -84,15 +107,31 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         JPanel historyPanel = createHistoryPanel();
         mainContent.add(historyPanel, BorderLayout.CENTER);
 
-        add(mainContent, BorderLayout.CENTER);
+        backgroundPanel.add(mainContent, BorderLayout.CENTER);
+        add(backgroundPanel, BorderLayout.CENTER);
     }
 
     private JPanel createProfileCard() {
-        JPanel card = new JPanel();
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Semi-transparent background with gradient
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(10, 60, 35, 200),
+                    0, getHeight(), new Color(5, 40, 25, 220)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+            }
+        };
         card.setLayout(new BorderLayout(20, 0));
-        card.setBackground(PANEL_BG_COLOR);
+        card.setOpaque(false);
         card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_COLOR, 1, true),
+                new LineBorder(BORDER_COLOR, 2, true),
                 new EmptyBorder(25, 25, 25, 25)
         ));
 
@@ -120,8 +159,8 @@ public class ProfileMenu extends JPanel implements ProfileListener {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Rounded border
-                g2d.setColor(PRIMARY_COLOR);
+                // Rounded border with gold color
+                g2d.setColor(new Color(255, 215, 0)); // Gold
                 g2d.setStroke(new BasicStroke(3));
                 g2d.drawRoundRect(2, 2, getWidth()-4, getHeight()-4, 15, 15);
 
@@ -133,7 +172,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         avatarLabel.setVerticalAlignment(SwingConstants.CENTER);
         avatarLabel.setPreferredSize(new Dimension(120, 120));
         avatarLabel.setOpaque(true);
-        avatarLabel.setBackground(new Color(236, 240, 241));
+        avatarLabel.setBackground(new Color(30, 30, 30));
 
         avatarContainer.add(avatarLabel, BorderLayout.NORTH);
 
@@ -166,13 +205,16 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         namePanel.setOpaque(false);
         JLabel nameTitle = new JLabel("Nome:");
-        nameTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        nameTitle.setForeground(TEXT_COLOR);
+        nameTitle.setFont(new Font("Georgia", Font.BOLD, 16));
+        nameTitle.setForeground(new Color(255, 215, 0)); // Gold
         nameField = new JTextField(20);
-        nameField.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        nameField.setFont(new Font("Arial", Font.PLAIN, 15));
         nameField.setPreferredSize(new Dimension(200, 32));
+        nameField.setBackground(new Color(30, 30, 30));
+        nameField.setForeground(TEXT_COLOR);
+        nameField.setCaretColor(TEXT_COLOR);
         nameField.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_COLOR, 1, true),
+                new LineBorder(BORDER_COLOR, 2, true),
                 new EmptyBorder(5, 10, 5, 10)
         ));
         namePanel.add(nameTitle);
@@ -187,16 +229,16 @@ public class ProfileMenu extends JPanel implements ProfileListener {
 
         // Stats section
         statsLabel = new JLabel();
-        statsLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        statsLabel.setForeground(PRIMARY_COLOR);
+        statsLabel.setFont(new Font("Georgia", Font.BOLD, 16));
+        statsLabel.setForeground(new Color(255, 215, 0)); // Gold
         statsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         infoPanel.add(statsLabel);
         infoPanel.add(Box.createVerticalStrut(15));
 
         // Experience bar section
         JLabel expTitle = new JLabel("Esperienza:");
-        expTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        expTitle.setForeground(TEXT_COLOR);
+        expTitle.setFont(new Font("Georgia", Font.BOLD, 14));
+        expTitle.setForeground(new Color(255, 215, 0)); // Gold
         expTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         infoPanel.add(expTitle);
         infoPanel.add(Box.createVerticalStrut(5));
@@ -207,7 +249,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         infoPanel.add(Box.createVerticalStrut(5));
 
         expLabel = new JLabel();
-        expLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        expLabel.setFont(new Font("Arial", Font.PLAIN, 13));
         expLabel.setForeground(SECONDARY_TEXT_COLOR);
         expLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         infoPanel.add(expLabel);
@@ -219,12 +261,27 @@ public class ProfileMenu extends JPanel implements ProfileListener {
     }
 
     private JPanel createHistoryPanel() {
-        JPanel panel = new JPanel(new BorderLayout(0, 15));
+        JPanel panel = new JPanel(new BorderLayout(0, 15)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Semi-transparent background
+                g2d.setColor(new Color(0, 0, 0, 128));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+            }
+        };
         panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER_COLOR, 2, true),
+                new EmptyBorder(15, 15, 15, 15)
+        ));
 
         JLabel historyLabel = new JLabel("Storico Partite");
-        historyLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        historyLabel.setForeground(TEXT_COLOR);
+        historyLabel.setFont(new Font("Georgia", Font.BOLD, 22));
+        historyLabel.setForeground(new Color(255, 215, 0)); // Gold color
         panel.add(historyLabel, BorderLayout.NORTH);
 
         // Table setup
@@ -234,19 +291,19 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         };
 
         historyTable = new JTable(tableModel);
-        historyTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        historyTable.setFont(new Font("Arial", Font.PLAIN, 13));
         historyTable.setRowHeight(32);
         historyTable.setShowGrid(false);
         historyTable.setIntercellSpacing(new Dimension(0, 0));
-        historyTable.setBackground(PANEL_BG_COLOR);
+        historyTable.setBackground(new Color(20, 50, 30, 150));
         historyTable.setForeground(TEXT_COLOR);
-        historyTable.setSelectionBackground(new Color(52, 152, 219, 30));
+        historyTable.setSelectionBackground(new Color(255, 215, 0, 50));
         historyTable.setSelectionForeground(TEXT_COLOR);
 
         // Header styling
-        historyTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        historyTable.getTableHeader().setFont(new Font("Georgia", Font.BOLD, 14));
         historyTable.getTableHeader().setBackground(PRIMARY_COLOR);
-        historyTable.getTableHeader().setForeground(Color.WHITE);
+        historyTable.getTableHeader().setForeground(new Color(255, 215, 0));
         historyTable.getTableHeader().setPreferredSize(new Dimension(0, 40));
         historyTable.getTableHeader().setBorder(BorderFactory.createEmptyBorder());
 
@@ -257,8 +314,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
                                                            boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? PANEL_BG_COLOR : new Color(249, 249, 249));
+                    c.setBackground(row % 2 == 0 ? new Color(20, 50, 30, 150) : new Color(15, 40, 25, 150));
                 }
+                setForeground(TEXT_COLOR);
                 setBorder(new EmptyBorder(5, 10, 5, 10));
                 return c;
             }
@@ -269,8 +327,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
 
         JScrollPane sp = new JScrollPane(historyTable);
         sp.setPreferredSize(new Dimension(700, 280));
-        sp.setBorder(new LineBorder(BORDER_COLOR, 1, true));
-        sp.getViewport().setBackground(PANEL_BG_COLOR);
+        sp.setBorder(new LineBorder(BORDER_COLOR, 2, true));
+        sp.getViewport().setBackground(new Color(20, 50, 30, 150));
+        sp.setOpaque(false);
 
         panel.add(sp, BorderLayout.CENTER);
 
@@ -283,9 +342,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         bar.setPreferredSize(new Dimension(400, 25));
         bar.setMaximumSize(new Dimension(400, 25));
         bar.setAlignmentX(Component.LEFT_ALIGNMENT);
-        bar.setForeground(EXP_BAR_COLOR);
-        bar.setBackground(new Color(236, 240, 241));
-        bar.setBorder(new LineBorder(BORDER_COLOR, 1, true));
+        bar.setForeground(EXP_BAR_COLOR); // Gold
+        bar.setBackground(new Color(30, 30, 30, 180));
+        bar.setBorder(new LineBorder(BORDER_COLOR, 2, true));
         bar.setUI(new javax.swing.plaf.basic.BasicProgressBarUI() {
             @Override
             protected void paintDeterminate(Graphics g, JComponent c) {
@@ -300,11 +359,11 @@ public class ProfileMenu extends JPanel implements ProfileListener {
                 g2d.setColor(bar.getBackground());
                 g2d.fillRoundRect(0, 0, width, height, 12, 12);
 
-                // Fill with gradient
+                // Fill with gradient (gold)
                 if (fillWidth > 0) {
                     GradientPaint gradient = new GradientPaint(
-                            0, 0, EXP_BAR_COLOR,
-                            fillWidth, 0, new Color(39, 174, 96)
+                            0, 0, new Color(255, 215, 0),
+                            fillWidth, 0, new Color(255, 185, 0)
                     );
                     g2d.setPaint(gradient);
                     g2d.fillRoundRect(1, 1, fillWidth - 1, height - 2, 11, 11);

@@ -193,6 +193,15 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                 .map(java.util.Map.Entry::getKey)
                 .orElse(null);
 
+        // Play victory or defeat sound if effects are enabled
+        if (MenuImpostazioni.getInstance().isEffects()) {
+            if (winner == humanPlayer) {
+                audioManager.playVictorySound();
+            } else {
+                audioManager.playDefeatSound();
+            }
+        }
+
         if (winner != null) {
             return "Vincitore: " + winner.getName() + " (punti: " + gameState.getScaledScoreString(winner) + ")";
         }
