@@ -1,8 +1,10 @@
+
 package Model.Profile;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Profilo utente: mantiene experience come totale cumulativo.
@@ -24,7 +26,7 @@ public class UserProfile implements Serializable {
 
     // Costanti per sistema XP (configurabili qui)
     public static final int XP_PER_LEVEL = 500;
-    public static final int XP_PER_POINT = 7; // mantiene il valore già presente nel progetto
+    public static final int XP_PER_POINT = 5;  // Aggiornato da 7 a 5 come da specifiche
     public static final int XP_PER_CARD = 2;
     public static final int XP_WIN_BONUS = 50;
     public static final int XP_LOSS_BONUS = 20;
@@ -143,11 +145,51 @@ public class UserProfile implements Serializable {
     public int getWinsNumber() {
         int wins = 0;
         for (GamesRecord record : getRecentGames()) {
-            if (record.getWinner() != null && record.getWinner().equals(username)) {
+            if (Objects.equals(record.getWinner(), username)) {
                 wins++;
             }
         }
         return wins;
+    }
+
+    /**
+     * Aggiunge un record di partita allo storico e aggiorna esperienza e statistiche
+     */
+    public void addGameRecord(GamesRecord record) {
+        if (record == null) return;
+
+        // Aggiungi il record alla lista
+        getRecentGames().add(record);
+
+        // Aggiorna totale partite
+        this.totalGames++;
+
+        // Verifica se l'utente ha vinto
+        boolean won = Objects.equals(record.getWinner(), username);
+
+        // Aggiorna vittorie se l'utente ha vinto
+        if (won) {
+            this.totalWins++;
+        }
+
+        // Calcola e aggiungi esperienza basata sui dati della partita
+        int xpGained = 0;
+        xpGained += record.getMyPoints() * XP_PER_POINT;
+        xpGained += record.getMyCardsWon() * XP_PER_CARD;
+        xpGained += won ? XP_WIN_BONUS : XP_LOSS_BONUS;
+
+        // Salva l'esperienza nel record
+        record.setExperience(xpGained);
+
+        // Aggiungi al totale
+        addExperience(xpGained);
+    }
+
+    /**
+     * Ritorna lo storico delle partite (alias per compatibilità con ProfileMenu)
+     */
+    public List<GamesRecord> getHistory() {
+        return getRecentGames();
     }
 
     @Override

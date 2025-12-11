@@ -290,7 +290,14 @@ public class ProfileMenu extends JPanel implements ProfileListener {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
 
-        historyTable = new JTable(tableModel);
+        // Create a JTable subclass that ignores selection attempts (no selection, no keyboard navigation)
+        historyTable = new JTable(tableModel) {
+            @Override
+            public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+                // Ignore selection changes to keep the table read-only and non-selectable
+            }
+        };
+
         historyTable.setFont(new Font("Arial", Font.PLAIN, 13));
         historyTable.setRowHeight(32);
         historyTable.setShowGrid(false);
@@ -299,6 +306,24 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         historyTable.setForeground(TEXT_COLOR);
         historyTable.setSelectionBackground(new Color(255, 215, 0, 50));
         historyTable.setSelectionForeground(TEXT_COLOR);
+
+        // Make table non-focusable and non-interactive
+        historyTable.setFocusable(false);
+        historyTable.setRequestFocusEnabled(false);
+        historyTable.setRowSelectionAllowed(false);
+        historyTable.setColumnSelectionAllowed(false);
+        historyTable.setCellSelectionEnabled(false);
+        historyTable.setDragEnabled(false);
+        // Prevent any default editing mechanism
+        historyTable.setDefaultEditor(Object.class, null);
+
+        // Replace selection model with one that does nothing (extra safety)
+        historyTable.setSelectionModel(new javax.swing.DefaultListSelectionModel() {
+            @Override
+            public void setSelectionInterval(int index0, int index1) { /* ignore */ }
+            @Override
+            public void addSelectionInterval(int index0, int index1) { /* ignore */ }
+        });
 
         // Header styling
         historyTable.getTableHeader().setFont(new Font("Georgia", Font.BOLD, 14));
@@ -330,6 +355,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         sp.setBorder(new LineBorder(BORDER_COLOR, 2, true));
         sp.getViewport().setBackground(new Color(20, 50, 30, 150));
         sp.setOpaque(false);
+
+        // Make scroll pane non-focusable as well so keyboard focus won't land there
+        sp.setFocusable(false);
 
         panel.add(sp, BorderLayout.CENTER);
 
@@ -396,7 +424,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
             int expPercent = (int) profile.getProgressPercentage();
             expBar.setValue(expPercent);
             expLabel.setText(String.format("%d / %d XP (%d%%)",
-                    profile.getExperience(),
+                    profile.getExperienceInCurrentLevel(),
                     profile.getExperienceToNextLevel(),
                     expPercent));
 

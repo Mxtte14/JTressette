@@ -322,8 +322,8 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
     private Object experienceFromGame(GiocatoreUmano humanPlayer, Giocatore winner, int myPoints, int myCardsWon) {
         int experience = 0;
-        experience += myPoints * 2; // XP per punto
-        experience += myCardsWon * 5; // XP per carta vinta
+        experience += myPoints * 5; // XP per punto
+        experience += myCardsWon * 2; // XP per carta vinta
         if (humanPlayer == winner) {
             experience += 50; // bonus vittoria
         } else {
