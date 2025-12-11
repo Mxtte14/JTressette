@@ -89,6 +89,9 @@ public class GameView extends JFrame {
         setResizable(true); // allow resize for testing; layout adapts
         setLocationRelativeTo(null);
 
+        // Make frame undecorated to allow opacity changes
+        setUndecorated(true);
+        
         // Start with opacity 0 for fade-in effect
         setOpacity(0.0f);
 
