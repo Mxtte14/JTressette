@@ -88,6 +88,9 @@ public class GameView extends JFrame {
         setSize(1100, 750);
         setResizable(true); // allow resize for testing; layout adapts
         setLocationRelativeTo(null);
+        
+        // Start with opacity 0 for fade-in effect
+        setOpacity(0.0f);
 
         // Main panel with gradient background
         JPanel mainPanel = new GradientPanel();
@@ -1352,5 +1355,22 @@ public class GameView extends JFrame {
             playButton.setEnabled(false);
             statusLabel.setText("");
         });
+    }
+
+    /**
+     * Fade in the window when it becomes visible
+     */
+    public void fadeIn() {
+        Timer fadeTimer = new Timer(16, null);
+        final float[] alpha = {0.0f};
+        fadeTimer.addActionListener(e -> {
+            alpha[0] += 0.05f;
+            if (alpha[0] >= 1.0f) {
+                alpha[0] = 1.0f;
+                fadeTimer.stop();
+            }
+            setOpacity(alpha[0]);
+        });
+        fadeTimer.start();
     }
 }
