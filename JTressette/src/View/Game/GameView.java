@@ -62,6 +62,8 @@ public class GameView extends JFrame {
     private JPanel playerHandPanel;
     private JScrollPane handScrollPane;
     private JPanel opponentArea;
+    private JPanel leftBotPanel;
+    private JPanel rightBotPanel;
     private JLabel statusLabel;
     private JLabel scoreLabel;
     private JPanel logArea;
@@ -114,9 +116,22 @@ public class GameView extends JFrame {
         
         mainPanel.add(topContainer, BorderLayout.NORTH);
 
+        // Center: Container for table and side bot hands
+        JPanel centerContainer = new JPanel(new BorderLayout(5, 5));
+        centerContainer.setOpaque(false);
+        
+        // Create left and right panels for side bot hands
+        leftBotPanel = createSideBotPanel();
+        rightBotPanel = createSideBotPanel();
+        
         // Center: Table with played cards
         JPanel tableCenter = createTableCenter();
-        mainPanel.add(tableCenter, BorderLayout.CENTER);
+        
+        centerContainer.add(leftBotPanel, BorderLayout.WEST);
+        centerContainer.add(tableCenter, BorderLayout.CENTER);
+        centerContainer.add(rightBotPanel, BorderLayout.EAST);
+        
+        mainPanel.add(centerContainer, BorderLayout.CENTER);
 
         // Bottom: Player's hand
         JPanel bottomArea = createPlayerArea();
@@ -278,6 +293,14 @@ public class GameView extends JFrame {
         return exitButton;
     }
 
+    private JPanel createSideBotPanel() {
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setPreferredSize(new Dimension(120, 0));
+        return panel;
+    }
+
     private JPanel createOpponentArea() {
         JPanel area = new JPanel();
         area.setOpaque(false);
@@ -290,7 +313,7 @@ public class GameView extends JFrame {
     private JPanel createOpponentBox(Giocatore player, boolean isVertical) {
         JPanel box = new JPanel();
         box.setOpaque(false);
-        box.setLayout(new BoxLayout(box, isVertical ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS));
+        box.setLayout(new BoxLayout(box, isVertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
 
         // Player name with improved styling
         JLabel nameLabel = new JLabel(player.getName());
@@ -304,26 +327,25 @@ public class GameView extends JFrame {
         List<Cards> hand = gameState.getHand(player);
         int handSize = hand.size();
 
-        // Calculate card size to fit all cards
-        // For horizontal: max width depends on available space and overlap
-        // For vertical: max height depends on available space and overlap
-        int baseCardWidth = SMALL_CARD_WIDTH;
-        int baseCardHeight = SMALL_CARD_HEIGHT;
-        int overlap = isVertical ? -20 : -20; // Negative for overlapping cards
+        // Larger card sizes for better visibility, especially for vertical layout
+        int baseCardWidth = isVertical ? 60 : 55;
+        int baseCardHeight = isVertical ? 85 : 80;
+        int overlap = isVertical ? -30 : -25; // More overlap for vertical to fit better
 
         // Adjust size if too many cards
-        if (handSize > 5) {
-            // Reduce size for larger hands
-            float scaleFactor = Math.min(1.0f, 5.0f / handSize);
+        if (handSize > 6 && !isVertical) {
+            float scaleFactor = Math.min(1.0f, 6.0f / handSize);
             baseCardWidth = (int)(baseCardWidth * scaleFactor);
             baseCardHeight = (int)(baseCardHeight * scaleFactor);
         }
 
-        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, isVertical ? 0 : overlap, isVertical ? overlap : 0));
+        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, isVertical ? 3 : overlap, isVertical ? overlap : 3));
         cardsPanel.setOpaque(false);
 
+        // For vertical layout, rotate the card dimensions
         int cardWidth = isVertical ? baseCardHeight : baseCardWidth;
         int cardHeight = isVertical ? baseCardWidth : baseCardHeight;
+        
         Image cardBackImg = CardImageLoader.getScaledCardBackImage(cardWidth, cardHeight);
         for (int i = 0; i < handSize; i++) {
             JLabel cardBack = new JLabel(new ImageIcon(cardBackImg));
@@ -341,7 +363,7 @@ public class GameView extends JFrame {
 
         JLabel wonLabel = new JLabel("Carte: " + wonCards);
         wonLabel.setForeground(TEXT_GOLD);
-        wonLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+        wonLabel.setFont(new Font("Arial", Font.PLAIN, 11));
         infoPanel.add(wonLabel);
 
         // Add score if enabled in settings
@@ -353,19 +375,32 @@ public class GameView extends JFrame {
             infoPanel.add(scoreLabel);
         }
 
+        // Different layout for vertical vs horizontal
         if (isVertical) {
-            box.add(Box.createHorizontalStrut(5));
-            box.add(nameLabel);
-            box.add(Box.createHorizontalStrut(5));
-            box.add(cardsPanel);
-            box.add(Box.createHorizontalStrut(5));
-            box.add(infoPanel);
-        } else {
-            box.add(nameLabel);
             box.add(Box.createVerticalStrut(5));
+            box.add(nameLabel);
+            box.add(Box.createVerticalStrut(8));
             box.add(cardsPanel);
-            box.add(Box.createVerticalStrut(3));
+            box.add(Box.createVerticalStrut(5));
             box.add(infoPanel);
+            box.add(Box.createVerticalStrut(5));
+        } else {
+            // Horizontal layout - wrap in a container for better centering
+            JPanel container = new JPanel();
+            container.setOpaque(false);
+            container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+            
+            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            cardsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            infoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            
+            container.add(nameLabel);
+            container.add(Box.createVerticalStrut(5));
+            container.add(cardsPanel);
+            container.add(Box.createVerticalStrut(3));
+            container.add(infoPanel);
+            
+            box.add(container);
         }
         return box;
     }
@@ -984,6 +1019,8 @@ public class GameView extends JFrame {
 
     private void updateOpponentArea() {
         opponentArea.removeAll();
+        leftBotPanel.removeAll();
+        rightBotPanel.removeAll();
 
         int numPlayers = players.size();
         int areaWidth = opponentArea.getWidth() > 0 ? opponentArea.getWidth() : 1000;
@@ -998,54 +1035,68 @@ public class GameView extends JFrame {
 
             Giocatore player = players.get(i);
             boolean isVertical = false;
+            
+            JPanel targetPanel = opponentArea; // Default to top area
             int x = 0, y = 0;
 
             if (numPlayers == 2) {
-                // Top center
+                // Top center - horizontal cards
                 isVertical = false;
-                x = areaWidth / 2 - 80;
+                x = areaWidth / 2 - 100;
                 y = 10;
             } else if (numPlayers == 3) {
-                // Arrange as: left, top, bottom (excluding human at bottom)
-                if (i == (humanIndex + 1) % 3) {
-                    // Left player - vertical cards
+                // For 3 players: left (vertical), top (horizontal)
+                int relativePos = (i - humanIndex + 3) % 3;
+                if (relativePos == 1) {
+                    // Left player - vertical cards on side panel
                     isVertical = true;
-                    x = 20;
-                    y = areaHeight / 2 - 60;
+                    targetPanel = leftBotPanel;
                 } else {
                     // Top player - horizontal cards
                     isVertical = false;
-                    x = areaWidth / 2 - 80;
+                    x = areaWidth / 2 - 100;
                     y = 10;
                 }
             } else if (numPlayers == 4) {
-                // Arrange as: left, top, right (excluding human at bottom)
+                // For 4 players: left (vertical), top (horizontal), right (vertical)
                 int relativePos = (i - humanIndex + 4) % 4;
                 if (relativePos == 1) {
-                    // Left player - vertical cards
+                    // Left player - vertical cards on side panel
                     isVertical = true;
-                    x = 20;
-                    y = areaHeight / 2 - 60;
+                    targetPanel = leftBotPanel;
                 } else if (relativePos == 2) {
                     // Top player - horizontal cards
                     isVertical = false;
-                    x = areaWidth / 2 - 80;
+                    x = areaWidth / 2 - 100;
                     y = 10;
                 } else if (relativePos == 3) {
-                    // Right player - vertical cards
+                    // Right player - vertical cards on side panel
                     isVertical = true;
-                    x = areaWidth - 180;
-                    y = areaHeight / 2 - 60;
+                    targetPanel = rightBotPanel;
                 }
             }
 
             JPanel opponentBox = createOpponentBox(player, isVertical);
-            opponentBox.setBounds(x, y, isVertical ? 180 : 200, isVertical ? 120 : 150);
-            opponentArea.add(opponentBox);
+            
+            if (targetPanel == leftBotPanel || targetPanel == rightBotPanel) {
+                // For side panels, use vertical layout
+                opponentBox.setAlignmentX(Component.CENTER_ALIGNMENT);
+                targetPanel.add(Box.createVerticalGlue());
+                targetPanel.add(opponentBox);
+                targetPanel.add(Box.createVerticalGlue());
+            } else {
+                // For top area, use absolute positioning
+                opponentBox.setBounds(x, y, isVertical ? 180 : 220, isVertical ? 180 : 150);
+                targetPanel.add(opponentBox);
+            }
         }
 
         opponentArea.revalidate();
         opponentArea.repaint();
+        leftBotPanel.revalidate();
+        leftBotPanel.repaint();
+        rightBotPanel.revalidate();
+        rightBotPanel.repaint();
     }
 
     private void updateScores() {

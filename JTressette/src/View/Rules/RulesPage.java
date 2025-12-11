@@ -126,17 +126,27 @@ public class RulesPage extends JPanel {
     private String getString() {
         String html = buildHtmlContent();
 
-        // Imposta stile CSS inline per testo e sfondo trasparente
+        // Imposta stile CSS inline per testo e sfondo trasparente con miglioramenti
         return "<html><head><style type='text/css'>"
                 + "body { font-family: 'Serif', Georgia, 'Times New Roman'; color: rgb("
                 + TEXT_CREME.getRed() + "," + TEXT_CREME.getGreen() + "," + TEXT_CREME.getBlue()
-                + "); background: transparent; padding: 8px; }"
-                + "h2 { color: rgb(" + TITLE_GOLD.getRed() + "," + TITLE_GOLD.getGreen() + "," + TITLE_GOLD.getBlue() + "); }"
-                + "h3 { color: rgb(" + (TEXT_CREME.getRed()-20) + "," + Math.max(0, TEXT_CREME.getGreen()-20) + "," + Math.max(0, TEXT_CREME.getBlue()-20) + "); }"
-                + "p { font-size: 12pt; line-height:1.45; }"
-                + "ul { margin-left: 1.2em; }"
-                + ".note { color: #d6cebf; font-size:10pt; }"
-                + "code { background: rgba(255,255,255,0.06); padding:2px 4px; border-radius:3px; }"
+                + "); background: transparent; padding: 12px; line-height: 1.6; }"
+                + "h2 { color: rgb(" + TITLE_GOLD.getRed() + "," + TITLE_GOLD.getGreen() + "," + TITLE_GOLD.getBlue() 
+                + "); margin-top: 20px; margin-bottom: 12px; font-size: 20pt; border-bottom: 2px solid rgba(255,215,0,0.3); padding-bottom: 8px; }"
+                + "h3 { color: rgb(" + (TEXT_CREME.getRed()-20) + "," + Math.max(0, TEXT_CREME.getGreen()-20) + "," + Math.max(0, TEXT_CREME.getBlue()-20) 
+                + "); margin-top: 16px; margin-bottom: 10px; font-size: 14pt; }"
+                + "p { font-size: 12pt; line-height: 1.6; margin: 10px 0; }"
+                + "ul, ol { margin-left: 1.5em; margin-top: 8px; margin-bottom: 8px; }"
+                + "li { margin: 6px 0; font-size: 11pt; }"
+                + "ul ul { margin-left: 1.2em; }"
+                + ".note { color: #d6cebf; font-size: 10pt; background: rgba(255,255,255,0.03); padding: 10px; "
+                + "border-left: 3px solid rgba(255,215,0,0.5); margin: 15px 0; border-radius: 4px; }"
+                + "code, b { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 3px; font-weight: bold; }"
+                + "ol { counter-reset: item; list-style-type: none; }"
+                + "ol > li { counter-increment: item; position: relative; padding-left: 30px; }"
+                + "ol > li:before { content: counter(item); position: absolute; left: 0; top: 0; "
+                + "background: rgba(255,215,0,0.2); color: rgb(" + TITLE_GOLD.getRed() + "," + TITLE_GOLD.getGreen() + "," + TITLE_GOLD.getBlue() 
+                + "); width: 22px; height: 22px; border-radius: 50%; text-align: center; line-height: 22px; font-weight: bold; font-size: 10pt; }"
                 + "</style></head><body>"
                 + html
                 + "</body></html>";
@@ -144,26 +154,55 @@ public class RulesPage extends JPanel {
 
     private String buildHtmlContent() {
         String rulesHtml =
-                "<h2>Regole base del Tressette (sintesi)</h2>" +
-                        "<p>Il <b>Tressette</b> è un classico gioco di carte italiano. Qui trovi una versione sintetica delle regole per giocare velocemente a questo gioco.</p>" +
-                        "<h3>Obiettivo</h3>" +
-                        "<p>Raccogliere più carte possibili che abbiano un valore attraverso il loro valore e la priorità che hanno sulle altre carte</p>" +
-                        "<h3>Carte e valori</h3>" +
+                "<h2>📜 Regole base del Tressette</h2>" +
+                        "<p>Il <b>Tressette</b> è un classico gioco di carte italiano che si gioca con un mazzo da 40 carte. " +
+                        "Scopri le regole fondamentali per iniziare a giocare!</p>" +
+                        
+                        "<h3>🎯 Obiettivo del Gioco</h3>" +
+                        "<p>L'obiettivo è raccogliere il maggior numero di punti possibile attraverso le carte vinte durante le mani. " +
+                        "Il giocatore o la squadra con il punteggio più alto vince la partita.</p>" +
+                        
+                        "<h3>🃏 Mazzo e Valori delle Carte</h3>" +
+                        "<p>Si utilizza un mazzo da 40 carte italiano. Le carte hanno un ordine di priorità e valore specifico:</p>" +
                         "<ul>" +
-                        "<li>Si gioca con un mazzo da 40 carte italiano: le figure e i valori seguono la seguente scala:</li>" +
-                        "<li> <b>3</b>, <b>2</b>, <b>Asso</b>, <b>Re</b>, <b>Cavallo</b>, <b>Fante</b>, ed in ordine dal 7 al 4</li>" +
+                        "<li><b>Ordine di forza:</b> 3 (più forte), 2, Asso, Re, Cavallo, Fante, 7, 6, 5, 4 (più debole)</li>" +
+                        "<li><b>Valori in punti:</b>" +
+                        "  <ul>" +
+                        "    <li>Asso = 1 punto</li>" +
+                        "    <li>2 = 1 punto</li>" +
+                        "    <li>3 = 1 punto</li>" +
+                        "    <li>Re, Cavallo, Fante = 1/3 di punto ciascuno</li>" +
+                        "    <li>Altre carte = 0 punti</li>" +
+                        "  </ul>" +
+                        "</li>" +
                         "</ul>" +
-                        "<h3>Svolgimento</h3>" +
+                        
+                        "<h3>🎮 Svolgimento della Partita</h3>" +
+                        "<ol>" +
+                        "<li><b>Distribuzione:</b> Vengono distribuite 10 carte a ciascun giocatore all'inizio della mano.</li>" +
+                        "<li><b>Primo turno:</b> Il primo giocatore (o vincitore del turno precedente) gioca una carta. Il suo seme diventa il seme dominante del turno.</li>" +
+                        "<li><b>Rispondere:</b> Gli altri giocatori devono rispondere con lo stesso seme, se possibile. Altrimenti, possono giocare qualsiasi altra carta.</li>" +
+                        "<li><b>Vincere il turno:</b> Vince il turno la carta più alta del seme dominante secondo l'ordine di forza.</li>" +
+                        "<li><b>Pesca:</b> Dopo ogni turno, i giocatori pescano una carta dal mazzo per riportare la mano a 10 carte.</li>" +
+                        "</ol>" +
+                        
+                        "<h3>📊 Calcolo del Punteggio</h3>" +
+                        "<p>Al termine della mano, si contano i punti di tutte le carte raccolte da ogni giocatore o squadra:</p>" +
                         "<ul>" +
-                        "<li>Il primo giocatore del turno, o il giocatore vincitore del turno precedente, gioca una carta il cui seme sarà il seme dominante di quel turno, gli altri devono rispondere con lo stesso seme laddove possibile, altrimenti saranno liberi di gettare qualsiasi altra carta.</li>" +
-                        "<li>Vince il turno, e quindi conseguentemente prende tutte le carte a terra, la carta con il valore più alto secondo la scala del Tressette.</li>" +
+                        "<li>Si sommano i valori delle carte vinte</li>" +
+                        "<li>Il punteggio viene arrotondato secondo le convenzioni del gioco</li>" +
+                        "<li>Vince chi raggiunge per primo il punteggio stabilito (solitamente 21 punti)</li>" +
                         "</ul>" +
-                        "<h3>Punteggi</h3>" +
-                        "<p>Al termine della mano si conteggiano i punti di tutte le carte raccolte. Il valore delle carte corrisponde a 1 per : Asso, 2 , 3; mentre vale 1/3 per Re, Cavallo e Fante</p>" +
-                        "<h3>Consigli</h3>" +
+                        
+                        "<h3>💡 Consigli Strategici</h3>" +
                         "<ul>" +
-                        "<li>Ricorda di osservare le carte giocate e pianificare la presa.</li>" +
-                        "<li>Usa le regole fornite come base e personalizza la strategia in base alla tua variante preferita.</li>" ;
+                        "<li><b>Memoria:</b> Ricorda le carte giocate per anticipare le mosse degli avversari</li>" +
+                        "<li><b>Gestione:</b> Conserva le carte forti per i momenti cruciali</li>" +
+                        "<li><b>Attenzione:</b> Presta attenzione al seme dominante e pianifica le tue giocate</li>" +
+                        "<li><b>Pratica:</b> L'esperienza è fondamentale per migliorare la propria strategia</li>" +
+                        "</ul>" +
+                        
+                        "<div class='note'><i>💭 Nota: Queste sono le regole base. Esistono diverse varianti regionali del Tressette con regole leggermente diverse.</i></div>";
         return rulesHtml;
     }
 
