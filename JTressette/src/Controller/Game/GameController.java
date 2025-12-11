@@ -3,7 +3,6 @@ package Controller.Game;
 import Model.Audio.AudioManager;
 import Model.Game.*;
 import Model.Impostazioni.MenuImpostazioni;
-import View.Menu.HomeMenu;
 import Model.Profile.GamesRecord;
 import View.Game.GameView;
 
@@ -318,15 +317,23 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         int myPoints = gameState.getScore(humanPlayer);
         int myCardsWon = gameState.getWonCardsCount(humanPlayer);
 
-        return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore, myPoints, myCardsWon);
+        return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore, (Integer) experienceFromGame(humanPlayer, winner, myPoints, myCardsWon));
+    }
+
+    private Object experienceFromGame(GiocatoreUmano humanPlayer, Giocatore winner, int myPoints, int myCardsWon) {
+        int experience = 0;
+        experience += myPoints * 2; // XP per punto
+        experience += myCardsWon * 5; // XP per carta vinta
+        if (humanPlayer == winner) {
+            experience += 50; // bonus vittoria
+        } else {
+            experience += 20; // bonus partecipazione
+        }
+        return experience;
     }
 
     public GameView getView() {
         return view;
-    }
-
-    public AudioManager getAudioManager() {
-        return audioManager;
     }
 
     @Override

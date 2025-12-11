@@ -89,6 +89,9 @@ public class GameView extends JFrame {
         setResizable(true); // allow resize for testing; layout adapts
         setLocationRelativeTo(null);
 
+        // Make frame undecorated to allow opacity changes
+        setUndecorated(true);
+
         // Start with opacity 0 for fade-in effect
         setOpacity(0.0f);
 
@@ -115,6 +118,40 @@ public class GameView extends JFrame {
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
         setContentPane(mainPanel);
+
+        // Add mouse listeners to make undecorated window draggable
+        // Using array wrapper to allow mutation in anonymous inner class
+        final Point[] initialClick = {null};
+        mainPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                initialClick[0] = e.getPoint();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                initialClick[0] = null;
+            }
+        });
+        mainPanel.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (initialClick[0] != null) {
+                    // Get location of window
+                    int thisX = getLocation().x;
+                    int thisY = getLocation().y;
+
+                    // Determine how much the mouse moved since initial click
+                    int xMoved = e.getX() - initialClick[0].x;
+                    int yMoved = e.getY() - initialClick[0].y;
+
+                    // Move window to new position
+                    int X = thisX + xMoved;
+                    int Y = thisY + yMoved;
+                    setLocation(X, Y);
+                }
+            }
+        });
 
         // Resize listener to recompute sizes
         this.addComponentListener(new java.awt.event.ComponentAdapter() {

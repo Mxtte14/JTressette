@@ -14,21 +14,29 @@ public class GamesRecord implements Serializable {
     private String winner;       // Vincitore della partita
     private String winnerScore;  // Punteggio del vincitore (es: 2/3)
     private String myScore;      // Punteggio dell'utente (es: 1 2/3)
+    private int experience;      // Esperienza guadagnata per questa partita
     private int myPoints;        // Punti raw dell'utente
     private int myCardsWon;      // Numero di carte vinte dall'utente
 
     public GamesRecord() {}
 
-    public GamesRecord(String date, String opponent, String winner, String winnerScore, String myScore) {
+    /**
+     * Constructor backwards-compatible with older serialization where "experience" was the last arg.
+     */
+    public GamesRecord(String date, String opponent, String winner, String winnerScore, String myScore, int experience) {
         this.date = date;
         this.opponent = opponent;
         this.winner = winner;
         this.winnerScore = winnerScore;
         this.myScore = myScore;
+        this.experience = experience;
         this.myPoints = 0;
         this.myCardsWon = 0;
     }
 
+    /**
+     * New constructor used in GameController: pass raw points and cards won; experience can be set later.
+     */
     public GamesRecord(String date, String opponent, String winner, String winnerScore, String myScore, int myPoints, int myCardsWon) {
         this.date = date;
         this.opponent = opponent;
@@ -37,6 +45,7 @@ public class GamesRecord implements Serializable {
         this.myScore = myScore;
         this.myPoints = myPoints;
         this.myCardsWon = myCardsWon;
+        this.experience = 0;
     }
 
     public String getDate() { return date; }
@@ -64,9 +73,17 @@ public class GamesRecord implements Serializable {
      */
     public String getMyScore() { return myScore; }
 
+    public int getExperience() { return experience; }
+
+    public void setExperience(int experience) { this.experience = experience; }
+
     public int getMyPoints() { return myPoints; }
 
+    public void setMyPoints(int myPoints) { this.myPoints = myPoints; }
+
     public int getMyCardsWon() { return myCardsWon; }
+
+    public void setMyCardsWon(int myCardsWon) { this.myCardsWon = myCardsWon; }
 
     @Override
     public String toString() {
@@ -75,6 +92,7 @@ public class GamesRecord implements Serializable {
                 "', winner='" + winner +
                 "', winnerScore='" + winnerScore +
                 "', myScore='" + myScore +
+                "', experience='" + experience +
                 "', myPoints=" + myPoints +
                 ", myCardsWon=" + myCardsWon + "}";
     }

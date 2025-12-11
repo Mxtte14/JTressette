@@ -15,6 +15,7 @@ public class StorageProfile {
 
     // Chiavi per le proprietà
     private static final String KEY_USERNAME = "username";
+    private static final String KEY_EXPERIENCE = "experience";
     private static final String KEY_AVATAR_PATH = "avatarPath";
     private static final String KEY_CREATED_AT = "createdAt";
     private static final String KEY_TOTAL_GAMES = "totalGames";
@@ -71,6 +72,24 @@ public class StorageProfile {
             }
         }
 
+        // Carica i game records (MINIMALISTA)
+        List<GamesRecord> games = loadGamesFromProperties(props);
+        profile.setRecentGames(games);
+
+        // Leggi esperienza totale se presente; altrimenti ricava dalla somma delle partite
+        String expProp = props.getProperty(KEY_EXPERIENCE);
+        if (expProp != null && !expProp.isEmpty()) {
+            try {
+                profile.setExperience(Integer.parseInt(expProp));
+            } catch (NumberFormatException e) {
+                LOG.log(Level.WARNING, "Valore non valido per experience: " + expProp + ", uso somma dei record");
+                profile.setExperience(sumExperienceFromGames(games));
+            }
+        } else {
+            // fallback: se il file non conteneva il campo experience, calcoliamo la somma delle partite
+            profile.setExperience(sumExperienceFromGames(games));
+        }
+
         String totalGamesStr = props.getProperty(KEY_TOTAL_GAMES, "0");
         try {
             profile.setTotalGames(Integer.parseInt(totalGamesStr));
@@ -87,15 +106,20 @@ public class StorageProfile {
             profile.setTotalWins(0);
         }
 
-        // Carica i game records (MINIMALISTA)
-        List<GamesRecord> games = loadGamesFromProperties(props);
-        profile.setRecentGames(games);
-
         return profile;
     }
 
+    private int sumExperienceFromGames(List<GamesRecord> games) {
+        int sum = 0;
+        if (games == null) return 0;
+        for (GamesRecord g : games) {
+            sum += g.getExperience();
+        }
+        return sum;
+    }
+
     /**
-     * Carica i game records dalle proprietà (solo dati essenziali).
+     * Carica i game records dalle proprietà (includiamo ora experience, myPoints e myCardsWon se presenti).
      */
     private List<GamesRecord> loadGamesFromProperties(Properties props) {
         List<GamesRecord> games = new ArrayList<>();
@@ -114,7 +138,27 @@ public class StorageProfile {
             String winner = props.getProperty(prefix + "winner", "");
             String winnerScore = props.getProperty(prefix + "winnerScore", "");
             String myScore = props.getProperty(prefix + "myScore", "");
-            games.add(new GamesRecord(date, opponent, winner, winnerScore, myScore));
+            int experience = 0;
+            int myPoints = 0;
+            int myCardsWon = 0;
+            try {
+                experience = Integer.parseInt(props.getProperty(prefix + "experience", "0"));
+            } catch (NumberFormatException e) {
+                // ignore, keep 0
+            }
+            try {
+                myPoints = Integer.parseInt(props.getProperty(prefix + "myPoints", "0"));
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+            try {
+                myCardsWon = Integer.parseInt(props.getProperty(prefix + "myCardsWon", "0"));
+            } catch (NumberFormatException e) {
+                // ignore
+            }
+            GamesRecord record = new GamesRecord(date, opponent, winner, winnerScore, myScore, myPoints, myCardsWon);
+            record.setExperience(experience);
+            games.add(record);
         }
         return games;
     }
@@ -130,6 +174,7 @@ public class StorageProfile {
         Properties props = new Properties();
         props.setProperty(KEY_USERNAME, profile.getUsername() != null ? profile.getUsername() : "Giocatore");
 
+        props.setProperty(KEY_EXPERIENCE, String.valueOf(profile.getExperience()));
         if (profile.getAvatarPath() != null) {
             props.setProperty(KEY_AVATAR_PATH, profile.getAvatarPath());
         }
@@ -138,7 +183,7 @@ public class StorageProfile {
         props.setProperty(KEY_TOTAL_GAMES, String.valueOf(profile.getTotalGames()));
         props.setProperty(KEY_TOTAL_WINS, String.valueOf(profile.getWinsNumber()));
 
-        // Salva i game records (solo dati fondamentali)
+        // Salva i game records (includiamo experience, myPoints e myCardsWon)
         List<GamesRecord> games = profile.getRecentGames();
         props.setProperty(KEY_GAMES_COUNT, String.valueOf(games.size()));
         for (int i = 0; i < games.size(); i++) {
@@ -149,6 +194,9 @@ public class StorageProfile {
             props.setProperty(prefix + "winner", g.getWinner() != null ? g.getWinner() : "");
             props.setProperty(prefix + "winnerScore", g.getWinnerScore() != null ? g.getWinnerScore() : "");
             props.setProperty(prefix + "myScore", g.getMyScore() != null ? g.getMyScore() : "");
+            props.setProperty(prefix + "experience", String.valueOf(g.getExperience()));
+            props.setProperty(prefix + "myPoints", String.valueOf(g.getMyPoints()));
+            props.setProperty(prefix + "myCardsWon", String.valueOf(g.getMyCardsWon()));
         }
 
         Path tmp = profileDir.resolve(FILE_NAME + ".tmp");
@@ -162,9 +210,5 @@ public class StorageProfile {
             LOG.log(Level.FINE, "Atomic move non supportato, uso move standard");
             Files.move(tmp, profileFile, StandardCopyOption.REPLACE_EXISTING);
         }
-    }
-
-    public Path getProfileFilePath() {
-        return profileFile;
     }
 }
