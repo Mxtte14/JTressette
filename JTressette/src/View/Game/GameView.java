@@ -222,14 +222,32 @@ public class GameView extends JFrame {
         nameLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
         // Face-down cards panel using card back images
-        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, isVertical ? 0 : -20, isVertical ? -20 : 0));
+        // Dynamically size cards to ensure all are visible
+        List<Cards> hand = gameState.getHand(player);
+        int handSize = hand.size();
+        
+        // Calculate card size to fit all cards
+        // For horizontal: max width depends on available space and overlap
+        // For vertical: max height depends on available space and overlap
+        int baseCardWidth = SMALL_CARD_WIDTH;
+        int baseCardHeight = SMALL_CARD_HEIGHT;
+        int overlap = isVertical ? -20 : -20; // Negative for overlapping cards
+        
+        // Adjust size if too many cards
+        if (handSize > 5) {
+            // Reduce size for larger hands
+            float scaleFactor = Math.min(1.0f, 5.0f / handSize);
+            baseCardWidth = (int)(baseCardWidth * scaleFactor);
+            baseCardHeight = (int)(baseCardHeight * scaleFactor);
+        }
+        
+        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, isVertical ? 0 : overlap, isVertical ? overlap : 0));
         cardsPanel.setOpaque(false);
 
-        List<Cards> hand = gameState.getHand(player);
-        int cardWidth = isVertical ? SMALL_CARD_HEIGHT : SMALL_CARD_WIDTH;
-        int cardHeight = isVertical ? SMALL_CARD_WIDTH : SMALL_CARD_HEIGHT;
+        int cardWidth = isVertical ? baseCardHeight : baseCardWidth;
+        int cardHeight = isVertical ? baseCardWidth : baseCardHeight;
         Image cardBackImg = CardImageLoader.getScaledCardBackImage(cardWidth, cardHeight);
-        for (int i = 0; i < hand.size(); i++) {
+        for (int i = 0; i < handSize; i++) {
             JLabel cardBack = new JLabel(new ImageIcon(cardBackImg));
             cardBack.setPreferredSize(new Dimension(cardWidth + 5, cardHeight + 5));
             cardsPanel.add(cardBack);
