@@ -3,6 +3,7 @@ package Model.Profile;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Profilo utente: mantiene experience come totale cumulativo.
@@ -143,7 +144,7 @@ public class UserProfile implements Serializable {
     public int getWinsNumber() {
         int wins = 0;
         for (GamesRecord record : getRecentGames()) {
-            if (record.getWinner() != null && record.getWinner().equals(username)) {
+            if (Objects.equals(record.getWinner(), username)) {
                 wins++;
             }
         }
@@ -163,7 +164,7 @@ public class UserProfile implements Serializable {
         this.totalGames++;
         
         // Verifica se l'utente ha vinto
-        boolean won = record.getWinner() != null && record.getWinner().equals(username);
+        boolean won = Objects.equals(record.getWinner(), username);
         
         // Aggiorna vittorie se l'utente ha vinto
         if (won) {
