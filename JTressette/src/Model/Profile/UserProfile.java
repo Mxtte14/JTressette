@@ -25,7 +25,7 @@ public class UserProfile implements Serializable {
 
     // Costanti per sistema XP (configurabili qui)
     public static final int XP_PER_LEVEL = 500;
-    public static final int XP_PER_POINT = 5;
+    public static final int XP_PER_POINT = 5;  // Aggiornato da 7 a 5 come da specifiche
     public static final int XP_PER_CARD = 2;
     public static final int XP_WIN_BONUS = 50;
     public static final int XP_LOSS_BONUS = 20;
