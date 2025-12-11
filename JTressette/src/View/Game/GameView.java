@@ -120,7 +120,7 @@ public class GameView extends JFrame {
         setContentPane(mainPanel);
 
         // Add mouse listeners to make undecorated window draggable
-        // Using instance variables instead of array wrapper
+        // Using array wrapper to allow mutation in anonymous inner class
         final Point[] initialClick = {null};
         mainPanel.addMouseListener(new MouseAdapter() {
             @Override
