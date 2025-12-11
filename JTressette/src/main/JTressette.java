@@ -1,3 +1,4 @@
+
 package main;
 
 import Controller.Profile.ProfileController;
@@ -97,37 +98,70 @@ public class JTressette {
         if (players == null || players.isEmpty()) return;
 
         frame.transitionToGameMusic(() -> SwingUtilities.invokeLater(() -> {
-            frame.setVisible(false);
+            // Fade out the menu frame before hiding it
+            Timer fadeTimer = new Timer(16, null);
+            final float[] alpha = {1.0f};
+            fadeTimer.addActionListener(e -> {
+                alpha[0] -= 0.1f;
+                if (alpha[0] <= 0.0f) {
+                    alpha[0] = 0.0f;
+                    fadeTimer.stop();
+                    frame.setVisible(false);
+                    frame.setOpacity(1.0f); // Reset for when it comes back
 
-            // user final holder to allow reference inside lambda
-            final GameController[] controllerHolder = new GameController[1];
-
-            // onGameEnd: verrà chiamato da GameController.onReturnToMenu()
-            Runnable onGameEnd = () -> {
-                // Esegui su EDT per essere sicuri di aggiornare UI
-                SwingUtilities.invokeLater(() -> {
-                    // registra partita se possibile (se controller esiste)
-                    if (controllerHolder[0] != null) {
-                        try {
-                            GamesRecord record = controllerHolder[0].getGameRecord();
-                            profileController.recordMatch(record);
-
-                        } catch (Exception ex) {
-                            // logga ma non bloccare la UI
-                            LOG.warning("Impossibile ottenere o registrare game record: " + ex.getMessage());
-                        }
-                    }
-
-                    // Riporta l'app alla schermata principale
-                    frame.setVisible(true);
-                    frame.resumeMenuMusic();
-                });
-            };
-
-            // Crea il controller della partita passando la lambda onGameEnd
-            controllerHolder[0] = new GameController(players, onGameEnd);
-            controllerHolder[0].startGame();
+                    // Start the game after fade out
+                    startGameAfterTransition(players);
+                } else {
+                    frame.setOpacity(alpha[0]);
+                }
+            });
+            fadeTimer.start();
         }));
+    }
+
+    private void startGameAfterTransition(List<Giocatore> players) {
+        // user final holder to allow reference inside lambda
+        final GameController[] controllerHolder = new GameController[1];
+
+        // onGameEnd: verrà chiamato da GameController.onReturnToMenu()
+        Runnable onGameEnd = () -> {
+            // Esegui su EDT per essere sicuri di aggiornare UI
+            SwingUtilities.invokeLater(() -> {
+                // registra partita se possibile (se controller esiste)
+                if (controllerHolder[0] != null) {
+                    try {
+                        GamesRecord record = controllerHolder[0].getGameRecord();
+                        profileController.recordMatch(record);
+
+                    } catch (Exception ex) {
+                        // logga ma non bloccare la UI
+                        LOG.warning("Impossibile ottenere o registrare game record: " + ex.getMessage());
+                    }
+                }
+
+                // Riporta l'app alla schermata principale con fade-in
+                frame.setOpacity(0.0f);
+                frame.setVisible(true);
+                frame.resumeMenuMusic();
+
+                // Fade in the menu frame
+                Timer fadeTimer = new Timer(16, null);
+                final float[] alpha = {0.0f};
+                fadeTimer.addActionListener(e -> {
+                    alpha[0] += 0.1f;
+                    if (alpha[0] >= 1.0f) {
+                        alpha[0] = 1.0f;
+                        fadeTimer.stop();
+                    }
+                    frame.setOpacity(alpha[0]);
+                });
+                fadeTimer.start();
+            });
+        };
+
+        // Crea il controller della partita passando la lambda onGameEnd
+        controllerHolder[0] = new GameController(players, onGameEnd);
+        controllerHolder[0].startGame();
     }
 
     private void setupRepaintTimer() {

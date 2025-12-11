@@ -77,8 +77,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         audioManager.fadeIn(800, volume);
         audioManager.loop();
 
-        // Animazione distribuzione, poi si distribuiscono 10 carte a giocatore
+        // Show window with fade-in effect
         view.setVisible(true);
+        view.fadeIn();
+
+        // Animazione distribuzione, poi si distribuiscono 10 carte a giocatore
         view.showDealingAnimation(gameState.getPlayers(), () -> {
             gameState.deal(10); // Distribuisci 10 carte a ciascuno!
             view.refresh();
@@ -152,10 +155,10 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                                 Cards nuovaCarta = gameState.getDeck().draw();
                                 if (nuovaCarta != null) {
                                     view.showDrawAnimationToPlayerHand(p, () -> {
-                                    view.refresh();
-                                    if (p == humanPlayer) {
-                                        audioManager.playDrawSound(); // suono
-                                    }});
+                                        view.refresh();
+                                        if (p == humanPlayer) {
+                                            audioManager.playDrawSound(); // suono
+                                        }});
                                     gameState.getHandMutable(p).add(nuovaCarta);
                                 }
                                 Thread.sleep(200);
@@ -193,6 +196,15 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                 .map(java.util.Map.Entry::getKey)
                 .orElse(null);
 
+        // Play victory or defeat sound if effects are enabled
+        if (MenuImpostazioni.getInstance().isEffects()) {
+            if (winner == humanPlayer) {
+                audioManager.playVictorySound();
+            } else {
+                audioManager.playDefeatSound();
+            }
+        }
+
         if (winner != null) {
             return "Vincitore: " + winner.getName() + " (punti: " + gameState.getScaledScoreString(winner) + ")";
         }
@@ -218,14 +230,28 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         MenuImpostazioni.getInstance().removeListener(this);
         audioManager.fadeOut(300, audioManager::close);
 
-        SwingUtilities.invokeLater(() -> {
-            if (view != null) {
-                view.dispose();
-            }
-            if (onGameEnd != null) {
-                onGameEnd.run(); // DELEGA chi ha creato il GameController
+        // Fade out the window before closing
+        Timer fadeTimer = new Timer(16, null);
+        final float[] alpha = {1.0f};
+        fadeTimer.addActionListener(e -> {
+            alpha[0] -= 0.1f;
+            if (alpha[0] <= 0.0f) {
+                alpha[0] = 0.0f;
+                fadeTimer.stop();
+
+                SwingUtilities.invokeLater(() -> {
+                    if (view != null) {
+                        view.dispose();
+                    }
+                    if (onGameEnd != null) {
+                        onGameEnd.run(); // DELEGA chi ha creato il GameController
+                    }
+                });
+            } else {
+                view.setOpacity(alpha[0]);
             }
         });
+        fadeTimer.start();
     }
 
     /**
@@ -241,12 +267,26 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         // Fade out musica
         audioManager.fadeOut(500, audioManager::close);
 
-        SwingUtilities.invokeLater(() -> {
-            view.dispose();
-            if (onGameEnd != null) {
-                onGameEnd.run();
+        // Fade out the window before closing
+        Timer fadeTimer = new Timer(16, null);
+        final float[] alpha = {1.0f};
+        fadeTimer.addActionListener(e -> {
+            alpha[0] -= 0.1f;
+            if (alpha[0] <= 0.0f) {
+                alpha[0] = 0.0f;
+                fadeTimer.stop();
+
+                SwingUtilities.invokeLater(() -> {
+                    view.dispose();
+                    if (onGameEnd != null) {
+                        onGameEnd.run();
+                    }
+                });
+            } else {
+                view.setOpacity(alpha[0]);
             }
         });
+        fadeTimer.start();
     }
 
     /**

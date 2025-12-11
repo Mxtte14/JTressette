@@ -28,6 +28,8 @@ public class AudioManager {
     public static final int BACKGROUND_GAME = 3;
     public static final int CARD_DRAW = 4;
     public static final int CARD_DEALING = 5;
+    public static final int VICTORY = 6;
+    public static final int DEFEAT = 7;
 
     // Volume scaling constant - AudioManager max safe volume
     public static final float MAX_VOLUME_SCALE = 0.4f;
@@ -45,6 +47,8 @@ public class AudioManager {
         soundURL[BACKGROUND_GAME] = getClass().getResource("/res/audio/backGame.wav");
         soundURL[CARD_DRAW] = getClass().getResource("/res/audio/cardDraw.wav");
         soundURL[CARD_DEALING] = getClass().getResource("/res/audio/dealing.wav");
+        soundURL[VICTORY] = getClass().getResource("/res/audio/victory.wav");
+        soundURL[DEFEAT] = getClass().getResource("/res/audio/defeat.wav");
     }
 
     public void setFile(int i) {
@@ -233,6 +237,8 @@ public class AudioManager {
         playSoundEffect(CARD_DEALING);
     }
 
+
+
     /**
      * Play the draw effect sound.
      */
@@ -244,6 +250,20 @@ public class AudioManager {
      */
     public void playCardSound() {
         playSoundEffect(CARD_PLAYED);
+    }
+
+    /**
+     * Play the victory sound effect.
+     */
+    public void playVictorySound() {
+        playSoundEffect(VICTORY);
+    }
+
+    /**
+     * Play the defeat sound effect.
+     */
+    public void playDefeatSound() {
+        playSoundEffect(DEFEAT);
     }
 
     private void stopFadeTimer() {

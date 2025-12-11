@@ -5,40 +5,27 @@ Progetto JTressette 👌
 	- Riduzione di audio sample
 	- Animazioni varie
 
-- Carenze attuali progetto:
+Potresti migliorarmi queste specifiche mancanti:
 	- Audio nel gioco:
-		- Cambiare audio Home  👌
 		- Gestire audio Home quando si torna alla Home durante una partita
-		- Implementare audio per carte date 👌
-		- Implementare audio per click di pulsanti  👌
 		- Implementare audio per vittoria/ sconfitta
 
     - Animazioni:
-        - Implementare animazioni per carte giocate
-
-
-	- Livello:
-		- Implementazione esperienza per partita  👌
-		- Implementazione livello basato su esperienza  👌
+        - Implementare animazioni per carte giocate (passaggio dalla mano alla relativa posizione sul tavolo)
+        - Implementare il passaggio dalla Home al gioco senza aprire una nuova finestra (animazione di transizione)
 
 	- Partita:
 		- Migliorie grafiche quali:
-			- mano del giocatore, 👌
-			- gestione pagina per 2 o più giocatori
+			- gestione pagina per 2 o più giocatori (visualizzazione carte, nomi giocatori, punteggi)
+			        - per 2 giocatori: visualizzazione carte in orizzontale (del bot tutte le carte in mano devono essere visibili)
+                    - per 3 giocatori: visualizzazione carte in orizzontale pr il bot in alto e visualizzazione carte in verticale alla sinistra del tavolo per il bot a sinistra ( devono essere visibili tutte le cartee, se necessario ridurre la grandezza di tutte carte)
+                    - per 4 giocatori: visualizzazione carte in orizzontale per i bot in alto e in basso e visualizzazione carte in verticale alla sinistra e alla destra del tavolo per i bot a sinistra e a destra ( devono essere visibili tutte le carte, se necessario ridurre la grandezza di tutte carte)
+            - migliorare grafica per punteggi giocatori (colori, font, dimensioni)
+            - implementazione funzioni che definiscono se il punteggio e la chat sono visibili in base alle impostazioni gia implementate
+			- migliorare grafica per carte giocate al centro e per il mazzo di carte, dovrà essere dello stesso stile delle carte in mano e della stessa grandezza delle carte a terra
 			- implementazione per scelta su impostazioni se mostrare chat e punteggi
-			- mazzo👌
-			- carte prese(?) 👌
-			-
 
 	- Profilo:
 		- Migliorie grafiche per:
-			- visualizzazione storico partite 👌
-			- visualizzazione schermata
-			- immagine profilo  👌
-			- colore sfondo (?)
-		- Implementazione nello storage dell'esperienza utente  👌
-		- Implementazione grafica barra livello ed esperienza  👌
-		- Modifica punteggi storico partite, utilizzando il punteggio scalato 👌
-
-	- Impostazioni:
-		-
+			- visualizzazione schermata, implementando colori verdi, oro, neri come la Home per i pulsanti e per il livello utente
+			- cambiar colore sfondo o aggiungere immagine di sfondo

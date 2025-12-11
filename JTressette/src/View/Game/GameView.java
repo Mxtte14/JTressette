@@ -2,6 +2,7 @@ package View.Game;
 
 import Controller.Game.GameController;
 import Model.Game.*;
+import Model.Impostazioni.MenuImpostazioni;
 import Model.Util.CardImageLoader;
 
 import javax.swing.*;
@@ -88,6 +89,9 @@ public class GameView extends JFrame {
         setResizable(true); // allow resize for testing; layout adapts
         setLocationRelativeTo(null);
 
+        // Start with opacity 0 for fade-in effect
+        setOpacity(0.0f);
+
         // Main panel with gradient background
         JPanel mainPanel = new GradientPanel();
         mainPanel.setLayout(new BorderLayout(10, 10));
@@ -133,7 +137,11 @@ public class GameView extends JFrame {
         int contentW = getContentPane().getWidth();
         int contentH = getContentPane().getHeight();
 
-        int rightPanelW = 220; // same as createInfoPanel preferred
+        // Check if info panel is visible based on settings
+        MenuImpostazioni settings = MenuImpostazioni.getInstance();
+        boolean infoPanelVisible = settings.isShowScore() || settings.isShowMessages();
+        int rightPanelW = infoPanelVisible ? 220 : 20; // Smaller margin if panel not visible
+
         int availableW = Math.max(400, contentW - rightPanelW - 60); // margin
         int availableH = Math.max(300, contentH - 220); // top + hand area approx
 
@@ -153,7 +161,12 @@ public class GameView extends JFrame {
     private void recomputeHandCardSize() {
         // figure available width inside center area (exclude info panel)
         int contentW = getContentPane().getWidth();
-        int rightPanelW = 220;
+
+        // Check if info panel is visible
+        MenuImpostazioni settings = MenuImpostazioni.getInstance();
+        boolean infoPanelVisible = settings.isShowScore() || settings.isShowMessages();
+        int rightPanelW = infoPanelVisible ? 220 : 20;
+
         int effectiveWidth = Math.max(320, contentW - rightPanelW - 60);
 
         int handCount = Math.max(1, gameState.getHand(humanPlayer).size());
@@ -204,37 +217,66 @@ public class GameView extends JFrame {
         box.setOpaque(false);
         box.setLayout(new BoxLayout(box, isVertical ? BoxLayout.X_AXIS : BoxLayout.Y_AXIS));
 
+        // Player name with improved styling
         JLabel nameLabel = new JLabel(player.getName());
-        nameLabel.setForeground(TEXT_WHITE);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        nameLabel.setForeground(new Color(255, 215, 0)); // Gold color
+        nameLabel.setFont(new Font("Georgia", Font.BOLD, 14));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         nameLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
 
         // Face-down cards panel using card back images
-        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, isVertical ? 0 : -20, isVertical ? -20 : 0));
+        // Dynamically size cards to ensure all are visible
+        List<Cards> hand = gameState.getHand(player);
+        int handSize = hand.size();
+
+        // Calculate card size to fit all cards
+        // For horizontal: max width depends on available space and overlap
+        // For vertical: max height depends on available space and overlap
+        int baseCardWidth = SMALL_CARD_WIDTH;
+        int baseCardHeight = SMALL_CARD_HEIGHT;
+        int overlap = isVertical ? -20 : -20; // Negative for overlapping cards
+
+        // Adjust size if too many cards
+        if (handSize > 5) {
+            // Reduce size for larger hands
+            float scaleFactor = Math.min(1.0f, 5.0f / handSize);
+            baseCardWidth = (int)(baseCardWidth * scaleFactor);
+            baseCardHeight = (int)(baseCardHeight * scaleFactor);
+        }
+
+        JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, isVertical ? 0 : overlap, isVertical ? overlap : 0));
         cardsPanel.setOpaque(false);
 
-        List<Cards> hand = gameState.getHand(player);
-        int cardWidth = isVertical ? SMALL_CARD_HEIGHT : SMALL_CARD_WIDTH;
-        int cardHeight = isVertical ? SMALL_CARD_WIDTH : SMALL_CARD_HEIGHT;
+        int cardWidth = isVertical ? baseCardHeight : baseCardWidth;
+        int cardHeight = isVertical ? baseCardWidth : baseCardHeight;
         Image cardBackImg = CardImageLoader.getScaledCardBackImage(cardWidth, cardHeight);
-        for (int i = 0; i < hand.size(); i++) {
+        for (int i = 0; i < handSize; i++) {
             JLabel cardBack = new JLabel(new ImageIcon(cardBackImg));
             cardBack.setPreferredSize(new Dimension(cardWidth + 5, cardHeight + 5));
             cardsPanel.add(cardBack);
         }
 
-        int wonCards = gameState.getWonCardsCount(player);
-        JPanel wonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        wonPanel.setOpaque(false);
+        // Score and won cards info panel
+        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        infoPanel.setOpaque(false);
 
+        int wonCards = gameState.getWonCardsCount(player);
         JPanel opponentDeckIcon = createOpponentWonCardsDeckIcon(player);
-        wonPanel.add(opponentDeckIcon);
+        infoPanel.add(opponentDeckIcon);
 
         JLabel wonLabel = new JLabel("Carte: " + wonCards);
         wonLabel.setForeground(TEXT_GOLD);
         wonLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        wonPanel.add(wonLabel);
+        infoPanel.add(wonLabel);
+
+        // Add score if enabled in settings
+        MenuImpostazioni settings = MenuImpostazioni.getInstance();
+        if (settings.isShowScore()) {
+            JLabel scoreLabel = new JLabel(" | Punti: " + gameState.getScaledScoreString(player));
+            scoreLabel.setForeground(new Color(255, 215, 0)); // Gold
+            scoreLabel.setFont(new Font("Georgia", Font.BOLD, 11));
+            infoPanel.add(scoreLabel);
+        }
 
         if (isVertical) {
             box.add(Box.createHorizontalStrut(5));
@@ -242,13 +284,13 @@ public class GameView extends JFrame {
             box.add(Box.createHorizontalStrut(5));
             box.add(cardsPanel);
             box.add(Box.createHorizontalStrut(5));
-            box.add(wonPanel);
+            box.add(infoPanel);
         } else {
             box.add(nameLabel);
             box.add(Box.createVerticalStrut(5));
             box.add(cardsPanel);
             box.add(Box.createVerticalStrut(3));
-            box.add(wonPanel);
+            box.add(infoPanel);
         }
         return box;
     }
@@ -435,6 +477,16 @@ public class GameView extends JFrame {
     }
 
     private JPanel createInfoPanel() {
+        // Check if info panel should be visible
+        MenuImpostazioni settings = MenuImpostazioni.getInstance();
+        if (!settings.isShowScore() && !settings.isShowMessages()) {
+            // If both score and chat are disabled, return an empty panel
+            JPanel emptyPanel = new JPanel();
+            emptyPanel.setOpaque(false);
+            emptyPanel.setPreferredSize(new Dimension(0, 0));
+            return emptyPanel;
+        }
+
         JPanel panel = getJPanel();
 
         JLabel titleLabel = new JLabel("Info Partita");
@@ -450,8 +502,8 @@ public class GameView extends JFrame {
         // Mostra punteggio solo se abilitato nelle impostazioni
 
         scoreLabel = new JLabel("Punteggio: 0");
-        scoreLabel.setForeground(TEXT_WHITE);
-        scoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        scoreLabel.setForeground(new Color(255, 215, 0)); // Gold color
+        scoreLabel.setFont(new Font("Georgia", Font.BOLD, 16));
         scoreLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel logTitle = new JLabel("Log:");
@@ -482,11 +534,20 @@ public class GameView extends JFrame {
         panel.add(Box.createVerticalStrut(15));
         panel.add(statusLabel);
         panel.add(Box.createVerticalStrut(10));
-        panel.add(scoreLabel);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(logTitle);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(logScroll);
+
+        // Add score only if enabled
+        if (settings.isShowScore()) {
+            panel.add(scoreLabel);
+            panel.add(Box.createVerticalStrut(15));
+        }
+
+        // Add chat/log only if enabled
+        if (settings.isShowMessages()) {
+            panel.add(logTitle);
+            panel.add(Box.createVerticalStrut(5));
+            panel.add(logScroll);
+        }
+
         panel.add(Box.createVerticalGlue());
         panel.add(backButton);
 
@@ -902,6 +963,46 @@ public class GameView extends JFrame {
         SwingUtilities.invokeLater(this::updateTableCards);
     }
 
+    /**
+     * Animate a card being played from hand to table position
+     */
+    public void animateCardPlay(Giocatore player, int cardIndex, Runnable onComplete) {
+        SwingUtilities.invokeLater(() -> {
+            // Get the card position in hand or opponent area
+            Point startPos;
+            if (player == humanPlayer && cardIndex >= 0 && cardIndex < cardPanels.size()) {
+                // Get the card panel position for animation
+                CardPanel cardPanel = cardPanels.get(cardIndex);
+                startPos = cardPanel.getLocationOnScreen();
+            } else {
+                // For opponent, start from their area
+                Point tablePos = tableOval.getLocationOnScreen();
+                int[][] positions = computeSlotPositions();
+                int playerIdx = players.indexOf(player);
+                if (playerIdx >= 0) {
+                    startPos = new Point(
+                            tablePos.x + positions[playerIdx][0],
+                            tablePos.y + positions[playerIdx][1]
+                    );
+                } else {
+                    // Fallback to center
+                    startPos = new Point(
+                            tablePos.x + tableOval.getWidth() / 2,
+                            tablePos.y + tableOval.getHeight() / 2
+                    );
+                }
+            }
+
+            // For now, just update the table (animation can be enhanced later)
+            updateTableCards();
+            if (onComplete != null) {
+                Timer delay = new Timer(100, e -> onComplete.run());
+                delay.setRepeats(false);
+                delay.start();
+            }
+        });
+    }
+
     public void clearTable() {
         SwingUtilities.invokeLater(() -> {
             tableOval.removeAll();
@@ -1254,5 +1355,22 @@ public class GameView extends JFrame {
             playButton.setEnabled(false);
             statusLabel.setText("");
         });
+    }
+
+    /**
+     * Fade in the window when it becomes visible
+     */
+    public void fadeIn() {
+        Timer fadeTimer = new Timer(16, null);
+        final float[] alpha = {0.0f};
+        fadeTimer.addActionListener(e -> {
+            alpha[0] += 0.05f;
+            if (alpha[0] >= 1.0f) {
+                alpha[0] = 1.0f;
+                fadeTimer.stop();
+            }
+            setOpacity(alpha[0]);
+        });
+        fadeTimer.start();
     }
 }
