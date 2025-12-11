@@ -119,6 +119,29 @@ public class GameView extends JFrame {
 
         setContentPane(mainPanel);
 
+        // Add mouse listeners to make undecorated window draggable
+        final Point[] mouseDownCompCoords = {null};
+        mainPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                mouseDownCompCoords[0] = e.getPoint();
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                mouseDownCompCoords[0] = null;
+            }
+        });
+        mainPanel.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                Point currCoords = e.getLocationOnScreen();
+                if (mouseDownCompCoords[0] != null) {
+                    setLocation(currCoords.x - mouseDownCompCoords[0].x, currCoords.y - mouseDownCompCoords[0].y);
+                }
+            }
+        });
+
         // Resize listener to recompute sizes
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
