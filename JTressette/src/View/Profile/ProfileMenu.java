@@ -396,7 +396,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
             int expPercent = (int) profile.getProgressPercentage();
             expBar.setValue(expPercent);
             expLabel.setText(String.format("%d / %d XP (%d%%)",
-                    profile.getExperience(),
+                    profile.getExperienceInCurrentLevel(),
                     profile.getExperienceToNextLevel(),
                     expPercent));
 
