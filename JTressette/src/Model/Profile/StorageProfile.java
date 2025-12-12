@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class StorageProfile {
     private static final Logger LOG = Logger.getLogger(StorageProfile.class.getName());
@@ -130,7 +132,7 @@ public class StorageProfile {
         }
         
         // Usa Streams per creare i game records
-        return java.util.stream.IntStream.range(0, count)
+        return IntStream.range(0, count)
             .mapToObj(i -> {
                 String prefix = KEY_GAME_PREFIX + i + ".";
                 String date = props.getProperty(prefix + "date", "");
@@ -147,7 +149,7 @@ public class StorageProfile {
                 record.setExperience(experience);
                 return record;
             })
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
     }
     
     private int parseIntOrDefault(String value, int defaultValue) {

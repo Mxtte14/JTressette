@@ -2,6 +2,7 @@ package Model.Game;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import Model.Audio.AudioManager;
 
 /*
@@ -189,9 +190,12 @@ public class GameState {
     }
 
     // Controlla se la partita è finita (tutte le mani vuote) con true o false come risultato
+    private boolean gameFinished = false;
+    
     public boolean isFinished() { 
         boolean finished = hands.values().stream().allMatch(List::isEmpty);
-        if (finished) {
+        if (finished && !gameFinished) {
+            gameFinished = true;
             notifyGameFinished();
         }
         return finished;
@@ -290,7 +294,7 @@ public class GameState {
 
         // se nessuna carta ancora giocata nella presa corrente => tutte legali
         if (trickCards.isEmpty()) {
-            return java.util.stream.IntStream.range(0, hand.size()).toArray();
+            return IntStream.range(0, hand.size()).toArray();
         }
 
         // altrimenti segue il seme leader se possibile
@@ -298,14 +302,14 @@ public class GameState {
         Cards.Segno leadSuit = lead.getSegno();
         
         // Usa Streams per trovare carte dello stesso seme
-        int[] sameSuit = java.util.stream.IntStream.range(0, hand.size())
+        int[] sameSuit = IntStream.range(0, hand.size())
             .filter(i -> hand.get(i).getSegno() == leadSuit)
             .toArray();
             
         if (sameSuit.length > 0) {
             return sameSuit;
         } else {
-            return java.util.stream.IntStream.range(0, hand.size()).toArray();
+            return IntStream.range(0, hand.size()).toArray();
         }
     }
 

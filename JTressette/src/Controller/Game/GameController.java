@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * GameControllerSwing: Controller for the game following MVC pattern.
@@ -297,7 +298,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         String opponentNames = gameState.getPlayers().stream()
             .filter(p -> p != humanPlayer)
             .map(Giocatore::getName)
-            .collect(java.util.stream.Collectors.joining(","));
+            .collect(Collectors.joining(","));
 
         // Vincitore e punteggi
         var scores = gameState.getScores();
