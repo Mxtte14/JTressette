@@ -79,7 +79,7 @@ public class Bot implements Giocatore {
             int bestIdx = legal[0];
             double bestScore = Double.NEGATIVE_INFINITY;
 
-            // per ogni mossa legale calcolo un punteggio euristico
+            // per ogni mossa legale calcolo un punteggio euristico usando Streams
             for (int idx : legal) {
                 Cards candidate = state.getHand(this).get(idx);
 
@@ -94,39 +94,30 @@ public class Bot implements Giocatore {
                     }
                 }
 
-                // punti nella presa considerando la carta candidata
-                int trickPoints = 0;
-                for (Cards tc : trickCards) trickPoints += GameState.getCardPoints(tc);
-                trickPoints += GameState.getCardPoints(candidate);
+                // punti nella presa considerando la carta candidata usando Streams
+                int trickPoints = trickCards.stream()
+                    .mapToInt(GameState::getCardPoints)
+                    .sum() + GameState.getCardPoints(candidate);
 
-                // quante carte punto rimangono nel seme del lead (approssimazione)
-                int remainingPointCardsInLead = 0;
+                // quante carte punto rimangono nel seme del lead (approssimazione) usando Streams
                 Cards.Segno suitToCheck = (leadSuit != null) ? leadSuit : candidate.getSegno();
-                for (Cards.Rank r : Cards.Rank.values()) {
-                    // consideriamo solo rank che danno punti (valori > 0)
-                    // costruiamo una "ipotetica" carta suitToCheck/r
-                    // la carta è rimasta se non è nelle played e non è in mano del bot e non è nella trick corrente
-                    Cards hypothetical = new Cards(suitToCheck, r);
-                    boolean seen = false;
-                    for (Cards pc : played) {
-                        if (pc.getSegno() == suitToCheck && pc.getRank() == r) { seen = true; break; }
-                    }
-                    if (seen) continue;
-                    // se è nella trick (in corso) la consideriamo già presente -> non contare come rimasta
-                    boolean inTrick = false;
-                    for (Cards tc : trickCards) {
-                        if (tc.getSegno() == suitToCheck && tc.getRank() == r) { inTrick = true; break; }
-                    }
-                    if (inTrick) continue;
-                    // se la carta è nella mano del bot la vediamo come "nostra" (non rimane per altri)
-                    boolean inMyHand = false;
-                    for (Cards my : state.getHand(this)) {
-                        if (my.getSegno() == suitToCheck && my.getRank() == r) { inMyHand = true; break; }
-                    }
-                    if (inMyHand) continue;
-                    // se questa rank ha punti, incrementiamo
-                    if (GameState.getCardPoints(hypothetical) > 0) remainingPointCardsInLead++;
-                }
+                int remainingPointCardsInLead = (int) Arrays.stream(Cards.Rank.values())
+                    .filter(r -> {
+                        Cards hypothetical = new Cards(suitToCheck, r);
+                        // la carta è rimasta se non è nelle played e non è in mano del bot e non è nella trick corrente
+                        boolean seen = played.stream().anyMatch(pc -> pc.getSegno() == suitToCheck && pc.getRank() == r);
+                        if (seen) return false;
+                        
+                        boolean inTrick = trickCards.stream().anyMatch(tc -> tc.getSegno() == suitToCheck && tc.getRank() == r);
+                        if (inTrick) return false;
+                        
+                        boolean inMyHand = state.getHand(this).stream().anyMatch(my -> my.getSegno() == suitToCheck && my.getRank() == r);
+                        if (inMyHand) return false;
+                        
+                        // se questa rank ha punti, la consideriamo
+                        return GameState.getCardPoints(hypothetical) > 0;
+                    })
+                    .count();
 
                 // euristica:
                 // - se la mossa vince e ci sono già punti nella presa => alta priorità (minimizzare waste scegliendo la minima che vince)
