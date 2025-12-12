@@ -1,6 +1,8 @@
 package Model.Game;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import Model.Audio.AudioManager;
@@ -36,8 +38,11 @@ public class GameState {
     private Giocatore lastTrickWinner = null;
     private int lastTrickCardsWon = 0;
     
-    // Observer pattern: lista di observers
-    private final List<GameStateObserver> observers = new ArrayList<>();
+    // Observer pattern: lista di observers (thread-safe)
+    private final List<GameStateObserver> observers = new CopyOnWriteArrayList<>();
+    
+    // Flag per notificare la fine del gioco solo una volta (thread-safe)
+    private final AtomicBoolean gameFinished = new AtomicBoolean(false);
 
 
     // punti per carta (mappa semplificata): ASSO, TRE, DUE = 3; RE, CAVALLO, ALFIERE = 1
@@ -190,12 +195,10 @@ public class GameState {
     }
 
     // Controlla se la partita è finita (tutte le mani vuote) con true o false come risultato
-    private boolean gameFinished = false;
-    
     public boolean isFinished() { 
         boolean finished = hands.values().stream().allMatch(List::isEmpty);
-        if (finished && !gameFinished) {
-            gameFinished = true;
+        if (finished && gameFinished.compareAndSet(false, true)) {
+            // Solo il primo thread che chiama isFinished quando finished=true notificherà
             notifyGameFinished();
         }
         return finished;
