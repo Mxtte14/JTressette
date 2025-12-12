@@ -1,6 +1,7 @@
 package Model.Game;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import Model.Audio.AudioManager;
 
 /*
@@ -12,6 +13,7 @@ import Model.Audio.AudioManager;
     - stato della presa corrente (trick)
     - storico delle carte giocate
     Fornisce metodi per eseguire mosse, distribuire carte, calcolare punteggi, determinare vincitori delle prese, ecc.
+    Implementa il pattern Observer per notificare i cambiamenti di stato.
  */
 
 public class GameState {
@@ -32,6 +34,9 @@ public class GameState {
     // Dati sull'ultima presa completata
     private Giocatore lastTrickWinner = null;
     private int lastTrickCardsWon = 0;
+    
+    // Observer pattern: lista di observers
+    private final List<GameStateObserver> observers = new ArrayList<>();
 
 
     // punti per carta (mappa semplificata): ASSO, TRE, DUE = 3; RE, CAVALLO, ALFIERE = 1
@@ -62,6 +67,39 @@ public class GameState {
         }
         this.audioManager = new AudioManager();
     }
+    
+    /**
+     * Observer pattern methods
+     */
+    public void addObserver(GameStateObserver observer) {
+        if (observer != null && !observers.contains(observer)) {
+            observers.add(observer);
+        }
+    }
+    
+    public void removeObserver(GameStateObserver observer) {
+        observers.remove(observer);
+    }
+    
+    private void notifyCardPlayed(Giocatore player, Cards card) {
+        observers.forEach(observer -> observer.onCardPlayed(player, card));
+    }
+    
+    private void notifyTrickCompleted(Giocatore winner, int cardsWon) {
+        observers.forEach(observer -> observer.onTrickCompleted(winner, cardsWon));
+    }
+    
+    private void notifyCardsDealt() {
+        observers.forEach(observer -> observer.onCardsDealt());
+    }
+    
+    private void notifyTurnChanged(Giocatore currentPlayer) {
+        observers.forEach(observer -> observer.onTurnChanged(currentPlayer));
+    }
+    
+    private void notifyGameFinished() {
+        observers.forEach(observer -> observer.onGameFinished());
+    }
 
     /**
      * FUNZIONE PRINCIPALE: GIOCA UNA CARTA
@@ -82,6 +120,9 @@ public class GameState {
         Cards c = hand.remove(handIndex);
         trickCards.add(c);
         trickPlayers.add(p);
+        
+        // Notify observers that a card was played
+        notifyCardPlayed(p, c);
 
         // se presa completata
         if (trickCards.size() == players.size()) {
@@ -89,11 +130,10 @@ public class GameState {
             int winnerPos = determineTrickWinner();
             Giocatore winner = trickPlayers.get(winnerPos);
 
-            // calcola punti della presa
-            int trickPoints = 0;
-            for (Cards card : trickCards) {
-                trickPoints += CARD_POINTS.getOrDefault(card.getRank(), 0);
-            }
+            // calcola punti della presa usando Streams
+            int trickPoints = trickCards.stream()
+                .mapToInt(card -> CARD_POINTS.getOrDefault(card.getRank(), 0))
+                .sum();
 
             // assegna punti
             int prev = scores.getOrDefault(winner, 0);
@@ -107,9 +147,13 @@ public class GameState {
             // Store last trick winner for UI
             lastTrickWinner = winner;
             lastTrickCardsWon = cardsWon;
+            
+            // Notify observers that trick was completed
+            notifyTrickCompleted(winner, cardsWon);
 
             // prepara per la prossima presa: il prossimo currentPlayerIndex = index del winner nella lista players
             currentPlayerIndex = players.indexOf(winner);
+            notifyTurnChanged(getCurrentPlayer());
         }
         return c;
     }
@@ -138,10 +182,20 @@ public class GameState {
         // Random rand = new Random();
         // currentPlayerIndex = rand.nextInt(players.size());
         currentPlayerIndex = 0; // sempre il primo giocatore nella lista
+        
+        // Notify observers that cards were dealt
+        notifyCardsDealt();
+        notifyTurnChanged(getCurrentPlayer());
     }
 
     // Controlla se la partita è finita (tutte le mani vuote) con true o false come risultato
-    public boolean isFinished() { for (List<Cards> h : hands.values()) {if (!h.isEmpty()) return false;}return true;}
+    public boolean isFinished() { 
+        boolean finished = hands.values().stream().allMatch(List::isEmpty);
+        if (finished) {
+            notifyGameFinished();
+        }
+        return finished;
+    }
 
     // Prende la lista dei giocatori
     public List<Giocatore> getPlayers() { return Collections.unmodifiableList(players); }
@@ -173,6 +227,7 @@ public class GameState {
     public void advanceTurn() {
         if (players == null || players.isEmpty()) return;
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+        notifyTurnChanged(getCurrentPlayer());
     }
 
 
@@ -235,24 +290,22 @@ public class GameState {
 
         // se nessuna carta ancora giocata nella presa corrente => tutte legali
         if (trickCards.isEmpty()) {
-            int[] all = new int[hand.size()];
-            for (int i = 0; i < hand.size(); i++) all[i] = i;
-            return all;
+            return java.util.stream.IntStream.range(0, hand.size()).toArray();
         }
 
         // altrimenti segue il seme leader se possibile
         Cards lead = trickCards.get(0);
         Cards.Segno leadSuit = lead.getSegno();
-        List<Integer> sameSuit = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i).getSegno() == leadSuit) sameSuit.add(i);
-        }
-        if (!sameSuit.isEmpty()) {
-            return sameSuit.stream().mapToInt(Integer::intValue).toArray();
+        
+        // Usa Streams per trovare carte dello stesso seme
+        int[] sameSuit = java.util.stream.IntStream.range(0, hand.size())
+            .filter(i -> hand.get(i).getSegno() == leadSuit)
+            .toArray();
+            
+        if (sameSuit.length > 0) {
+            return sameSuit;
         } else {
-            int[] all = new int[hand.size()];
-            for (int i = 0; i < hand.size(); i++) all[i] = i;
-            return all;
+            return java.util.stream.IntStream.range(0, hand.size()).toArray();
         }
     }
 

@@ -143,13 +143,9 @@ public class UserProfile implements Serializable {
      * Calcola vittorie guardando lo storico (compatibile con ProfileMenu)
      */
     public int getWinsNumber() {
-        int wins = 0;
-        for (GamesRecord record : getRecentGames()) {
-            if (Objects.equals(record.getWinner(), username)) {
-                wins++;
-            }
-        }
-        return wins;
+        return (int) getRecentGames().stream()
+            .filter(record -> Objects.equals(record.getWinner(), username))
+            .count();
     }
 
     /**

@@ -36,17 +36,16 @@ public class Bot implements Giocatore {
                 // altrimenti scarta la minima (più debole)
                 Cards lead = state.getLeadCard();
                 if (lead != null) {
-                    int bestWinIdx = -1;
-                    int bestWinStrength = Integer.MAX_VALUE;
-                    for (int idx : legal) {
-                        Cards c = state.getHand(this).get(idx);
-                        if (c.getSegno() == lead.getSegno() && c.getPriority() > lead.getPriority()) {
-                            if (c.getPriority() < bestWinStrength) {
-                                bestWinStrength = c.getPriority();
-                                bestWinIdx = idx;
-                            }
-                        }
-                    }
+                    // Usa Streams per trovare la minima carta che vince
+                    int bestWinIdx = Arrays.stream(legal)
+                        .boxed()
+                        .filter(idx -> {
+                            Cards c = state.getHand(this).get(idx);
+                            return c.getSegno() == lead.getSegno() && c.getPriority() > lead.getPriority();
+                        })
+                        .min(Comparator.comparingInt(idx -> state.getHand(this).get(idx).getPriority()))
+                        .orElse(-1);
+                    
                     if (bestWinIdx >= 0) return bestWinIdx;
                 }
                 // altrimenti gioca la carta legale con min strength
@@ -66,16 +65,15 @@ public class Bot implements Giocatore {
             var trickCards = state.getTrickCards();
             var played = state.getPlayedCards();
             Cards.Segno leadSuit = trickCards.isEmpty() ? null : trickCards.get(0).getSegno();
-            // miglior carta attuale nella presa (se esiste)
+            
+            // miglior carta attuale nella presa (se esiste) usando Streams
             Cards currentBest = null;
             if (!trickCards.isEmpty()) {
-                currentBest = trickCards.get(0);
-                for (int i = 1; i < trickCards.size(); i++) {
-                    Cards c = trickCards.get(i);
-                    if (c.getSegno() == currentBest.getSegno() && c.getPriority() > currentBest.getPriority()) {
-                        currentBest = c;
-                    }
-                }
+                Cards.Segno firstSuit = trickCards.get(0).getSegno();
+                currentBest = trickCards.stream()
+                    .filter(c -> c.getSegno() == firstSuit)
+                    .max(Comparator.comparingInt(Cards::getPriority))
+                    .orElse(trickCards.get(0));
             }
 
             int bestIdx = legal[0];
