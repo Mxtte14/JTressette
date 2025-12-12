@@ -44,33 +44,49 @@ public class JTressette {
     }
 
     // Gestione click mouse menu principale
+    // Sostituisci il metodo setupMouseListener() nel tuo JTressette.java con questa versione
     private void setupMouseListener() {
         frame.panel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                int selected = frame.panel.getSelectedOption();
-                switch (selected) {
-                    case 1 -> {
+                // Prendi l'indice selezionato dal Cursor (0-based).
+                // Se vuoi mantenere la vecchia logica 1-based, usa (sel + 1).
+                int sel = -1;
+                if (frame.panel.cursor != null) {
+                    sel = frame.panel.cursor.getSelectedIndex();
+                }
+                if (sel < 0) {
+                    // niente selezione valida
+                    return;
+                }
+
+                // switch su 0-based index
+                switch (sel) {
+                    case 0 -> {
                         frame.playMenuClick();
-                        onStartGame(); // AVVIO PARTITA
+                        onStartGame(); // AVVIO PARTITA (prima case 1)
+                    }
+                    case 1 -> {
+                        LOG.info("Mostra regole...");
+                        frame.showRules(); // (prima case 2)
                     }
                     case 2 -> {
-                        LOG.info("Mostra regole...");
-                        frame.showRules(); // NAVIGA schermata regole
+                        LOG.info("Accesso al profilo...");
+                        frame.showProfile(); // (prima case 3)
                     }
                     case 3 -> {
-                        LOG.info("Accesso al profilo...");
-                        frame.showProfile(); // NAVIGA schermata profilo
+                        frame.playMenuClick();
+                        LOG.info("Impostazioni...");
+                        showSettings(); // (prima case 4)
                     }
                     case 4 -> {
                         frame.playMenuClick();
-                        LOG.info("Impostazioni...");
-                        showSettings(); // <-- Mostra schermata impostazioni!
-                    }
-                    case 5 -> {
-                        frame.playMenuClick();
                         LOG.info("Uscita...");
-                        System.exit(0);
+                        System.exit(0); // (prima case 5)
+                    }
+                    default -> {
+                        // eventualmente loggare index fuori range
+                        LOG.fine("Menu click con indice non gestito: " + sel);
                     }
                 }
             }

@@ -2,7 +2,10 @@ package Model.Game;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Bot semplice/strategico che cambia comportamento secondo la Difficulty:
@@ -36,23 +39,25 @@ public class Bot implements Giocatore {
                 // altrimenti scarta la minima (più debole)
                 Cards lead = state.getLeadCard();
                 if (lead != null) {
-                    int bestWinIdx = -1;
-                    int bestWinStrength = Integer.MAX_VALUE;
-                    for (int idx : legal) {
-                        Cards c = state.getHand(this).get(idx);
-                        if (c.getSegno() == lead.getSegno() && c.getPriority() > lead.getPriority()) {
-                            if (c.getPriority() < bestWinStrength) {
-                                bestWinStrength = c.getPriority();
-                                bestWinIdx = idx;
-                            }
-                        }
-                    }
+                    // Cache hand reference per evitare chiamate multiple
+                    List<Cards> hand = state.getHand(this);
+                    // Usa Streams per trovare la minima carta che vince
+                    int bestWinIdx = Arrays.stream(legal)
+                            .boxed()
+                            .filter(idx -> {
+                                Cards c = hand.get(idx);
+                                return c.getSegno() == lead.getSegno() && c.getPriority() > lead.getPriority();
+                            })
+                            .min(Comparator.comparingInt(idx -> hand.get(idx).getPriority()))
+                            .orElse(-1);
+
                     if (bestWinIdx >= 0) return bestWinIdx;
                 }
                 // altrimenti gioca la carta legale con min strength
+                List<Cards> hand = state.getHand(this);
                 return Arrays.stream(legal)
                         .boxed()
-                        .min(Comparator.comparingInt(i -> state.getHand(this).get(i).getPriority()))
+                        .min(Comparator.comparingInt(i -> hand.get(i).getPriority()))
                         .orElse(legal[0]);
 
             case HARD:
@@ -62,103 +67,95 @@ public class Bot implements Giocatore {
     }
 
     private int chooseCardHard(GameState state, int[] legal) {
-            // Informazioni pubbliche
-            var trickCards = state.getTrickCards();
-            var played = state.getPlayedCards();
-            Cards.Segno leadSuit = trickCards.isEmpty() ? null : trickCards.get(0).getSegno();
-            // miglior carta attuale nella presa (se esiste)
-            Cards currentBest = null;
-            if (!trickCards.isEmpty()) {
-                currentBest = trickCards.get(0);
-                for (int i = 1; i < trickCards.size(); i++) {
-                    Cards c = trickCards.get(i);
-                    if (c.getSegno() == currentBest.getSegno() && c.getPriority() > currentBest.getPriority()) {
-                        currentBest = c;
-                    }
+        // Informazioni pubbliche
+        var trickCards = state.getTrickCards();
+        var played = state.getPlayedCards();
+        var myHand = state.getHand(this);
+        Cards.Segno leadSuit = trickCards.isEmpty() ? null : trickCards.get(0).getSegno();
+
+        // Crea Sets per lookup O(1) invece di stream O(n)
+        Set<Cards> playedSet = new HashSet<>(played);
+        Set<Cards> trickSet = new HashSet<>(trickCards);
+        Set<Cards> myHandSet = new HashSet<>(myHand);
+
+        // miglior carta attuale nella presa (se esiste) usando Streams
+        Cards currentBest = null;
+        if (!trickCards.isEmpty()) {
+            Cards.Segno firstSuit = trickCards.get(0).getSegno();
+            currentBest = trickCards.stream()
+                    .filter(c -> c.getSegno() == firstSuit)
+                    .max(Comparator.comparingInt(Cards::getPriority))
+                    .orElse(trickCards.get(0));
+        }
+
+        int bestIdx = legal[0];
+        double bestScore = Double.NEGATIVE_INFINITY;
+
+        // per ogni mossa legale calcolo un punteggio euristico usando Streams
+        for (int idx : legal) {
+            Cards candidate = myHand.get(idx);
+
+            boolean wouldWin = false;
+            if (trickCards.isEmpty()) {
+                // se si è leader non sappiamo se vincerà (dipende dagli altri), valutiamo come "lead" case
+                wouldWin = false;
+            } else {
+                // può vincere se segue il seme e supera currentBest (se currentBest è del seme di mano)
+                if (candidate.getSegno() == currentBest.getSegno() && candidate.getPriority() > currentBest.getPriority()) {
+                    wouldWin = true;
                 }
             }
 
-            int bestIdx = legal[0];
-            double bestScore = Double.NEGATIVE_INFINITY;
+            // punti nella presa considerando la carta candidata usando Streams
+            int trickPoints = trickCards.stream()
+                    .mapToInt(GameState::getCardPoints)
+                    .sum() + GameState.getCardPoints(candidate);
 
-            // per ogni mossa legale calcolo un punteggio euristico
-            for (int idx : legal) {
-                Cards candidate = state.getHand(this).get(idx);
+            // quante carte punto rimangono nel seme del lead (approssimazione) usando Streams con Set lookup
+            Cards.Segno suitToCheck = (leadSuit != null) ? leadSuit : candidate.getSegno();
+            int remainingPointCardsInLead = (int) Arrays.stream(Cards.Rank.values())
+                    .filter(r -> {
+                        Cards hypothetical = new Cards(suitToCheck, r);
+                        // la carta è rimasta se non è nelle played e non è in mano del bot e non è nella trick corrente
+                        // Usa Set.contains per O(1) invece di stream per O(n)
+                        if (playedSet.contains(hypothetical)) return false;
+                        if (trickSet.contains(hypothetical)) return false;
+                        if (myHandSet.contains(hypothetical)) return false;
 
-                boolean wouldWin = false;
-                if (trickCards.isEmpty()) {
-                    // se si è leader non sappiamo se vincerà (dipende dagli altri), valutiamo come "lead" case
-                    wouldWin = false;
-                } else {
-                    // può vincere se segue il seme e supera currentBest (se currentBest è del seme di mano)
-                    if (candidate.getSegno() == currentBest.getSegno() && candidate.getPriority() > currentBest.getPriority()) {
-                        wouldWin = true;
-                    }
-                }
+                        // se questa rank ha punti, la consideriamo
+                        return GameState.getCardPoints(hypothetical) > 0;
+                    })
+                    .count();
 
-                // punti nella presa considerando la carta candidata
-                int trickPoints = 0;
-                for (Cards tc : trickCards) trickPoints += GameState.getCardPoints(tc);
-                trickPoints += GameState.getCardPoints(candidate);
-
-                // quante carte punto rimangono nel seme del lead (approssimazione)
-                int remainingPointCardsInLead = 0;
-                Cards.Segno suitToCheck = (leadSuit != null) ? leadSuit : candidate.getSegno();
-                for (Cards.Rank r : Cards.Rank.values()) {
-                    // consideriamo solo rank che danno punti (valori > 0)
-                    // costruiamo una "ipotetica" carta suitToCheck/r
-                    // la carta è rimasta se non è nelle played e non è in mano del bot e non è nella trick corrente
-                    Cards hypothetical = new Cards(suitToCheck, r);
-                    boolean seen = false;
-                    for (Cards pc : played) {
-                        if (pc.getSegno() == suitToCheck && pc.getRank() == r) { seen = true; break; }
-                    }
-                    if (seen) continue;
-                    // se è nella trick (in corso) la consideriamo già presente -> non contare come rimasta
-                    boolean inTrick = false;
-                    for (Cards tc : trickCards) {
-                        if (tc.getSegno() == suitToCheck && tc.getRank() == r) { inTrick = true; break; }
-                    }
-                    if (inTrick) continue;
-                    // se la carta è nella mano del bot la vediamo come "nostra" (non rimane per altri)
-                    boolean inMyHand = false;
-                    for (Cards my : state.getHand(this)) {
-                        if (my.getSegno() == suitToCheck && my.getRank() == r) { inMyHand = true; break; }
-                    }
-                    if (inMyHand) continue;
-                    // se questa rank ha punti, incrementiamo
-                    if (GameState.getCardPoints(hypothetical) > 0) remainingPointCardsInLead++;
-                }
-
-                // euristica:
-                // - se la mossa vince e ci sono già punti nella presa => alta priorità (minimizzare waste scegliendo la minima che vince)
-                // - se la mossa vince e la presa ha 0 punti ma nel seme ci sono punti rimasti => possibile "setup", piccolo vantaggio
-                // - se la mossa non vince => preferisco scartare carte di bassa priorità
-                double score;
-                if (wouldWin) {
-                    score = 2000 - candidate.getPriority(); // preferisco vincere con carta più bassa possibile
-                    // se ci sono punti nella presa li valorizzo ulteriormente
-                    score += trickPoints * 100;
-                    // valorizzo anche il fatto che ci siano ancora punti in quel seme
-                    score += remainingPointCardsInLead * 50;
-                } else {
-                    // penalizzo giocare carte forti senza vincere; preferisco scartare le più basse
-                    score = -candidate.getPriority();
-                    // se la presa non contiene punti e non ci sono punti rimasti in seme, scartare è ancora più favorevole
-                    if (trickPoints == 0 && remainingPointCardsInLead == 0) {
-                        score += 20; // piccolo bonus per scartare carte inutili
-                    }
-                }
-
-                // tie-breaker randomico per varietà
-                score += rnd.nextDouble() * 0.1;
-
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestIdx = idx;
+            // euristica:
+            // - se la mossa vince e ci sono già punti nella presa => alta priorità (minimizzare waste scegliendo la minima che vince)
+            // - se la mossa vince e la presa ha 0 punti ma nel seme ci sono punti rimasti => possibile "setup", piccolo vantaggio
+            // - se la mossa non vince => preferisco scartare carte di bassa priorità
+            double score;
+            if (wouldWin) {
+                score = 2000 - candidate.getPriority(); // preferisco vincere con carta più bassa possibile
+                // se ci sono punti nella presa li valorizzo ulteriormente
+                score += trickPoints * 100;
+                // valorizzo anche il fatto che ci siano ancora punti in quel seme
+                score += remainingPointCardsInLead * 50;
+            } else {
+                // penalizzo giocare carte forti senza vincere; preferisco scartare le più basse
+                score = -candidate.getPriority();
+                // se la presa non contiene punti e non ci sono punti rimasti in seme, scartare è ancora più favorevole
+                if (trickPoints == 0 && remainingPointCardsInLead == 0) {
+                    score += 20; // piccolo bonus per scartare carte inutili
                 }
             }
 
-            return bestIdx;
+            // tie-breaker randomico per varietà
+            score += rnd.nextDouble() * 0.1;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestIdx = idx;
+            }
+        }
+
+        return bestIdx;
     }
 }

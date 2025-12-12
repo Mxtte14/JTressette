@@ -71,13 +71,12 @@ public class ProfileControllerImpl implements ProfileController {
             @Override
             protected void done() {
                 if (err != null) {
-                    for (ProfileListener l : listeners) l.onProfileSaveFailed(err);
+                    listeners.forEach(l -> l.onProfileSaveFailed(err));
                 } else {
-                    for (ProfileListener l : listeners) l.onProfileUpdated(profile);
+                    listeners.forEach(l -> l.onProfileUpdated(profile));
                 }
             }
         };
         w.execute();
     }
 }
-

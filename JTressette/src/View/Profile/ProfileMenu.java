@@ -11,6 +11,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -302,7 +303,8 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         historyTable.setRowHeight(32);
         historyTable.setShowGrid(false);
         historyTable.setIntercellSpacing(new Dimension(0, 0));
-        historyTable.setBackground(new Color(20, 50, 30, 150));
+        // ---- CHANGED: use opaque solid colors (no alpha) to avoid repaint artifacts ----
+        historyTable.setBackground(new Color(20, 50, 30)); // removed alpha
         historyTable.setForeground(TEXT_COLOR);
         historyTable.setSelectionBackground(new Color(255, 215, 0, 50));
         historyTable.setSelectionForeground(TEXT_COLOR);
@@ -332,17 +334,47 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         historyTable.getTableHeader().setPreferredSize(new Dimension(0, 40));
         historyTable.getTableHeader().setBorder(BorderFactory.createEmptyBorder());
 
-        // Cell renderer for alternating row colors
+        // Make header opaque so it repaints correctly
+        historyTable.getTableHeader().setOpaque(true);
+
+        // ---- NEW: Make columns fixed and non-interactive to avoid horizontal scroll ----
+        historyTable.getTableHeader().setReorderingAllowed(false);
+        historyTable.getTableHeader().setResizingAllowed(false);
+        historyTable.getTableHeader().setEnabled(false);
+
+        // Ensure table auto-resizes columns to fit the viewport so horizontal scrollbar doesn't appear
+        historyTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        // Define fixed column widths so columns are "fixed". Sum should match the scroll viewport width.
+        int[] fixedWidths = new int[] {140, 260, 200, 100}; // sum = 700 (matches scroll pane width)
+        for (int i = 0; i < historyTable.getColumnCount(); i++) {
+            TableColumn tc = historyTable.getColumnModel().getColumn(i);
+            int w = fixedWidths[i];
+            tc.setMinWidth(w);
+            tc.setMaxWidth(w);
+            tc.setPreferredWidth(w);
+            tc.setResizable(false); // disable per-column resizing
+        }
+
+        // ---- NEW: ensure table repaints correctly when scrolling ----
+        historyTable.setOpaque(true);
+        historyTable.setFillsViewportHeight(true);
+
+        // Cell renderer for alternating row colors — ensure renderer is opaque and paints full background
         DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                                                            boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) {
-                    c.setBackground(row % 2 == 0 ? new Color(20, 50, 30, 150) : new Color(15, 40, 25, 150));
+                // make the renderer component fully opaque and paint a solid background
+                if (c instanceof JComponent) {
+                    JComponent jc = (JComponent) c;
+                    jc.setOpaque(true);
+                    Color bg = (row % 2 == 0) ? new Color(20, 50, 30) : new Color(15, 40, 25);
+                    jc.setBackground(bg);
+                    jc.setForeground(TEXT_COLOR);
+                    jc.setBorder(new EmptyBorder(5, 10, 5, 10));
                 }
-                setForeground(TEXT_COLOR);
-                setBorder(new EmptyBorder(5, 10, 5, 10));
                 return c;
             }
         };
@@ -353,8 +385,12 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         JScrollPane sp = new JScrollPane(historyTable);
         sp.setPreferredSize(new Dimension(700, 280));
         sp.setBorder(new LineBorder(BORDER_COLOR, 2, true));
-        sp.getViewport().setBackground(new Color(20, 50, 30, 150));
-        sp.setOpaque(false);
+        // ---- CHANGED: make viewport opaque and use solid background color ----
+        sp.getViewport().setBackground(new Color(20, 50, 30));
+        sp.setOpaque(true);
+
+        // Prevent horizontal scrollbar and rely on AUTO_RESIZE to fit columns to viewport
+        sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         // Make scroll pane non-focusable as well so keyboard focus won't land there
         sp.setFocusable(false);

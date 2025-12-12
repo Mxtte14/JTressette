@@ -1,23 +1,16 @@
 Progetto JTressette 👌
 - Specifiche Mancanti:
 	- livello utente  👌
-	- Utilizzo di stream
-	- Riduzione di audio sample
+	- Observer/ Observable  👌
+	- Utilizzo di stream  👌
+	- Riduzione di audio sample  👌
 	- Animazioni varie
 
-Specifiche Mancanti:
-    - Pagina Partita: spostar il pulsante "Abbandona Partita" in alto a destra e indipendente dalla chat
-    - Migliorare a livello grafico la posizione dei players e la loro mano
-    - Audio al ritorno alla home
-    - Audio quando vengono pescate le carte
-    - Audio quando vengono distribuite le carte
-    - Mazzo al centro di stesse dimensioni delle carte sul tavolo
-    - Regolare sfondo home con grandezza pagina
-    - Sistemare audio pesca in contrasto con audio carte piazzate
-    - Aggiungere animazioni quando si seleziona una carta e la si piazza
-
-
-Specifiche non obbligatorie:
-    - Rendere piu professionale la pagina delle regole del gioco
-    - Eliminar lo sfondo nero dalle impostazioni
-    - Cambiare colore del livello ( magari oro e nero)
+Specifiche Mancanti Dettagliate:
+    - Gestire lo sfondo della Home ridimensionandolo in base alla risoluzione dello schermo dell'utente   👌
+    - Ingrandire font regole 👌
+    - Rendere le colonne dello storico fisse senza possibilita di interazioni e sistemare il bug dello scroll orizzontale  👌
+    - Rimuovere possibilità di giocare la partita da soli (minimo numero avversari 1) 👌
+    - Sistemare il nome del giocatore in partita (non è visibile)
+    - Aggiungere animazioni varie (es. carte che si muovono, carte che vengono distribuite, ecc.)
+    - Migliorare audio quando vengono distribuite le carte ( se necessario ridurre velocità distribuzione carte)

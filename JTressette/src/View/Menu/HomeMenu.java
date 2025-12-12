@@ -15,36 +15,29 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 /**
- * HomeMenu - Menu principale modernizzato con stile elegante.
- * Include titolo con effetti, menu centrato, sfondo con overlay e profilo utente.
+ * HomeMenu - Menu principale con box dimensionato in base al testo delle opzioni.
+ *
+ * Modifiche:
+ * - Calcolo di uno scale sicuro (clamp a [0.6, 1.6]).
+ * - Impostazione esplicita di MenuOption.setScale(scale) prima di misurare e disegnare.
+ * - DrawMenuPanel misura i testi in base alla scala delle opzioni e dimensiona il box di conseguenza.
  */
 public class HomeMenu extends JPanel implements ProfileListener {
 
     private static final Logger LOGGER = Logger.getLogger(HomeMenu.class.getName());
 
-    // Dimensioni schermo
-    final int originalTileSize = 16, scale = 3;
-    public final int tileSize = originalTileSize * scale;
-    public final int maxScreenCol = 17, maxScreenRow = 13;
-    public final int screenWidth = tileSize * maxScreenCol, screenHeight = tileSize * maxScreenRow;
+    private static final int DESIGN_WIDTH = 1100;
+    private static final int DESIGN_HEIGHT = 720;
 
-    // Risorse grafiche
     BufferedImage background;
     public MenuOption[] options;
     public Controller.Game.Cursor cursor;
-
     private int selectedOption = 0;
 
-    // Colori moderni
     private static final Color OVERLAY_COLOR = new Color(0, 0, 0, 100);
     private static final Color TITLE_GOLD = new Color(255, 215, 0);
     private static final Color TITLE_GOLD_LIGHT = new Color(255, 235, 130);
-    private static final Color TITLE_SHADOW = new Color(0, 0, 0, 180);
-    private static final Color ACCENT_RED = new Color(180, 40, 40);
-    private static final Color PANEL_BG = new Color(0, 50, 30, 180);
     private static final Color PANEL_BORDER = new Color(255, 215, 0, 100);
-
-    // Colori pre-creati per effetti (ottimizzazione performance)
     private static final Color PANEL_SHADOW = new Color(0, 0, 0, 80);
     private static final Color PANEL_GRADIENT_TOP = new Color(10, 60, 35, 200);
     private static final Color PANEL_GRADIENT_BOTTOM = new Color(5, 40, 25, 220);
@@ -56,182 +49,168 @@ public class HomeMenu extends JPanel implements ProfileListener {
             new Color(0, 0, 0, 130), new Color(0, 0, 0, 110),
             new Color(0, 0, 0, 90), new Color(0, 0, 0, 70)
     };
-    private static final Color VIGNETTE_TRANSPARENT = new Color(0, 0, 0, 0);
-    private static final Color VIGNETTE_MEDIUM = new Color(0, 0, 0, 50);
-    private static final Color VIGNETTE_DARK = new Color(0, 0, 0, 150);
-
-    // Costante per raggio vignettatura
     private static final float VIGNETTE_RADIUS_FACTOR = 0.8f;
 
-    // Font per il titolo
     private static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 56);
     private static final Font SUBTITLE_FONT = new Font("Georgia", Font.ITALIC, 18);
 
-    // Campi per profilo utente
     private JLabel avatarSmallLabel;
     private JLabel nameSmallLabel;
     private JLabel levelBadgeLabel;
-    private final ProfileController controller;
     private Runnable onProfileClick;
-
-    // Posizioni menu centrate
-    private static final int MENU_START_Y = 280;
-    private static final int MENU_SPACING = 55;
-    private static final int MENU_X = 120;
+    private int avatarSize = 46;
 
     public HomeMenu(ProfileController controller) {
-        this.controller = controller;
-
         loadBackground();
 
-        // Opzioni del menu con posizioni migliorate
         options = new MenuOption[]{
-                new MenuOption("Gioca", MENU_START_Y),
-                new MenuOption("Regole", MENU_START_Y + MENU_SPACING),
-                new MenuOption("Profilo", MENU_START_Y + MENU_SPACING * 2),
-                new MenuOption("Impostazioni", MENU_START_Y + MENU_SPACING * 3),
-                new MenuOption("Esci", MENU_START_Y + MENU_SPACING * 4)
+                new MenuOption("Gioca", 0),
+                new MenuOption("Regole", 0),
+                new MenuOption("Profilo", 0),
+                new MenuOption("Impostazioni", 0),
+                new MenuOption("Esci", 0)
         };
 
-        // Imposta la posizione X per tutte le opzioni
-        for (MenuOption opt : options) {
-            opt.x = MENU_X;
-        }
+        for (MenuOption opt : options) opt.x = 120;
 
         cursor = new Controller.Game.Cursor(this);
-
         setLayout(new BorderLayout());
 
-        // Pannello superiore per profilo utente (moderno)
         JPanel topPanel = createModernTopPanel();
         add(topPanel, BorderLayout.NORTH);
 
-        setPreferredSize(new Dimension(screenWidth, screenHeight));
         setBackground(Color.BLACK);
         setFocusable(true);
         setDoubleBuffered(true);
-
         setupMouseListeners();
 
-        // Timer per repaint
         Timer timer = new Timer(16, e -> repaint());
         timer.start();
 
-        // Registrazione observer
-        if (this.controller != null) {
-            this.controller.addListener(this);
-            UserProfile p = this.controller.getProfile();
+        if (controller != null) {
+            controller.addListener(this);
+            UserProfile p = controller.getProfile();
             if (p != null) onProfileUpdated(p);
         }
+
+        addComponentListener(new ComponentAdapter() {
+            @Override public void componentResized(ComponentEvent e) { adjustResponsiveLayout(); }
+            @Override public void componentShown(ComponentEvent e) { adjustResponsiveLayout(); }
+        });
+
+        SwingUtilities.invokeLater(this::adjustResponsiveLayout);
     }
 
     private JPanel createModernTopPanel() {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         topPanel.setOpaque(false);
 
-        // Avatar con bordo arrotondato e level badge
-        JPanel avatarContainer = new JPanel(null); // null layout for absolute positioning
-        avatarContainer.setPreferredSize(new Dimension(52, 52));
+        JPanel avatarContainer = new JPanel(null);
         avatarContainer.setOpaque(false);
 
         avatarSmallLabel = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Bordo dorato
                 g2d.setColor(TITLE_GOLD);
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-
-                // Sfondo interno
                 g2d.setColor(new Color(30, 30, 30));
                 g2d.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 10, 10);
-
                 g2d.dispose();
                 super.paintComponent(g);
             }
         };
-        avatarSmallLabel.setBounds(0, 0, 52, 52);
         avatarSmallLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarSmallLabel.setOpaque(false);
 
-        // Level badge in bottom-right corner
         levelBadgeLabel = new JLabel("1", SwingConstants.CENTER) {
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Draw circular badge
-                g2d.setColor(new Color(231, 76, 60)); // Red badge
-                g2d.fillOval(0, 0, getWidth(), getHeight());
-
-                // Border
+                g2d.setColor(new Color(20,20,20));
+                g2d.fillOval(0,0,getWidth(),getHeight());
                 g2d.setColor(TITLE_GOLD);
-                g2d.setStroke(new BasicStroke(2));
-                g2d.drawOval(1, 1, getWidth() - 2, getHeight() - 2);
-
+                g2d.setStroke(new BasicStroke(Math.max(1f, getWidth()*0.06f)));
+                g2d.drawOval(1,1,getWidth()-2,getHeight()-2);
                 g2d.dispose();
                 super.paintComponent(g);
             }
         };
-        levelBadgeLabel.setBounds(36, 36, 20, 20); // Bottom-right corner
-        levelBadgeLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        levelBadgeLabel.setForeground(Color.WHITE);
         levelBadgeLabel.setOpaque(false);
+        levelBadgeLabel.setForeground(TITLE_GOLD);
 
         avatarContainer.add(avatarSmallLabel);
         avatarContainer.add(levelBadgeLabel);
 
-        // Nome utente con stile
         nameSmallLabel = new JLabel();
-        nameSmallLabel.setForeground(new Color(255, 248, 220));
-        nameSmallLabel.setFont(new Font("Georgia", Font.BOLD, 16));
+        nameSmallLabel.setForeground(new Color(255,248,220));
         nameSmallLabel.setVerticalAlignment(SwingConstants.CENTER);
 
-        // Area cliccabile
         JPanel clickable = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         clickable.setOpaque(false);
-        clickable.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        clickable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         clickable.add(nameSmallLabel);
         clickable.add(avatarContainer);
         clickable.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (onProfileClick != null) onProfileClick.run();
-            }
+            @Override public void mouseClicked(MouseEvent e) { if (onProfileClick != null) onProfileClick.run(); }
         });
+
+        avatarContainer.setPreferredSize(new Dimension(52,52));
+        avatarSmallLabel.setBounds(0,0,52,52);
+        levelBadgeLabel.setBounds(36,36,20,20);
 
         topPanel.add(clickable);
         return topPanel;
     }
 
+    private void adjustResponsiveLayout() {
+        int w = Math.max(1, getWidth());
+        double scale = getClampedScale();
+
+        avatarSize = Math.max(36, (int)Math.round(46 * scale * 1.1));
+        Container avatarContainer = avatarSmallLabel.getParent();
+        if (avatarContainer != null) {
+            int cont = avatarSize + 6;
+            avatarContainer.setPreferredSize(new Dimension(cont, cont));
+            avatarSmallLabel.setBounds(0,0,cont,cont);
+            int badge = Math.max(10, avatarSize/3);
+            levelBadgeLabel.setBounds(cont - badge - 2, cont - badge - 2, badge, badge);
+        }
+
+        float nameFontSize = Math.max(12f, (float)(14 * scale));
+        nameSmallLabel.setFont(new Font("Georgia", Font.BOLD, (int) nameFontSize));
+        revalidate();
+        repaint();
+    }
+
     private void setupMouseListeners() {
-        // Movimento mouse per hover
         addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                for (int i = 0; i < options.length; i++) {
-                    int top = options[i].y - 35;
-                    int bottom = options[i].y + 5;
-                    if (e.getY() >= top && e.getY() <= bottom && e.getX() >= options[i].x - 50 && e.getX() <= options[i].x + 250) {
+            @Override public void mouseMoved(MouseEvent e) {
+                double scale = getClampedScale();
+                int verticalMargin = Math.max(8, (int)Math.round(18*scale));
+                int horizontalMargin = Math.max(10, (int)Math.round(40*scale));
+                for (int i=0;i<options.length;i++) {
+                    int top = options[i].y - verticalMargin;
+                    int bottom = options[i].y + (int)Math.round(8*scale);
+                    if (e.getY() >= top && e.getY() <= bottom && e.getX() >= options[i].x - horizontalMargin && e.getX() <= options[i].x + (int)Math.round(220*scale)) {
                         cursor.setSelectedIndex(i);
-                        setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+                        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                         return;
                     }
                 }
-                setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                setCursor(Cursor.getDefaultCursor());
             }
         });
 
-        // Click mouse
         addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                for (int i = 0; i < options.length; i++) {
-                    int top = options[i].y - 35;
-                    int bottom = options[i].y + 5;
-                    if (e.getY() >= top && e.getY() <= bottom && e.getX() >= options[i].x - 50 && e.getX() <= options[i].x + 250) {
+            @Override public void mouseClicked(MouseEvent e) {
+                double scale = getClampedScale();
+                int verticalMargin = Math.max(8, (int)Math.round(18*scale));
+                int horizontalMargin = Math.max(10, (int)Math.round(40*scale));
+                for (int i=0;i<options.length;i++) {
+                    int top = options[i].y - verticalMargin;
+                    int bottom = options[i].y + (int)Math.round(8*scale);
+                    if (e.getY() >= top && e.getY() <= bottom && e.getX() >= options[i].x - horizontalMargin && e.getX() <= options[i].x + (int)Math.round(220*scale)) {
                         selectedOption = i + 1;
                         return;
                     }
@@ -240,44 +219,40 @@ public class HomeMenu extends JPanel implements ProfileListener {
         });
     }
 
-    public int getSelectedOption() {
-        return selectedOption;
+    /**
+     * Compute raw scale and clamp it to a safe range [0.6, 1.6].
+     */
+    private double getClampedScale() {
+        int w = Math.max(1, getWidth());
+        int h = Math.max(1, getHeight());
+        double sx = (double) w / DESIGN_WIDTH;
+        double sy = (double) h / DESIGN_HEIGHT;
+        double raw = Math.min(sx, sy);
+        return Math.max(0.6, Math.min(1.6, raw));
     }
 
-    public void setOnProfileClick(Runnable r) {
-        this.onProfileClick = r;
-    }
+    public int getSelectedOption() { return selectedOption; }
+    public void setOnProfileClick(Runnable r) { this.onProfileClick = r; }
 
     @Override
     public void onProfileUpdated(UserProfile profile) {
         SwingUtilities.invokeLater(() -> {
             String n = profile.getUsername() == null || profile.getUsername().isBlank() ? "Giocatore" : profile.getUsername();
             nameSmallLabel.setText(n);
-
-            // Update level badge
-            if (levelBadgeLabel != null) {
-                levelBadgeLabel.setText(String.valueOf(profile.getLevel()));
-            }
+            if (levelBadgeLabel != null) levelBadgeLabel.setText(String.valueOf(profile.getLevel()));
 
             Image icon = null;
             if (profile.getAvatarPath() != null) {
-                try {
-                    icon = ImageIO.read(new File(profile.getAvatarPath()));
-                } catch (IOException ex) {
-                    LOGGER.log(Level.WARNING, "Impossibile leggere avatar utente: " + profile.getAvatarPath(), ex);
-                }
+                try { icon = ImageIO.read(new File(profile.getAvatarPath())); }
+                catch (IOException ex) { LOGGER.log(Level.WARNING, "Impossibile leggere avatar: " + profile.getAvatarPath(), ex); }
             }
             if (icon == null) {
-                try {
-                    BufferedImage def = ImageIO.read(getClass().getResourceAsStream("/res/default_images/default_icon.jpg"));
-                    if (def != null) icon = def;
-                } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "Impossibile caricare avatar di default dalle risorse", ex);
-                }
+                try { BufferedImage def = ImageIO.read(getClass().getResourceAsStream("/res/default_images/default_icon.jpg")); if (def != null) icon = def; }
+                catch (Exception ex) { LOGGER.log(Level.WARNING, "Impossibile caricare avatar di default", ex); }
             }
 
             if (icon != null) {
-                Image scaled = icon.getScaledInstance(46, 46, Image.SCALE_SMOOTH);
+                Image scaled = icon.getScaledInstance(avatarSize, avatarSize, Image.SCALE_SMOOTH);
                 avatarSmallLabel.setIcon(new ImageIcon(scaled));
                 avatarSmallLabel.setText("");
             } else {
@@ -288,23 +263,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         });
     }
 
-    @Override
-    public void onProfileSaveFailed(Exception ex) {
-        SwingUtilities.invokeLater(() -> {
-            JOptionPane.showMessageDialog(this, "Salvataggio profilo fallito: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
-        });
-    }
-
     private void loadBackground() {
         try (java.io.InputStream is = getClass().getResourceAsStream("/res/default_images/sfondo_1.jpg")) {
-            if (is == null) {
-                LOGGER.severe("Immagine di sfondo non trovata: /main/resource/sfondo_1.jpg");
-                return;
-            }
+            if (is == null) { LOGGER.severe("Immagine di sfondo non trovata"); return; }
             background = ImageIO.read(is);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Errore nel caricamento dello sfondo", e);
-        }
+        } catch (IOException e) { LOGGER.log(Level.SEVERE, "Errore nel caricamento dello sfondo", e); }
     }
 
     @Override
@@ -312,167 +275,169 @@ public class HomeMenu extends JPanel implements ProfileListener {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        // Anti-aliasing
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        int w = getWidth();
+        int h = getHeight();
+        double clamped = getClampedScale();
 
-        // Sfondo
-        if (background != null) {
-            g2d.drawImage(background, 0, 0, screenWidth, screenHeight, null);
+        // apply clamped scale to options (so MenuOption draws with correct scaled font)
+        double optionScale = Math.max(0.6, Math.min(1.6, clamped)); // same clamp applied
+        for (MenuOption mo : options) mo.setScale(optionScale);
+
+        // background cover
+        if (background != null && w > 0 && h > 0) {
+            double s = Math.max((double) w / background.getWidth(), (double) h / background.getHeight());
+            int drawWidth = (int) Math.round(background.getWidth() * s);
+            int drawHeight = (int) Math.round(background.getHeight() * s);
+            int drawX = (w - drawWidth) / 2;
+            int drawY = (h - drawHeight) / 2;
+            g2d.drawImage(background, drawX, drawY, drawWidth, drawHeight, null);
+        } else {
+            g2d.setColor(Color.DARK_GRAY);
+            g2d.fillRect(0,0,w,h);
         }
 
-        // Overlay scuro leggero per migliorare leggibilita
         g2d.setColor(OVERLAY_COLOR);
-        g2d.fillRect(0, 0, screenWidth, screenHeight);
+        g2d.fillRect(0,0,w,h);
 
-        // Vignettatura (scurisce i bordi)
-        drawVignette(g2d);
+        drawVignette(g2d, w, h);
 
-        // Pannello semi-trasparente per il menu
-        drawMenuPanel(g2d);
+        // draw menu box moved lower and sized by text width
+        drawMenuPanel(g2d, w, h, clamped);
 
-        // Titolo del gioco
-        drawTitle(g2d);
+        // draw title using option size (smaller) and slightly larger subtitle
+        drawTitleUsingOptionSize(g2d, w, h, optionScale);
 
-        // Simboli carte decorativi
-        drawCardSymbols(g2d);
-
-        // Opzioni del menu
-        for (int i = 0; i < options.length; i++) {
-            options[i].draw(g, cursor.getSelectedIndex() == i);
+        // draw options
+        for (int i=0;i<options.length;i++) {
+            options[i].draw(g2d, cursor.getSelectedIndex() == i);
         }
 
-        // Footer decorativo
-        drawFooter(g2d);
+        // footer
+        drawFooter(g2d, w, h, clamped);
     }
 
-    private void drawVignette(Graphics2D g2d) {
-        int centerX = screenWidth / 2;
-        int centerY = screenHeight / 2;
-        float radius = Math.max(screenWidth, screenHeight) * VIGNETTE_RADIUS_FACTOR;
-
-        RadialGradientPaint vignette = new RadialGradientPaint(
-                centerX, centerY, radius,
-                new float[]{0.0f, 0.7f, 1.0f},
-                new Color[]{VIGNETTE_TRANSPARENT, VIGNETTE_MEDIUM, VIGNETTE_DARK}
-        );
+    private void drawVignette(Graphics2D g2d, int w, int h) {
+        int centerX = w/2;
+        int centerY = h/2;
+        float radius = Math.max(w,h) * VIGNETTE_RADIUS_FACTOR;
+        RadialGradientPaint vignette = new RadialGradientPaint(centerX, centerY, radius, new float[]{0f,0.7f,1f}, new Color[]{new Color(0,0,0,0), new Color(0,0,0,50), new Color(0,0,0,150)});
+        Paint prev = g2d.getPaint();
         g2d.setPaint(vignette);
-        g2d.fillRect(0, 0, screenWidth, screenHeight);
+        g2d.fillRect(0,0,w,h);
+        g2d.setPaint(prev);
     }
 
-    private void drawMenuPanel(Graphics2D g2d) {
-        int panelX = 50;
-        int panelY = 220;
-        int panelWidth = 350;
-        int panelHeight = 320;
-        int arc = 25;
+    private void drawMenuPanel(Graphics2D g2d, int w, int h, double scale) {
+        // Determine option font metrics using the option scale applied earlier
+        // Use a temporary font matching MenuOption's family and scaled size to measure text.
+        int optionBase = 32;
+        int optFontSize = Math.max(8, (int)Math.round(optionBase * options[0].uiScaleSafe()));
+        Font tmpFont = new Font("Georgia", Font.BOLD, optFontSize);
+        FontMetrics fm = g2d.getFontMetrics(tmpFont);
 
-        // Ombra del pannello
+        int maxTextWidth = 0;
+        int textLineHeight = fm.getHeight();
+        for (MenuOption mo : options) {
+            int tw = fm.stringWidth(mo.text);
+            maxTextWidth = Math.max(maxTextWidth, tw);
+        }
+
+        int paddingH = (int)Math.round(28 * scale);
+        int paddingV = (int)Math.round(22 * scale);
+
+        int desiredBoxW = Math.max(w/4, maxTextWidth + paddingH*2);
+        int boxW = (int)Math.round(desiredBoxW * Math.max(0.95, scale));
+        int boxH = (int)Math.round( options.length * textLineHeight + paddingV*2 + (options.length-1) * Math.round(8 * scale) );
+
+        // Move box lower
+        int panelX = Math.max(16, (w - boxW) / 10);
+        int panelY = Math.max((int)(h * 0.30), h/6);
+        int arc = Math.max(12, Math.round(boxW/12f));
+
+        // shadow
         g2d.setColor(PANEL_SHADOW);
-        g2d.fillRoundRect(panelX + 5, panelY + 5, panelWidth, panelHeight, arc, arc);
+        g2d.fillRoundRect(panelX + Math.round(6f*(float)scale), panelY + Math.round(6f*(float)scale), boxW, boxH, arc, arc);
 
-        // Pannello principale con gradiente
-        GradientPaint panelGradient = new GradientPaint(
-                panelX, panelY, PANEL_GRADIENT_TOP,
-                panelX, panelY + panelHeight, PANEL_GRADIENT_BOTTOM
-        );
-        g2d.setPaint(panelGradient);
-        g2d.fillRoundRect(panelX, panelY, panelWidth, panelHeight, arc, arc);
+        // gradient
+        GradientPaint grad = new GradientPaint(panelX, panelY, PANEL_GRADIENT_TOP, panelX, panelY + boxH, PANEL_GRADIENT_BOTTOM);
+        Paint prev = g2d.getPaint();
+        g2d.setPaint(grad);
+        g2d.fillRoundRect(panelX, panelY, boxW, boxH, arc, arc);
+        g2d.setPaint(prev);
 
-        // Bordo dorato
+        // border
         g2d.setColor(PANEL_BORDER);
-        g2d.setStroke(new BasicStroke(2f));
-        g2d.drawRoundRect(panelX, panelY, panelWidth, panelHeight, arc, arc);
+        g2d.setStroke(new BasicStroke(Math.max(1f, 2f*(float)scale)));
+        g2d.drawRoundRect(panelX, panelY, boxW, boxH, arc, arc);
 
-        // Linea decorativa interna
+        // inner line
         g2d.setColor(PANEL_INNER_BORDER);
-        g2d.setStroke(new BasicStroke(1f));
-        g2d.drawRoundRect(panelX + 8, panelY + 8, panelWidth - 16, panelHeight - 16, arc - 5, arc - 5);
+        g2d.setStroke(new BasicStroke(Math.max(0.75f, (float)scale)));
+        g2d.drawRoundRect(panelX + Math.round(8f*(float)scale), panelY + Math.round(8f*(float)scale), boxW - Math.round(16f*(float)scale), boxH - Math.round(16f*(float)scale), Math.max(6, arc-4), Math.max(6, arc-4));
+
+        // compute option positions: center texts horizontally inside the content area
+        int contentX = panelX + paddingH;
+        int contentW = boxW - paddingH*2;
+        int baseY = panelY + paddingV;
+        int spacing = Math.max(textLineHeight + (int)Math.round(6*scale), boxH / (options.length + 1));
+        for (int i=0;i<options.length;i++) {
+            int tw = fm.stringWidth(options[i].text);
+            options[i].x = contentX + Math.max(0, (contentW - tw)/2);
+            options[i].y = baseY + i*spacing + fm.getAscent();
+        }
     }
 
-    private void drawTitle(Graphics2D g2d) {
-        String title = "JTressette";
-        g2d.setFont(TITLE_FONT);
+    private void drawTitleUsingOptionSize(Graphics2D g2d, int w, int h, double optionScale) {
+        int optionBase = 32;
+        float titleSize = Math.max(18f, (float)(optionBase * optionScale));
+        Font titleFont = TITLE_FONT.deriveFont(titleSize);
+        g2d.setFont(titleFont);
         FontMetrics fm = g2d.getFontMetrics();
 
-        int titleX = (screenWidth - fm.stringWidth(title)) / 2;
-        int titleY = 120;
+        int titleX = (w - fm.stringWidth("JTressette")) / 2;
+        int titleY = Math.max(60, h/8);
 
-        // Ombra multipla per effetto 3D (usa colori pre-creati)
-        for (int i = 0; i < SHADOW_COLORS.length; i++) {
+        for (int i=0;i<SHADOW_COLORS.length;i++) {
             g2d.setColor(SHADOW_COLORS[i]);
-            int offset = 4 - i;
-            g2d.drawString(title, titleX + offset, titleY + offset);
+            int offset = Math.max(1, 4 - i);
+            g2d.drawString("JTressette", titleX + offset, titleY + offset);
         }
 
-        // Effetto glow semplificato (ridotto da 16 a 8 draw per performance)
         g2d.setColor(TITLE_GLOW);
-        g2d.drawString(title, titleX - 2, titleY);
-        g2d.drawString(title, titleX + 2, titleY);
-        g2d.drawString(title, titleX, titleY - 2);
-        g2d.drawString(title, titleX, titleY + 2);
+        g2d.drawString("JTressette", titleX - (int)Math.round(2*optionScale), titleY);
+        g2d.drawString("JTressette", titleX + (int)Math.round(2*optionScale), titleY);
 
-        // Gradiente per il titolo
-        GradientPaint titleGradient = new GradientPaint(
-                titleX, titleY - fm.getAscent(), TITLE_GOLD_LIGHT,
-                titleX, titleY, TITLE_GOLD
-        );
-        g2d.setPaint(titleGradient);
-        g2d.drawString(title, titleX, titleY);
+        GradientPaint titleGrad = new GradientPaint(titleX, titleY - fm.getAscent(), TITLE_GOLD_LIGHT, titleX, titleY, TITLE_GOLD);
+        Paint prev = g2d.getPaint();
+        g2d.setPaint(titleGrad);
+        g2d.drawString("JTressette", titleX, titleY);
+        g2d.setPaint(prev);
 
-        // Sottotitolo
-        g2d.setFont(SUBTITLE_FONT);
-        String subtitle = "Il classico gioco di carte italiano";
+        float subSize = Math.max(11f, (float)((optionBase * optionScale) * 0.45 * 1.2));
+        Font subFont = SUBTITLE_FONT.deriveFont(subSize);
+        g2d.setFont(subFont);
+        String subtitle = "Gioco di carte italiano";
         FontMetrics fmSub = g2d.getFontMetrics();
-        int subX = (screenWidth - fmSub.stringWidth(subtitle)) / 2;
-        int subY = titleY + 35;
+        int subX = (w - fmSub.stringWidth(subtitle)) / 2;
+        int subY = titleY + (int)(fm.getHeight() * 0.6);
 
         g2d.setColor(SUBTITLE_SHADOW);
-        g2d.drawString(subtitle, subX + 1, subY + 1);
-
+        g2d.drawString(subtitle, subX + (int)Math.round(1*optionScale), subY + (int)Math.round(1*optionScale));
         g2d.setColor(SUBTITLE_COLOR);
         g2d.drawString(subtitle, subX, subY);
     }
 
-    private void drawCardSymbols(Graphics2D g2d) {
-        // Simboli delle carte decorativi ai lati del titolo
-        Font symbolFont = new Font("Serif", Font.PLAIN, 36);
-        g2d.setFont(symbolFont);
+    private void drawFooter(Graphics2D g2d, int w, int h, double scale) {
+        int footerY = h - (int)Math.round(40*scale);
+        GradientPaint lg = new GradientPaint(Math.max(80, w/12), footerY, new Color(255,215,0,0), w/2, footerY, new Color(255,215,0,100));
+        Paint prev = g2d.getPaint();
+        g2d.setPaint(lg);
+        g2d.setStroke(new BasicStroke(Math.max(1f, (float)(1.5f*scale))));
+        g2d.drawLine(Math.max(80, w/12), footerY, w/2, footerY);
 
-        int leftX = 80;
-        int rightX = screenWidth - 120;
-        int y = 100;
-    }
-
-    private void drawFooter(Graphics2D g2d) {
-        // Linea decorativa in basso
-        int footerY = screenHeight - 40;
-
-        // Gradiente per la linea
-        GradientPaint lineGradient = new GradientPaint(
-                100, footerY, new Color(255, 215, 0, 0),
-                screenWidth / 2, footerY, new Color(255, 215, 0, 100)
-        );
-
-        g2d.setPaint(lineGradient);
-        g2d.setStroke(new BasicStroke(1.5f));
-        g2d.drawLine(100, footerY, screenWidth / 2, footerY);
-
-        // Specchiato a destra
-        GradientPaint lineGradient2 = new GradientPaint(
-                screenWidth / 2, footerY, new Color(255, 215, 0, 100),
-                screenWidth - 100, footerY, new Color(255, 215, 0, 0)
-        );
-        g2d.setPaint(lineGradient2);
-        g2d.drawLine(screenWidth / 2, footerY, screenWidth - 100, footerY);
-
-        // Piccolo diamante al centro
-        int diamondSize = 8;
-        int[] xPoints = {screenWidth / 2, screenWidth / 2 + diamondSize, screenWidth / 2, screenWidth / 2 - diamondSize};
-        int[] yPoints = {footerY - diamondSize, footerY, footerY + diamondSize, footerY};
-
-        g2d.setColor(new Color(255, 215, 0, 150));
-        g2d.fillPolygon(xPoints, yPoints, 4);
+        GradientPaint lg2 = new GradientPaint(w/2, footerY, new Color(255,215,0,100), w - Math.max(80, w/12), footerY, new Color(255,215,0,0));
+        g2d.setPaint(lg2);
+        g2d.drawLine(w/2, footerY, w - Math.max(80, w/12), footerY);
+        g2d.setPaint(prev);
     }
 }

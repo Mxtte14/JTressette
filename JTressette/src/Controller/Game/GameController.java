@@ -12,9 +12,9 @@ import java.awt.event.WindowEvent;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * GameControllerSwing: Controller for the game following MVC pattern.
@@ -294,14 +294,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     public GamesRecord getGameRecord() {
         String date = Instant.now().toString();
 
-        // Opponenti: tutti tranne l'umano!
-        StringJoiner opponentsJoiner = new StringJoiner(",");
-        for (Giocatore p : gameState.getPlayers()) {
-            if (p != humanPlayer) {
-                opponentsJoiner.add(p.getName());
-            }
-        }
-        String opponentNames = opponentsJoiner.toString();
+        // Opponenti: tutti tranne l'umano usando Streams!
+        String opponentNames = gameState.getPlayers().stream()
+                .filter(p -> p != humanPlayer)
+                .map(Giocatore::getName)
+                .collect(Collectors.joining(","));
 
         // Vincitore e punteggi
         var scores = gameState.getScores();

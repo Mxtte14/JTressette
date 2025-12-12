@@ -19,17 +19,13 @@ import java.util.Random;
  */
 public class GameSetup extends JDialog {
     private final JLabel nameLabel;
-    private final JComboBox<Integer> nbBox = new JComboBox<>(new Integer[]{0,1,2,3});
+    private final JComboBox<Integer> nbBox = new JComboBox<>(new Integer[]{1,2,3});
     private final JPanel botsPanel = new JPanel(new GridLayout(3, 1, 4, 4));
     private final List<JTextField> botNameFields = new ArrayList<>();
     private final List<JComboBox<Difficoltà>> botDiffBoxes = new ArrayList<>();
 
     private List<Giocatore> players = null;
     private final String playerName;
-
-    public GameSetup(Window owner) {
-        this(owner, null);
-    }
 
     public GameSetup(Window owner, UserProfile profile) {
         super(owner, "Impostazioni partita", ModalityType.APPLICATION_MODAL);
@@ -96,7 +92,7 @@ public class GameSetup extends JDialog {
     private void updateBotsPanel() {
         int numberOfBots = (Integer) nbBox.getSelectedItem();
         Component[] comps = botsPanel.getComponents();
-        for (int i = 0; i < comps.length; i++) {
+        for (int i = 1; i < comps.length; i++) {
             comps[i].setVisible(i < numberOfBots);
         }
         botsPanel.revalidate();
@@ -106,7 +102,7 @@ public class GameSetup extends JDialog {
     private void onStart() {
         players = new ArrayList<>();
         // human first - use name from profile
-        players.add((Giocatore) new GiocatoreUmano(playerName));
+        players.add(new GiocatoreUmano(playerName));
 
         int nb = (Integer) nbBox.getSelectedItem();
         for (int i = 0; i < nb; i++) {

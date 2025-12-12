@@ -15,7 +15,9 @@ public class ViewImpostazioni extends JPanel {
         this.settings = settings != null ? settings : MenuImpostazioni.getInstance();
 
         setLayout(new GridBagLayout());
-        setBackground(Color.BLACK);
+        // Make panel transparent to show the menu background image underneath,
+        // providing visual continuity with the home screen
+        setOpaque(false);
 
         // Modern glass card panel (stile HomeMenu)
         JPanel card = new GlassPanel();

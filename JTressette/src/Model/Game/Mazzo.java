@@ -1,9 +1,11 @@
 package Model.Game;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import Model.Audio.AudioManager;
 
 public class Mazzo {
@@ -12,12 +14,11 @@ public class Mazzo {
     private final AudioManager audioManager = new AudioManager();
 
     public Mazzo() {
-        cards = new ArrayList<>(52);
-        for (Cards.Segno s : Cards.Segno.values()) {
-            for (Cards.Rank r : Cards.Rank.values()) {
-                cards.add(new Cards(s, r));
-            }
-        }
+        // Usa Streams per creare il mazzo
+        cards = Arrays.stream(Cards.Segno.values())
+                .flatMap(segno -> Arrays.stream(Cards.Rank.values())
+                        .map(rank -> new Cards(segno, rank)))
+                .collect(Collectors.toCollection(() -> new ArrayList<>(52)));
     }
 
     public void shuffle() {

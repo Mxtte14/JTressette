@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class StorageProfile {
     private static final Logger LOG = Logger.getLogger(StorageProfile.class.getName());
@@ -110,19 +112,16 @@ public class StorageProfile {
     }
 
     private int sumExperienceFromGames(List<GamesRecord> games) {
-        int sum = 0;
         if (games == null) return 0;
-        for (GamesRecord g : games) {
-            sum += g.getExperience();
-        }
-        return sum;
+        return games.stream()
+                .mapToInt(GamesRecord::getExperience)
+                .sum();
     }
 
     /**
      * Carica i game records dalle proprietà (includiamo ora experience, myPoints e myCardsWon se presenti).
      */
     private List<GamesRecord> loadGamesFromProperties(Properties props) {
-        List<GamesRecord> games = new ArrayList<>();
         String countStr = props.getProperty(KEY_GAMES_COUNT, "0");
         int count;
         try {
@@ -131,36 +130,34 @@ public class StorageProfile {
             LOG.log(Level.WARNING, "Valore non valido per gamesCount: " + countStr + ", uso 0");
             count = 0;
         }
-        for (int i = 0; i < count; i++) {
-            String prefix = KEY_GAME_PREFIX + i + ".";
-            String date = props.getProperty(prefix + "date", "");
-            String opponent = props.getProperty(prefix + "opponent", "");
-            String winner = props.getProperty(prefix + "winner", "");
-            String winnerScore = props.getProperty(prefix + "winnerScore", "");
-            String myScore = props.getProperty(prefix + "myScore", "");
-            int experience = 0;
-            int myPoints = 0;
-            int myCardsWon = 0;
-            try {
-                experience = Integer.parseInt(props.getProperty(prefix + "experience", "0"));
-            } catch (NumberFormatException e) {
-                // ignore, keep 0
-            }
-            try {
-                myPoints = Integer.parseInt(props.getProperty(prefix + "myPoints", "0"));
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-            try {
-                myCardsWon = Integer.parseInt(props.getProperty(prefix + "myCardsWon", "0"));
-            } catch (NumberFormatException e) {
-                // ignore
-            }
-            GamesRecord record = new GamesRecord(date, opponent, winner, winnerScore, myScore, myPoints, myCardsWon);
-            record.setExperience(experience);
-            games.add(record);
+
+        // Usa Streams per creare i game records
+        return IntStream.range(0, count)
+                .mapToObj(i -> {
+                    String prefix = KEY_GAME_PREFIX + i + ".";
+                    String date = props.getProperty(prefix + "date", "");
+                    String opponent = props.getProperty(prefix + "opponent", "");
+                    String winner = props.getProperty(prefix + "winner", "");
+                    String winnerScore = props.getProperty(prefix + "winnerScore", "");
+                    String myScore = props.getProperty(prefix + "myScore", "");
+
+                    int experience = parseIntOrDefault(props.getProperty(prefix + "experience", "0"), 0);
+                    int myPoints = parseIntOrDefault(props.getProperty(prefix + "myPoints", "0"), 0);
+                    int myCardsWon = parseIntOrDefault(props.getProperty(prefix + "myCardsWon", "0"), 0);
+
+                    GamesRecord record = new GamesRecord(date, opponent, winner, winnerScore, myScore, myPoints, myCardsWon);
+                    record.setExperience(experience);
+                    return record;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private int parseIntOrDefault(String value, int defaultValue) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
         }
-        return games;
     }
 
     /**
