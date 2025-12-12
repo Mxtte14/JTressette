@@ -78,8 +78,10 @@ public class GameState {
      * Observer pattern methods
      */
     public void addObserver(GameStateObserver observer) {
-        if (observer != null && !observers.contains(observer)) {
-            observers.add(observer);
+        if (observer != null) {
+            // CopyOnWriteArrayList handles concurrent add operations safely
+            // Use addIfAbsent to prevent duplicates in a thread-safe way
+            ((CopyOnWriteArrayList<GameStateObserver>) observers).addIfAbsent(observer);
         }
     }
     

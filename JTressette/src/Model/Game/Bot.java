@@ -2,7 +2,10 @@ package Model.Game;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Bot semplice/strategico che cambia comportamento secondo la Difficulty:
@@ -36,22 +39,25 @@ public class Bot implements Giocatore {
                 // altrimenti scarta la minima (più debole)
                 Cards lead = state.getLeadCard();
                 if (lead != null) {
+                    // Cache hand reference per evitare chiamate multiple
+                    List<Cards> hand = state.getHand(this);
                     // Usa Streams per trovare la minima carta che vince
                     int bestWinIdx = Arrays.stream(legal)
                         .boxed()
                         .filter(idx -> {
-                            Cards c = state.getHand(this).get(idx);
+                            Cards c = hand.get(idx);
                             return c.getSegno() == lead.getSegno() && c.getPriority() > lead.getPriority();
                         })
-                        .min(Comparator.comparingInt(idx -> state.getHand(this).get(idx).getPriority()))
+                        .min(Comparator.comparingInt(idx -> hand.get(idx).getPriority()))
                         .orElse(-1);
                     
                     if (bestWinIdx >= 0) return bestWinIdx;
                 }
                 // altrimenti gioca la carta legale con min strength
+                List<Cards> hand = state.getHand(this);
                 return Arrays.stream(legal)
                         .boxed()
-                        .min(Comparator.comparingInt(i -> state.getHand(this).get(i).getPriority()))
+                        .min(Comparator.comparingInt(i -> hand.get(i).getPriority()))
                         .orElse(legal[0]);
 
             case HARD:
@@ -64,7 +70,13 @@ public class Bot implements Giocatore {
             // Informazioni pubbliche
             var trickCards = state.getTrickCards();
             var played = state.getPlayedCards();
+            var myHand = state.getHand(this);
             Cards.Segno leadSuit = trickCards.isEmpty() ? null : trickCards.get(0).getSegno();
+            
+            // Crea Sets per lookup O(1) invece di stream O(n)
+            Set<Cards> playedSet = new HashSet<>(played);
+            Set<Cards> trickSet = new HashSet<>(trickCards);
+            Set<Cards> myHandSet = new HashSet<>(myHand);
             
             // miglior carta attuale nella presa (se esiste) usando Streams
             Cards currentBest = null;
@@ -81,7 +93,7 @@ public class Bot implements Giocatore {
 
             // per ogni mossa legale calcolo un punteggio euristico usando Streams
             for (int idx : legal) {
-                Cards candidate = state.getHand(this).get(idx);
+                Cards candidate = myHand.get(idx);
 
                 boolean wouldWin = false;
                 if (trickCards.isEmpty()) {
@@ -99,20 +111,16 @@ public class Bot implements Giocatore {
                     .mapToInt(GameState::getCardPoints)
                     .sum() + GameState.getCardPoints(candidate);
 
-                // quante carte punto rimangono nel seme del lead (approssimazione) usando Streams
+                // quante carte punto rimangono nel seme del lead (approssimazione) usando Streams con Set lookup
                 Cards.Segno suitToCheck = (leadSuit != null) ? leadSuit : candidate.getSegno();
                 int remainingPointCardsInLead = (int) Arrays.stream(Cards.Rank.values())
                     .filter(r -> {
                         Cards hypothetical = new Cards(suitToCheck, r);
                         // la carta è rimasta se non è nelle played e non è in mano del bot e non è nella trick corrente
-                        boolean seen = played.stream().anyMatch(pc -> pc.getSegno() == suitToCheck && pc.getRank() == r);
-                        if (seen) return false;
-                        
-                        boolean inTrick = trickCards.stream().anyMatch(tc -> tc.getSegno() == suitToCheck && tc.getRank() == r);
-                        if (inTrick) return false;
-                        
-                        boolean inMyHand = state.getHand(this).stream().anyMatch(my -> my.getSegno() == suitToCheck && my.getRank() == r);
-                        if (inMyHand) return false;
+                        // Usa Set.contains per O(1) invece di stream per O(n)
+                        if (playedSet.contains(hypothetical)) return false;
+                        if (trickSet.contains(hypothetical)) return false;
+                        if (myHandSet.contains(hypothetical)) return false;
                         
                         // se questa rank ha punti, la consideriamo
                         return GameState.getCardPoints(hypothetical) > 0;
