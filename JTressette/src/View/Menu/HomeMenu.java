@@ -120,6 +120,7 @@ public class HomeMenu extends JPanel implements ProfileListener {
                 super.paintComponent(g);
             }
         };
+
         avatarSmallLabel.setHorizontalAlignment(SwingConstants.CENTER);
         avatarSmallLabel.setOpaque(false);
 
@@ -279,11 +280,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         int h = getHeight();
         double clamped = getClampedScale();
 
-        // apply clamped scale to options (so MenuOption draws with correct scaled font)
-        double optionScale = Math.max(0.6, Math.min(1.6, clamped)); // same clamp applied
+        // Applica scale aumentato alle opzioni (1.3x invece di 1.0x)
+        double optionScale = Math.max(0.6, Math.min(1.6, clamped * 1.3));
         for (MenuOption mo : options) mo.setScale(optionScale);
 
-        // background cover
+        // Background cover
         if (background != null && w > 0 && h > 0) {
             double s = Math.max((double) w / background.getWidth(), (double) h / background.getHeight());
             int drawWidth = (int) Math.round(background.getWidth() * s);
@@ -293,26 +294,24 @@ public class HomeMenu extends JPanel implements ProfileListener {
             g2d.drawImage(background, drawX, drawY, drawWidth, drawHeight, null);
         } else {
             g2d.setColor(Color.DARK_GRAY);
-            g2d.fillRect(0,0,w,h);
+            g2d.fillRect(0, 0, w, h);
         }
 
         g2d.setColor(OVERLAY_COLOR);
-        g2d.fillRect(0,0,w,h);
+        g2d.fillRect(0, 0, w, h);
 
         drawVignette(g2d, w, h);
 
-        // draw menu box moved lower and sized by text width
+        // Disegna menu box e titolo con nuove dimensioni
         drawMenuPanel(g2d, w, h, clamped);
-
-        // draw title using option size (smaller) and slightly larger subtitle
         drawTitleUsingOptionSize(g2d, w, h, optionScale);
 
-        // draw options
-        for (int i=0;i<options.length;i++) {
+        // Disegna opzioni
+        for (int i = 0; i < options.length; i++) {
             options[i].draw(g2d, cursor.getSelectedIndex() == i);
         }
 
-        // footer
+        // Footer
         drawFooter(g2d, w, h, clamped);
     }
 
@@ -328,10 +327,10 @@ public class HomeMenu extends JPanel implements ProfileListener {
     }
 
     private void drawMenuPanel(Graphics2D g2d, int w, int h, double scale) {
-        // Determine option font metrics using the option scale applied earlier
-        // Use a temporary font matching MenuOption's family and scaled size to measure text.
+        // Font più grande per le opzioni
         int optionBase = 32;
-        int optFontSize = Math.max(8, (int)Math.round(optionBase * options[0].uiScaleSafe()));
+        // Aumentato da 1.0 a 1.3 per opzioni più grandi
+        int optFontSize = Math.max(12, (int)Math.round(optionBase * options[0].uiScaleSafe() * 1.3));
         Font tmpFont = new Font("Georgia", Font.BOLD, optFontSize);
         FontMetrics fm = g2d.getFontMetrics(tmpFont);
 
@@ -342,87 +341,129 @@ public class HomeMenu extends JPanel implements ProfileListener {
             maxTextWidth = Math.max(maxTextWidth, tw);
         }
 
-        int paddingH = (int)Math.round(28 * scale);
-        int paddingV = (int)Math.round(22 * scale);
+        // Padding aumentato per box più grande
+        int paddingH = (int)Math.round(45 * scale); // era 28
+        int paddingV = (int)Math.round(35 * scale); // era 22
 
-        int desiredBoxW = Math.max(w/4, maxTextWidth + paddingH*2);
-        int boxW = (int)Math.round(desiredBoxW * Math.max(0.95, scale));
-        int boxH = (int)Math.round( options.length * textLineHeight + paddingV*2 + (options.length-1) * Math.round(8 * scale) );
+        // Box più largo e più alto
+        int desiredBoxW = Math.max(w / 3, maxTextWidth + paddingH * 2); // era w/4
+        int boxW = (int)Math.round(desiredBoxW * Math.max(1.0, scale)); // era 0.95
 
-        // Move box lower
-        int panelX = Math.max(16, (w - boxW) / 10);
-        int panelY = Math.max((int)(h * 0.30), h/6);
-        int arc = Math.max(12, Math.round(boxW/12f));
+        // Spaziatura aumentata tra le opzioni
+        int optionSpacing = (int)Math.round(15 * scale); // era 8
+        int boxH = (int)Math.round(
+                options.length * textLineHeight +
+                        paddingV * 2 +
+                        (options.length - 1) * optionSpacing
+        );
 
-        // shadow
+        // Posizione del box - leggermente più in basso
+        int panelX = Math.max(20, (w - boxW) / 8); // era /10
+        int panelY = Math.max((int)(h * 0.35), h / 5); // era 0.30
+        int arc = Math.max(15, Math.round(boxW / 10f)); // era /12
+
+        // Ombra con offset proporzionale
+        int shadowOffset = Math.max(4, Math.round(8f * (float)scale));
         g2d.setColor(PANEL_SHADOW);
-        g2d.fillRoundRect(panelX + Math.round(6f*(float)scale), panelY + Math.round(6f*(float)scale), boxW, boxH, arc, arc);
+        g2d.fillRoundRect(
+                panelX + shadowOffset,
+                panelY + shadowOffset,
+                boxW, boxH, arc, arc
+        );
 
-        // gradient
-        GradientPaint grad = new GradientPaint(panelX, panelY, PANEL_GRADIENT_TOP, panelX, panelY + boxH, PANEL_GRADIENT_BOTTOM);
+        // Gradiente del pannello
+        GradientPaint grad = new GradientPaint(
+                panelX, panelY,
+                PANEL_GRADIENT_TOP,
+                panelX, panelY + boxH,
+                PANEL_GRADIENT_BOTTOM
+        );
         Paint prev = g2d.getPaint();
         g2d.setPaint(grad);
         g2d.fillRoundRect(panelX, panelY, boxW, boxH, arc, arc);
         g2d.setPaint(prev);
 
-        // border
+        // Bordo esterno
         g2d.setColor(PANEL_BORDER);
-        g2d.setStroke(new BasicStroke(Math.max(1f, 2f*(float)scale)));
+        g2d.setStroke(new BasicStroke(Math.max(2f, 3f * (float)scale))); // era 2f
         g2d.drawRoundRect(panelX, panelY, boxW, boxH, arc, arc);
 
-        // inner line
+        // Bordo interno
+        int innerOffset = Math.max(8, Math.round(12f * (float)scale));
         g2d.setColor(PANEL_INNER_BORDER);
-        g2d.setStroke(new BasicStroke(Math.max(0.75f, (float)scale)));
-        g2d.drawRoundRect(panelX + Math.round(8f*(float)scale), panelY + Math.round(8f*(float)scale), boxW - Math.round(16f*(float)scale), boxH - Math.round(16f*(float)scale), Math.max(6, arc-4), Math.max(6, arc-4));
+        g2d.setStroke(new BasicStroke(Math.max(1f, 1.5f * (float)scale)));
+        g2d.drawRoundRect(
+                panelX + innerOffset,
+                panelY + innerOffset,
+                boxW - innerOffset * 2,
+                boxH - innerOffset * 2,
+                Math.max(8, arc - 6),
+                Math.max(8, arc - 6)
+        );
 
-        // compute option positions: center texts horizontally inside the content area
+        // Posiziona le opzioni centrate con spaziatura aumentata
         int contentX = panelX + paddingH;
-        int contentW = boxW - paddingH*2;
+        int contentW = boxW - paddingH * 2;
         int baseY = panelY + paddingV;
-        int spacing = Math.max(textLineHeight + (int)Math.round(6*scale), boxH / (options.length + 1));
-        for (int i=0;i<options.length;i++) {
+        int spacing = textLineHeight + optionSpacing;
+
+        for (int i = 0; i < options.length; i++) {
             int tw = fm.stringWidth(options[i].text);
-            options[i].x = contentX + Math.max(0, (contentW - tw)/2);
-            options[i].y = baseY + i*spacing + fm.getAscent();
+            options[i].x = contentX + Math.max(0, (contentW - tw) / 2);
+            options[i].y = baseY + i * spacing + fm.getAscent();
         }
     }
 
     private void drawTitleUsingOptionSize(Graphics2D g2d, int w, int h, double optionScale) {
         int optionBase = 32;
-        float titleSize = Math.max(18f, (float)(optionBase * optionScale));
+        // Aumentato il moltiplicatore da 1.0 a 1.8 per un titolo molto più grande
+        float titleSize = Math.max(28f, (float)(optionBase * optionScale * 1.8));
         Font titleFont = TITLE_FONT.deriveFont(titleSize);
         g2d.setFont(titleFont);
         FontMetrics fm = g2d.getFontMetrics();
 
         int titleX = (w - fm.stringWidth("JTressette")) / 2;
-        int titleY = Math.max(60, h/8);
+        // Posizionato più in alto per dare più spazio al menu
+        int titleY = Math.max(80, (int)(h * 0.15));
 
-        for (int i=0;i<SHADOW_COLORS.length;i++) {
+        // Ombre con offset proporzionale alla dimensione
+        for (int i = 0; i < SHADOW_COLORS.length; i++) {
             g2d.setColor(SHADOW_COLORS[i]);
-            int offset = Math.max(1, 4 - i);
+            int offset = Math.max(2, (int)(6 * optionScale) - i);
             g2d.drawString("JTressette", titleX + offset, titleY + offset);
         }
 
+        // Effetto glow
         g2d.setColor(TITLE_GLOW);
-        g2d.drawString("JTressette", titleX - (int)Math.round(2*optionScale), titleY);
-        g2d.drawString("JTressette", titleX + (int)Math.round(2*optionScale), titleY);
+        int glowOffset = Math.max(2, (int)Math.round(3 * optionScale));
+        g2d.drawString("JTressette", titleX - glowOffset, titleY);
+        g2d.drawString("JTressette", titleX + glowOffset, titleY);
 
-        GradientPaint titleGrad = new GradientPaint(titleX, titleY - fm.getAscent(), TITLE_GOLD_LIGHT, titleX, titleY, TITLE_GOLD);
+        // Gradiente del titolo
+        GradientPaint titleGrad = new GradientPaint(
+                titleX, titleY - fm.getAscent(),
+                TITLE_GOLD_LIGHT,
+                titleX, titleY,
+                TITLE_GOLD
+        );
         Paint prev = g2d.getPaint();
         g2d.setPaint(titleGrad);
         g2d.drawString("JTressette", titleX, titleY);
         g2d.setPaint(prev);
 
-        float subSize = Math.max(11f, (float)((optionBase * optionScale) * 0.45 * 1.2));
+        // Sottotitolo aumentato proporzionalmente (1.5x più grande)
+        float subSize = Math.max(14f, (float)((optionBase * optionScale) * 0.65));
         Font subFont = SUBTITLE_FONT.deriveFont(subSize);
         g2d.setFont(subFont);
         String subtitle = "Gioco di carte italiano";
         FontMetrics fmSub = g2d.getFontMetrics();
         int subX = (w - fmSub.stringWidth(subtitle)) / 2;
-        int subY = titleY + (int)(fm.getHeight() * 0.6);
+        int subY = titleY + (int)(fm.getHeight() * 0.7);
 
+        // Ombra sottotitolo
         g2d.setColor(SUBTITLE_SHADOW);
-        g2d.drawString(subtitle, subX + (int)Math.round(1*optionScale), subY + (int)Math.round(1*optionScale));
+        int subShadow = Math.max(1, (int)Math.round(2 * optionScale));
+        g2d.drawString(subtitle, subX + subShadow, subY + subShadow);
         g2d.setColor(SUBTITLE_COLOR);
         g2d.drawString(subtitle, subX, subY);
     }

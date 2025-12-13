@@ -124,7 +124,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
                         SwingUtilities.invokeLater(() -> {
-                            view.showCardPlayed();
+                            view.showCardPlayed(current, played);
                             view.log(finalCurrent.getName() + " ha giocato " + finalPlayed);
                             view.refresh();
                         });

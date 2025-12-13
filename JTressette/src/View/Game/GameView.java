@@ -36,8 +36,8 @@ public class GameView extends JFrame {
     private static final Color TEXT_WHITE = Color.WHITE;
 
     // Dimensioni carte anche dinamico
-    private static final int CARD_WIDTH = 70;
-    private static final int CARD_HEIGHT = 100;
+    private static final int CARD_WIDTH = 60;
+    private static final int CARD_HEIGHT = 86;
     private static final int HAND_GAP = 5; // gap between hand cards
     private static final int HAND_CARD_MIN_WIDTH = 45;
     private static final int HAND_CARD_MAX_WIDTH = 85;
@@ -49,10 +49,11 @@ public class GameView extends JFrame {
     private int sideCardHeight = (int) Math.round(sideCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
     // Table sizing constraints
-    private static final int TABLE_MIN_W = 520;
-    private static final int TABLE_MIN_H = 260;
-    private static final int TABLE_MAX_W = 760;
-    private static final int TABLE_MAX_H = 420;
+    private static final int TABLE_MIN_W = 540;
+    private static final int TABLE_MIN_H = 280;
+    private static final int TABLE_MAX_W = 780;
+    private static final int TABLE_MAX_H = 440;
+
 
     // Animation constants
     private static final int ANIMATION_DELAY_MS = 80;
@@ -219,8 +220,8 @@ public class GameView extends JFrame {
         int availableW = Math.max(400, contentW - rightPanelW - 60);
         int availableH = Math.max(300, contentH - 220);
 
-        int tableW = Math.max(TABLE_MIN_W, Math.min(TABLE_MAX_W, (int) (availableW * 0.78)));
-        int tableH = Math.max(TABLE_MIN_H, Math.min(TABLE_MAX_H, (int) (availableH * 0.58)));
+        int tableW = Math.max(TABLE_MIN_W, Math.min(TABLE_MAX_W, (int) (availableW * 0.85)));
+        int tableH = Math.max(TABLE_MIN_H, Math.min(TABLE_MAX_H, (int) (availableH * 0.68)));
 
         if (tableOval != null) {
             tableOval.setPreferredSize(new Dimension(tableW, tableH));
@@ -347,14 +348,21 @@ public class GameView extends JFrame {
         area.setOpaque(false);
         area.setLayout(null); // Use null layout for precise positioning
         area.setBorder(new EmptyBorder(20, 20, 10, 20));
-        area.setPreferredSize(new Dimension(0, 150));
+        area.setPreferredSize(new Dimension(0, 180)); // Aumentata da 150 a 180
         return area;
     }
 
     /**
      * Create opponent box. If isVertical==true it will contain a VerticalCardStackPanel
      * which arranges cards from bottom-to-top and adapts its preferred size to the
-     * number of cards using sideCardWidth/sideCardHeight as fixed card size.
+     * number of cards using side CardWidth/sideCardHeight as fixed card size.
+     */
+    // Sostituisci il metodo createOpponentBox con questa versione aggiornata:
+
+    /**
+     * Create opponent box.
+     * - isVertical==true: vertical stack (per bot laterali)
+     * - isVertical==false: horizontal layout (per bot in alto)
      */
     private JPanel createOpponentBox(Giocatore player, boolean isVertical) {
         JPanel box = new JPanel();
@@ -362,7 +370,7 @@ public class GameView extends JFrame {
         box.setLayout(new BoxLayout(box, isVertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
 
         JLabel nameLabel = new JLabel(player.getName());
-        nameLabel.setForeground(new Color(255, 215, 0)); // Gold color
+        nameLabel.setForeground(new Color(255, 215, 0));
         nameLabel.setFont(new Font("Georgia", Font.BOLD, 14));
         nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         nameLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
@@ -371,11 +379,12 @@ public class GameView extends JFrame {
         int handSize = hand.size();
 
         if (isVertical) {
-            // Vertical stack: cards bottom-to-top, with fixed sideCardWidth/sideCardHeight
-            int overlap = Math.max(8, sideCardHeight / 3); // overlap amount (how much cards "rise" above previous)
+            // BOT LATERALI - verticale
+            int overlap = Math.max(8, sideCardHeight / 3);
             VerticalCardStackPanel vstack = new VerticalCardStackPanel(sideCardWidth, sideCardHeight, overlap);
+            vstack.setOpaque(false);
+            vstack.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-            // Add card backs (they will be laid out by vstack.doLayout)
             Image cardBackImg = CardImageLoader.getScaledCardBackImage(sideCardWidth, sideCardHeight);
             for (int i = 0; i < handSize; i++) {
                 JLabel cardBack = new JLabel(new ImageIcon(cardBackImg));
@@ -383,7 +392,6 @@ public class GameView extends JFrame {
                 vstack.add(cardBack);
             }
 
-            // If no cards, add an invisible placeholder to keep box consistent
             if (handSize == 0) {
                 JPanel placeholder = new JPanel();
                 placeholder.setOpaque(false);
@@ -391,56 +399,78 @@ public class GameView extends JFrame {
                 vstack.add(placeholder);
             }
 
-            // assemble vertical box
+            // Info panel verticale per bot laterali
+            JPanel infoPanel = new JPanel();
+            infoPanel.setOpaque(false);
+            infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+
+            JPanel cardsRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
+            cardsRow.setOpaque(false);
+            JPanel opponentDeckIcon = createOpponentWonCardsDeckIcon(player);
+            cardsRow.add(opponentDeckIcon);
+
+            JLabel wonLabel = new JLabel("Carte: " + gameState.getWonCardsCount(player));
+            wonLabel.setForeground(TEXT_GOLD);
+            wonLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+            cardsRow.add(wonLabel);
+
+            cardsRow.setAlignmentX(Component.CENTER_ALIGNMENT);
+            infoPanel.add(cardsRow);
+
+            MenuImpostazioni settings = MenuImpostazioni.getInstance();
+            if (settings.isShowScore()) {
+                infoPanel.add(Box.createVerticalStrut(3));
+                JLabel scoreLabel = new JLabel("Punti: " + gameState.getScaledScoreString(player));
+                scoreLabel.setForeground(new Color(255, 215, 0));
+                scoreLabel.setFont(new Font("Georgia", Font.BOLD, 10));
+                scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                infoPanel.add(scoreLabel);
+            }
+
             box.add(Box.createVerticalStrut(5));
             box.add(nameLabel);
             box.add(Box.createVerticalStrut(8));
             box.add(vstack);
             box.add(Box.createVerticalStrut(5));
-
-            // info panel (won cards etc.)
-            JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-            infoPanel.setOpaque(false);
-            JPanel opponentDeckIcon = createOpponentWonCardsDeckIcon(player);
-            infoPanel.add(opponentDeckIcon);
-
-            JLabel wonLabel = new JLabel("Carte: " + gameState.getWonCardsCount(player));
-            wonLabel.setForeground(TEXT_GOLD);
-            wonLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-            infoPanel.add(wonLabel);
-
-            MenuImpostazioni settings = MenuImpostazioni.getInstance();
-            if (settings.isShowScore()) {
-                JLabel scoreLabel = new JLabel(" | Punti: " + gameState.getScaledScoreString(player));
-                scoreLabel.setForeground(new Color(255, 215, 0)); // Gold
-                scoreLabel.setFont(new Font("Georgia", Font.BOLD, 11));
-                infoPanel.add(scoreLabel);
-            }
-
             box.add(infoPanel);
             box.add(Box.createVerticalStrut(5));
-        } else {
-            // Horizontal cards (existing behavior)
-            int baseCardWidth = 55;
-            int baseCardHeight = 80;
-            int overlap = -25; // negative in FlowLayout gap to cause visual overlap
 
-            if (handSize > 6) {
-                float scaleFactor = Math.min(1.0f, 6.0f / handSize);
-                baseCardWidth = (int) (baseCardWidth * scaleFactor);
-                baseCardHeight = (int) (baseCardHeight * scaleFactor);
+            Dimension vPref = vstack.getPreferredSize();
+            int prefW = Math.max(sideCardWidth + 12, vPref.width);
+            int prefH;
+            if (vPref.height > 0) {
+                prefH = vPref.height;
+            } else {
+                int step = Math.max(4, sideCardHeight - overlap);
+                int totalH = (handSize <= 0) ? sideCardHeight : sideCardHeight + Math.max(0, (handSize - 1) * step);
+                prefH = totalH + 8;
             }
+
+            // DIMENSIONE MINIMA per evitare che il box sparisca
+            int minHeight = sideCardHeight + nameLabel.getPreferredSize().height +
+                    infoPanel.getPreferredSize().height + 40;
+            prefH = Math.max(minHeight, prefH);
+
+            int extraH = nameLabel.getPreferredSize().height + infoPanel.getPreferredSize().height + 26;
+            box.setPreferredSize(new Dimension(prefW + 12, prefH + extraH));
+
+            vstack.setMaximumSize(new Dimension(prefW, Integer.MAX_VALUE));
+            nameLabel.setMaximumSize(new Dimension(prefW + 10, nameLabel.getPreferredSize().height));
+            infoPanel.setMaximumSize(new Dimension(prefW + 10, infoPanel.getPreferredSize().height));
+
+        } else {
+            // BOT IN ALTO - orizzontale
+            int cardWidth = sideCardWidth;
+            int cardHeight = sideCardHeight;
+            int overlap = -12;
 
             JPanel cardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, overlap, 3));
             cardsPanel.setOpaque(false);
 
-            int cardWidth = baseCardWidth;
-            int cardHeight = baseCardHeight;
-
             Image cardBackImg = CardImageLoader.getScaledCardBackImage(cardWidth, cardHeight);
             for (int i = 0; i < handSize; i++) {
                 JLabel cardBack = new JLabel(new ImageIcon(cardBackImg));
-                cardBack.setPreferredSize(new Dimension(cardWidth + 5, cardHeight + 5));
+                cardBack.setPreferredSize(new Dimension(cardWidth, cardHeight));
                 cardsPanel.add(cardBack);
             }
 
@@ -457,12 +487,11 @@ public class GameView extends JFrame {
             MenuImpostazioni settings = MenuImpostazioni.getInstance();
             if (settings.isShowScore()) {
                 JLabel sc = new JLabel(" | Punti: " + gameState.getScaledScoreString(player));
-                sc.setForeground(new Color(255, 215, 0)); // Gold
+                sc.setForeground(new Color(255, 215, 0));
                 sc.setFont(new Font("Georgia", Font.BOLD, 11));
                 infoPanel.add(sc);
             }
 
-            // Horizontal layout - wrap in a container for better centering
             JPanel container = new JPanel();
             container.setOpaque(false);
             container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
@@ -478,6 +507,13 @@ public class GameView extends JFrame {
             container.add(infoPanel);
 
             box.add(container);
+
+            // DIMENSIONE MINIMA anche per bot in alto
+            int minWidth = Math.max(200, cardWidth * 2);
+            int totalWidth = Math.max(minWidth, handSize * cardWidth + Math.max(0, (handSize - 1) * overlap) + 30);
+            int boxHeight = cardHeight + nameLabel.getPreferredSize().height +
+                    infoPanel.getPreferredSize().height + 25;
+            box.setPreferredSize(new Dimension(totalWidth, boxHeight));
         }
         return box;
     }
@@ -1020,36 +1056,41 @@ public class GameView extends JFrame {
 
         int[][] positions = new int[numPlayers][2];
 
+        // Margini aumentati per i nomi
+        int topMargin = 40;      // Spazio per nome in alto
+        int bottomMargin = 40;   // Spazio per nome in basso
+        int sideMargin = 60;     // Spazio per nomi laterali
+
         if (numPlayers == 2) {
             for (int i = 0; i < numPlayers; i++) {
                 if (i == humanIndex) {
-                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - 12};
+                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - bottomMargin};
                 } else {
-                    positions[i] = new int[]{centerX, 12};
+                    positions[i] = new int[]{centerX, topMargin};
                 }
             }
         } else if (numPlayers == 3) {
             for (int i = 0; i < numPlayers; i++) {
                 int relativePos = (i - humanIndex + 3) % 3;
                 if (relativePos == 0) {
-                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - 12};
+                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - bottomMargin};
                 } else if (relativePos == 1) {
-                    positions[i] = new int[]{12, centerY - CARD_HEIGHT / 2};
+                    positions[i] = new int[]{sideMargin, centerY - CARD_HEIGHT / 2};
                 } else {
-                    positions[i] = new int[]{centerX, 12};
+                    positions[i] = new int[]{centerX, topMargin};
                 }
             }
         } else if (numPlayers == 4) {
             for (int i = 0; i < numPlayers; i++) {
                 int relativePos = (i - humanIndex + 4) % 4;
                 if (relativePos == 0) {
-                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - 12};
+                    positions[i] = new int[]{centerX, h - CARD_HEIGHT - bottomMargin};
                 } else if (relativePos == 1) {
-                    positions[i] = new int[]{12, centerY - CARD_HEIGHT / 2};
+                    positions[i] = new int[]{sideMargin, centerY - CARD_HEIGHT / 2};
                 } else if (relativePos == 2) {
-                    positions[i] = new int[]{centerX, 12};
+                    positions[i] = new int[]{centerX, topMargin};
                 } else {
-                    positions[i] = new int[]{w - CARD_WIDTH - 12, centerY - CARD_HEIGHT / 2};
+                    positions[i] = new int[]{w - CARD_WIDTH - sideMargin, centerY - CARD_HEIGHT / 2};
                 }
             }
         }
@@ -1057,13 +1098,15 @@ public class GameView extends JFrame {
         return positions;
     }
 
+
     private void updateTableCards() {
         tableOval.removeAll();
 
+        // Posiziona il mazzo PIÙ AL CENTRO (tra bot sinistro e centro tavolo)
         JLabel deck = createDeckImage();
         int dw = deck.getPreferredSize().width;
         int dh = deck.getPreferredSize().height;
-        int deckX = Math.max(0, (int)(tableOval.getWidth() * 0.20));
+        int deckX = (int)(tableOval.getWidth() * 0.60); // Era 15 fisso, ora 15% della larghezza
         int deckY = (tableOval.getHeight() - dh) / 2;
         deck.setBounds(deckX, deckY, dw, dh);
         tableOval.add(deck);
@@ -1071,6 +1114,7 @@ public class GameView extends JFrame {
         int nPlayers = this.players.size();
         int[][] positions = computeSlotPositions();
 
+        // Slot per evidenziare turno corrente
         for (int i = 0; i < nPlayers; i++) {
             int x = positions[i][0];
             int y = positions[i][1];
@@ -1093,6 +1137,7 @@ public class GameView extends JFrame {
             tableOval.add(slot);
         }
 
+        // Carte giocate
         List<Giocatore> trickPlayers = gameState.getTrickPlayers();
         List<Cards> trickCards = gameState.getTrickCards();
 
@@ -1108,20 +1153,64 @@ public class GameView extends JFrame {
             }
         }
 
+        // Nomi giocatori - BOT LATERALI SOTTO LE CARTE
+        int tableW = tableOval.getWidth();
+        int tableH = tableOval.getHeight();
+
         for (int i = 0; i < nPlayers; i++) {
             Giocatore player = this.players.get(i);
             JLabel name = new JLabel(player.getName());
-            name.setForeground(TEXT_WHITE);
+            name.setForeground(TEXT_GOLD);
             name.setFont(new Font("Arial", Font.BOLD, 13));
-            int nx = positions[i][0] - 10;
-            int ny = positions[i][1] + CARD_HEIGHT + 8;
-            name.setBounds(Math.max(2, nx), ny, 140, 18);
+
+            int cardX = positions[i][0];
+            int cardY = positions[i][1];
+
+            FontMetrics fm = name.getFontMetrics(name.getFont());
+            int labelWidth = fm.stringWidth(player.getName()) + 15;
+            int labelHeight = 18;
+
+            int nx, ny;
+            int humanIdx = players.indexOf(humanPlayer);
+
+            if (i == humanIdx) {
+                // Giocatore umano - sotto la carta
+                nx = cardX + (CARD_WIDTH - labelWidth) / 2;
+                ny = cardY + CARD_HEIGHT + 8;
+            } else if (nPlayers == 2) {
+                // Bot in alto - sopra la carta
+                nx = cardX + (CARD_WIDTH - labelWidth) / 2;
+                ny = cardY - labelHeight - 8;
+            } else {
+                int relativePos = (i - humanIdx + nPlayers) % nPlayers;
+
+                if (relativePos == 1) {
+                    // Bot a sinistra - SOTTO la carta invece che a destra
+                    nx = cardX + (CARD_WIDTH - labelWidth) / 2;
+                    ny = cardY + CARD_HEIGHT + 8;
+                } else if (relativePos == nPlayers - 1) {
+                    // Bot a destra - SOTTO la carta invece che a sinistra
+                    nx = cardX + (CARD_WIDTH - labelWidth) / 2;
+                    ny = cardY + CARD_HEIGHT + 8;
+                } else {
+                    // Bot in alto - sopra la carta
+                    nx = cardX + (CARD_WIDTH - labelWidth) / 2;
+                    ny = cardY - labelHeight - 8;
+                }
+            }
+
+            // Assicura che il nome stia dentro i limiti
+            nx = Math.max(10, Math.min(nx, tableW - labelWidth - 10));
+            ny = Math.max(10, Math.min(ny, tableH - labelHeight - 10));
+
+            name.setBounds(nx, ny, labelWidth, labelHeight);
             tableOval.add(name);
         }
 
         tableOval.revalidate();
         tableOval.repaint();
     }
+
 
     /**
      * Update opponent area.
@@ -1134,7 +1223,6 @@ public class GameView extends JFrame {
         leftBotPanel.removeAll();
         rightBotPanel.removeAll();
 
-        // adjust left/right panel preferred width according to side card width (+padding)
         int sidePanelW = sideCardWidth + 24;
         leftBotPanel.setPreferredSize(new Dimension(sidePanelW, leftBotPanel.getHeight()));
         rightBotPanel.setPreferredSize(new Dimension(sidePanelW, rightBotPanel.getHeight()));
@@ -1152,34 +1240,34 @@ public class GameView extends JFrame {
             boolean isVertical = false;
 
             JPanel targetPanel = opponentArea;
-            int x = 0, y = 0;
 
             if (numPlayers == 2) {
-                // top center - keep horizontal
+                // Bot in alto - orizzontale
                 isVertical = false;
-                x = areaWidth / 2 - 100;
-                y = 10;
+                targetPanel = opponentArea;
             } else if (numPlayers == 3) {
                 int relativePos = (i - humanIndex + 3) % 3;
                 if (relativePos == 1) {
-                    // left player - vertical cards on side panel
+                    // left player - verticale
                     isVertical = true;
                     targetPanel = leftBotPanel;
                 } else { // relativePos == 2 (top)
-                    // top player - make vertical as well and place in opponentArea
-                    isVertical = true;
+                    // top player - orizzontale
+                    isVertical = false;
                     targetPanel = opponentArea;
                 }
             } else if (numPlayers == 4) {
                 int relativePos = (i - humanIndex + 4) % 4;
                 if (relativePos == 1) {
+                    // left - verticale
                     isVertical = true;
                     targetPanel = leftBotPanel;
                 } else if (relativePos == 2) {
-                    // top player - vertical stack in top area
-                    isVertical = true;
+                    // top player - orizzontale
+                    isVertical = false;
                     targetPanel = opponentArea;
                 } else if (relativePos == 3) {
+                    // right - verticale
                     isVertical = true;
                     targetPanel = rightBotPanel;
                 }
@@ -1188,26 +1276,36 @@ public class GameView extends JFrame {
             JPanel opponentBox = createOpponentBox(player, isVertical);
 
             if (targetPanel == leftBotPanel || targetPanel == rightBotPanel) {
+                // Bot laterali - centra verticalmente
                 opponentBox.setAlignmentX(Component.CENTER_ALIGNMENT);
                 targetPanel.add(Box.createVerticalGlue());
                 targetPanel.add(opponentBox);
                 targetPanel.add(Box.createVerticalGlue());
             } else {
-                // targetPanel == opponentArea (absolute)
-                if (isVertical) {
-                    // place vertical stack centered at top; its preferred size depends on card count
-                    Dimension pref = opponentBox.getPreferredSize();
-                    int prefW = pref.width > 0 ? pref.width : (sideCardWidth + 12);
-                    int prefH = pref.height > 0 ? pref.height : 160;
-                    int posX = Math.max(8, (areaWidth - prefW) / 2);
-                    int posY = 10; // top margin
-                    opponentBox.setBounds(posX, posY, prefW, prefH);
-                    opponentArea.add(opponentBox);
-                } else {
-                    // legacy horizontal top
-                    opponentBox.setBounds(x, y, 220, 150);
-                    opponentArea.add(opponentBox);
+                // Bot in alto - centra orizzontalmente nell'opponentArea
+                Dimension pref = opponentBox.getPreferredSize();
+                int prefW = pref.width > 0 ? pref.width : 300;
+                int prefH = pref.height > 0 ? pref.height : 120;
+
+                // Centra sopra il tavolo
+                int posX;
+                try {
+                    Rectangle tableRect = SwingUtilities.convertRectangle(
+                            tableOval.getParent(),
+                            tableOval.getBounds(),
+                            opponentArea
+                    );
+                    int tableCenterX = tableRect.x + tableRect.width / 2;
+                    posX = tableCenterX - prefW / 2;
+                } catch (Exception ex) {
+                    posX = Math.max(8, (areaWidth - prefW) / 2);
                 }
+
+                int posY = 10;
+                posX = Math.max(8, Math.min(posX, Math.max(8, areaWidth - prefW - 8)));
+
+                opponentBox.setBounds(posX, posY, prefW, prefH);
+                opponentArea.add(opponentBox);
             }
         }
 
@@ -1257,45 +1355,69 @@ public class GameView extends JFrame {
         });
     }
 
-    public void showCardPlayed() {
-        SwingUtilities.invokeLater(this::updateTableCards);
-    }
-
-    /**
-     * Animate a card being played from hand to table position
-     */
-    public void animateCardPlay(Giocatore player, int cardIndex, Runnable onComplete) {
+    public void showCardPlayed(Giocatore player, Cards card) {
         SwingUtilities.invokeLater(() -> {
+            // Trova posizione di partenza (dalla mano del giocatore)
+            int playerIdx = players.indexOf(player);
+            int[][] positions = computeSlotPositions();
+
+            if (playerIdx < 0) return;
+
+            Point tableOrigin = tableOval.getLocationOnScreen();
             Point startPos;
-            if (player == humanPlayer && cardIndex >= 0 && cardIndex < cardPanels.size()) {
-                CardPanel cardPanel = cardPanels.get(cardIndex);
-                startPos = cardPanel.getLocationOnScreen();
+
+            if (player == humanPlayer) {
+                // Dalla mano del giocatore umano
+                startPos = playerHandPanel.getLocationOnScreen();
+                startPos.x = startPos.x + playerHandPanel.getWidth() / 2 - CARD_WIDTH / 2;
+                startPos.y = startPos.y + playerHandPanel.getHeight() / 2 - CARD_HEIGHT / 2;
             } else {
-                Point tablePos = tableOval.getLocationOnScreen();
-                int[][] positions = computeSlotPositions();
-                int playerIdx = players.indexOf(player);
-                if (playerIdx >= 0) {
-                    startPos = new Point(
-                            tablePos.x + positions[playerIdx][0],
-                            tablePos.y + positions[playerIdx][1]
-                    );
-                } else {
-                    startPos = new Point(
-                            tablePos.x + tableOval.getWidth() / 2,
-                            tablePos.y + tableOval.getHeight() / 2
-                    );
-                }
+                // Dalle carte dell'avversario
+                startPos = new Point(
+                        tableOrigin.x + positions[playerIdx][0],
+                        tableOrigin.y + positions[playerIdx][1] - 50
+                );
             }
 
-            updateTableCards();
+            // Posizione finale
+            Point endPos = new Point(
+                    tableOrigin.x + positions[playerIdx][0],
+                    tableOrigin.y + positions[playerIdx][1]
+            );
 
-            if (onComplete != null) {
-                Timer delay = new Timer(100, e -> onComplete.run());
-                delay.setRepeats(false);
-                delay.start();
-            }
+            // Crea overlay per animazione
+            JPanel overlay = new JPanel(null);
+            overlay.setOpaque(false);
+            overlay.setBounds(0, 0, tableOval.getWidth(), tableOval.getHeight());
+
+            // Converti coordinate relative al tableOval
+            int startX = startPos.x - tableOrigin.x;
+            int startY = startPos.y - tableOrigin.y;
+            int endX = endPos.x - tableOrigin.x;
+            int endY = endPos.y - tableOrigin.y;
+
+            Image cardImg = CardImageLoader.getScaledCardImage(card, CARD_WIDTH, CARD_HEIGHT);
+            JLabel flyingCard = new JLabel(new ImageIcon(cardImg));
+            flyingCard.setBounds(startX, startY, CARD_WIDTH, CARD_HEIGHT);
+            overlay.add(flyingCard);
+
+            tableOval.add(overlay, 0);
+            tableOval.revalidate();
+            tableOval.repaint();
+
+            // Anima la carta
+            animateCardFlight(flyingCard, startX, startY, endX, endY);
+
+            // Rimuovi overlay e aggiorna tavolo
+            Timer cleanup = new Timer(CARD_FLY_DURATION_MS + 50, e -> {
+                tableOval.remove(overlay);
+                updateTableCards();
+            });
+            cleanup.setRepeats(false);
+            cleanup.start();
         });
     }
+
 
     public void clearTable() {
         SwingUtilities.invokeLater(() -> {
@@ -1323,17 +1445,18 @@ public class GameView extends JFrame {
         winnerLabel.setFont(new Font("Serif", Font.BOLD, 16));
         winnerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        int labelW = Math.min(320, tableOval.getWidth() - 10);
-        int labelH = 26;
-        int x = tableOval.getWidth() - labelW - 28;
-        int y = 18;
+        int labelW = Math.min(280, tableOval.getWidth() - 20);
+        int labelH = 30;
+        // Posizionato in BASSO A DESTRA per evitare sovrapposizioni
+        int x = tableOval.getWidth() - labelW - 15;
+        int y = tableOval.getHeight() - labelH - 15;
         winnerLabel.setBounds(x, y, labelW, labelH);
 
         tableOval.add(winnerLabel);
         tableOval.revalidate();
         tableOval.repaint();
 
-        Timer removeTimer = new Timer(800, _ -> {
+        Timer removeTimer = new Timer(1200, _ -> {
             tableOval.remove(winnerLabel);
             tableOval.revalidate();
             tableOval.repaint();
@@ -1366,7 +1489,18 @@ public class GameView extends JFrame {
 
     public void showDealingAnimation(List<Giocatore> players, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
-            JPanel animationOverlay = getPanel();
+            JPanel animationOverlay = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setColor(new Color(0, 0, 0, 150));
+                    g2d.fillRect(0, 0, getWidth(), getHeight());
+                }
+            };
+            animationOverlay.setLayout(null);
+            animationOverlay.setOpaque(false);
+            animationOverlay.setBounds(0, 0, getWidth(), getHeight());
 
             JPanel glassPane = (JPanel) getGlassPane();
             glassPane.setLayout(null);
@@ -1376,8 +1510,8 @@ public class GameView extends JFrame {
             int centerX = getWidth() / 2 - CARD_WIDTH / 2;
             int centerY = getHeight() / 2 - CARD_HEIGHT / 2;
 
+            // Calcola posizioni target per TUTTI i giocatori
             int numPlayers = players.size();
-            int[][] posBase = computeSlotPositions();
             int[][] targetPositions = new int[numPlayers][2];
 
             Point tableOnScreen = tableOval.getLocationOnScreen();
@@ -1385,20 +1519,21 @@ public class GameView extends JFrame {
             int offsetX = tableOnScreen.x - frameOnScreen.x;
             int offsetY = tableOnScreen.y - frameOnScreen.y;
 
+            // Usa computeSlotPositions per ottenere le posizioni corrette
+            int[][] slotPos = computeSlotPositions();
             for (int i = 0; i < numPlayers; i++) {
-                targetPositions[i][0] = posBase[i][0] + offsetX;
-                targetPositions[i][1] = posBase[i][1] + offsetY;
+                targetPositions[i][0] = slotPos[i][0] + offsetX;
+                targetPositions[i][1] = slotPos[i][1] + offsetY;
             }
 
             JLabel dealingLabel = new JLabel("Distribuzione carte...");
             dealingLabel.setFont(new Font("Georgia", Font.BOLD, 28));
             dealingLabel.setForeground(TEXT_GOLD);
             dealingLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            int labelWidth = 400;
-            int labelHeight = 40;
-            dealingLabel.setBounds((getWidth() - labelWidth) / 2, centerY - 80, labelWidth, labelHeight);
+            dealingLabel.setBounds((getWidth() - 400) / 2, centerY - 80, 400, 40);
             animationOverlay.add(dealingLabel);
 
+            // Mazzo centrale
             Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
             for (int i = 0; i < 5; i++) {
                 JLabel deckCard = new JLabel(new ImageIcon(cardBackImg));
@@ -1433,7 +1568,7 @@ public class GameView extends JFrame {
                 int targetY = targetPositions[playerIndex][1];
 
                 int cardNum = currentCard[0] / numPlayers;
-                int offset = cardNum * 12;
+                int offset = cardNum * 3; // Offset ridotto
                 targetX += offset;
 
                 JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
