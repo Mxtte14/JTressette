@@ -230,13 +230,6 @@ public class AudioManager {
         playSoundEffect(MENU_SELECTION_CLICK);
     }
 
-    /**
-     * Play the card dealing sound effect.
-     */
-    public void playDealingSound() {
-        playSoundEffect(CARD_DEALING);
-    }
-
 
 
     /**

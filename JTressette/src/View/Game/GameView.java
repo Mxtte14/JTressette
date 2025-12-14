@@ -19,7 +19,6 @@ import java.util.List;
  * Displays the table, player's hand, opponent hands (face down), and cards played.
  * Styled like an online poker server with a green felt table.
  * Uses actual card images from src/res/Cards/.
- *
  * Modifiche principali in questa versione:
  * - VerticalCardStackPanel per disporre carte verticalmente dal basso verso l'alto.
  * - Top opponent (quando visualizzato verticalmente) usa la stessa dimensione e comportamento
@@ -45,7 +44,7 @@ public class GameView extends JFrame {
     private int handCardHeight = (int) Math.round(handCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
     // Side (bot) card size (will be computed relative to handCardWidth)
-    private int sideCardWidth = Math.max(36, (int) (handCardWidth * 0.78));
+    private int sideCardWidth = (int) (handCardWidth * 0.78);
     private int sideCardHeight = (int) Math.round(sideCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
     // Table sizing constraints
@@ -54,12 +53,6 @@ public class GameView extends JFrame {
     private static final int TABLE_MAX_W = 780;
     private static final int TABLE_MAX_H = 440;
 
-
-    // Animation constants
-    private static final int ANIMATION_DELAY_MS = 80;
-    private static final int CARD_FLY_DURATION_MS = 200;
-    private static final double CARD_ARC_HEIGHT = 30.0;
-    private static final double CARD_SCALE_FACTOR = 0.15;
 
     private final GameState gameState;
     private final GiocatoreUmano humanPlayer;
@@ -80,20 +73,23 @@ public class GameView extends JFrame {
 
     // layered pane reference for placing player's cards directly on screen (not inside playerHandPanel)
     private JLayeredPane layeredPaneRef;
+    private final Model.Audio.AudioManager audioManager;
 
     // CardPanels representing the player's hand (they live on layeredPaneRef)
     private final List<CardPanel> cardPanels = new ArrayList<>();
-    private List<Giocatore> players;
+    private final List<Giocatore> players;
 
     // gap used for hand cards (calculated)
     private int handCardGapUsed = HAND_GAP;
+    private final int dealDelayMs = 800;
 
-    public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller) {
+    public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller, Model.Audio.AudioManager audioManager) {
         super("JTressette - Partita in Corso");
         this.gameState = gameState;
         this.humanPlayer = humanPlayer;
         this.controller = controller;
         this.players = gameState.getPlayers();
+        this.audioManager = audioManager;
         // Preload card images
         CardImageLoader.preloadImages();
         initUI();
@@ -329,7 +325,7 @@ public class GameView extends JFrame {
             }
         });
 
-        exitButton.addActionListener(e -> controller.onExitGame());
+        exitButton.addActionListener(_ -> controller.onExitGame());
         return exitButton;
     }
 
@@ -352,11 +348,6 @@ public class GameView extends JFrame {
         return area;
     }
 
-    /**
-     * Create opponent box. If isVertical==true it will contain a VerticalCardStackPanel
-     * which arranges cards from bottom-to-top and adapts its preferred size to the
-     * number of cards using side CardWidth/sideCardHeight as fixed card size.
-     */
     // Sostituisci il metodo createOpponentBox con questa versione aggiornata:
 
     /**
@@ -442,7 +433,7 @@ public class GameView extends JFrame {
                 prefH = vPref.height;
             } else {
                 int step = Math.max(4, sideCardHeight - overlap);
-                int totalH = (handSize <= 0) ? sideCardHeight : sideCardHeight + Math.max(0, (handSize - 1) * step);
+                int totalH = (handSize == 0) ? sideCardHeight : sideCardHeight + Math.max(0, (handSize - 1) * step);
                 prefH = totalH + 8;
             }
 
@@ -830,7 +821,6 @@ public class GameView extends JFrame {
 
     // CardPanel class supports arbitrary draw size
     private class CardPanel extends JPanel {
-        private final Cards card;
         private boolean isHovered = false;
         private boolean isAnimating = false;
         private float animationProgress = 0f;
@@ -840,7 +830,6 @@ public class GameView extends JFrame {
         private final int handIndex; // index in player's hand
 
         public CardPanel(Cards card, int index, boolean isPlayable, int drawWidth, int drawHeight) {
-            this.card = card;
             this.drawWidth = drawWidth;
             this.drawHeight = drawHeight;
             this.handIndex = index;
@@ -891,7 +880,7 @@ public class GameView extends JFrame {
             animationProgress = 0f;
 
             Timer animTimer = new Timer(16, null);
-            animTimer.addActionListener(e -> {
+            animTimer.addActionListener(_ -> {
                 animationProgress += 0.15f;
                 if (animationProgress >= 1.0f) {
                     animationProgress = 1.0f;
@@ -1029,7 +1018,7 @@ public class GameView extends JFrame {
             CardPanel cp = new CardPanel(card, i, isMyTurn && isLegal, handCardWidth, handCardHeight);
             int x = startX + i * (handCardWidth + gap);
             cp.setBounds(x, y, handCardWidth, handCardHeight);
-            layeredPaneRef.add(cp, Integer.valueOf(JLayeredPane.PALETTE_LAYER));
+            layeredPaneRef.add(cp, JLayeredPane.PALETTE_LAYER);
             cardPanels.add(cp);
         }
 
@@ -1229,7 +1218,6 @@ public class GameView extends JFrame {
 
         int numPlayers = players.size();
         int areaWidth = opponentArea.getWidth() > 0 ? opponentArea.getWidth() : 1000;
-        int areaHeight = opponentArea.getHeight() > 0 ? opponentArea.getHeight() : 150;
 
         int humanIndex = players.indexOf(humanPlayer);
 
@@ -1354,68 +1342,172 @@ public class GameView extends JFrame {
             logArea.repaint();
         });
     }
-
+    /**
+     * Mostra l'animazione di una carta giocata dalla mano del giocatore al tavolo.
+     * L'animazione parte dalla posizione della mano (o area del giocatore) e arriva
+     * alla posizione finale sul tavolo con un effetto fluido.
+     */
     public void showCardPlayed(Giocatore player, Cards card) {
         SwingUtilities.invokeLater(() -> {
-            // Trova posizione di partenza (dalla mano del giocatore)
             int playerIdx = players.indexOf(player);
-            int[][] positions = computeSlotPositions();
-
             if (playerIdx < 0) return;
 
+            int[][] positions = computeSlotPositions();
+
+            // Trova la posizione di partenza basata sul tipo di giocatore
+            Point startPos = getPlayerCardStartPosition(player, playerIdx);
+
+            // Posizione finale sul tavolo
             Point tableOrigin = tableOval.getLocationOnScreen();
-            Point startPos;
+            Point frameOrigin = getLocationOnScreen();
 
-            if (player == humanPlayer) {
-                // Dalla mano del giocatore umano
-                startPos = playerHandPanel.getLocationOnScreen();
-                startPos.x = startPos.x + playerHandPanel.getWidth() / 2 - CARD_WIDTH / 2;
-                startPos.y = startPos.y + playerHandPanel.getHeight() / 2 - CARD_HEIGHT / 2;
-            } else {
-                // Dalle carte dell'avversario
-                startPos = new Point(
-                        tableOrigin.x + positions[playerIdx][0],
-                        tableOrigin.y + positions[playerIdx][1] - 50
-                );
-            }
+            int endX = positions[playerIdx][0];
+            int endY = positions[playerIdx][1];
 
-            // Posizione finale
-            Point endPos = new Point(
-                    tableOrigin.x + positions[playerIdx][0],
-                    tableOrigin.y + positions[playerIdx][1]
-            );
-
-            // Crea overlay per animazione
+            // Crea overlay per l'animazione
             JPanel overlay = new JPanel(null);
             overlay.setOpaque(false);
-            overlay.setBounds(0, 0, tableOval.getWidth(), tableOval.getHeight());
+            overlay.setBounds(0, 0, getWidth(), getHeight());
 
-            // Converti coordinate relative al tableOval
-            int startX = startPos.x - tableOrigin.x;
-            int startY = startPos.y - tableOrigin.y;
-            int endX = endPos.x - tableOrigin.x;
-            int endY = endPos.y - tableOrigin.y;
+            // Converti coordinate relative al frame
+            int startX = startPos.x - frameOrigin.x;
+            int startY = startPos.y - frameOrigin.y;
+            int finalX = tableOrigin.x - frameOrigin.x + endX;
+            int finalY = tableOrigin.y - frameOrigin.y + endY;
 
+            // Crea la carta volante
             Image cardImg = CardImageLoader.getScaledCardImage(card, CARD_WIDTH, CARD_HEIGHT);
             JLabel flyingCard = new JLabel(new ImageIcon(cardImg));
             flyingCard.setBounds(startX, startY, CARD_WIDTH, CARD_HEIGHT);
             overlay.add(flyingCard);
 
-            tableOval.add(overlay, 0);
-            tableOval.revalidate();
-            tableOval.repaint();
+            // Aggiungi overlay al glass pane per coprire tutto
+            JPanel glassPane = (JPanel) getGlassPane();
+            glassPane.setLayout(null);
+            glassPane.add(overlay);
+            glassPane.setVisible(true);
 
-            // Anima la carta
-            animateCardFlight(flyingCard, startX, startY, endX, endY);
-
-            // Rimuovi overlay e aggiorna tavolo
-            Timer cleanup = new Timer(CARD_FLY_DURATION_MS + 50, e -> {
-                tableOval.remove(overlay);
+            // Anima la carta con effetto curvo
+            animateCardFlightCurved(flyingCard, startX, startY, finalX, finalY, () -> {
+                // Cleanup: rimuovi overlay e aggiorna tavolo
+                glassPane.remove(overlay);
+                glassPane.setVisible(false);
+                glassPane.repaint();
                 updateTableCards();
             });
-            cleanup.setRepeats(false);
-            cleanup.start();
         });
+    }
+
+    /**
+     * Ottiene la posizione di partenza della carta per un giocatore specifico.
+     */
+    private Point getPlayerCardStartPosition(Giocatore player, int playerIdx) {
+        if (player == humanPlayer) {
+            // Per il giocatore umano: centro della mano
+            Point handPos = playerHandPanel.getLocationOnScreen();
+            return new Point(
+                    handPos.x + playerHandPanel.getWidth() / 2 - CARD_WIDTH / 2,
+                    handPos.y + playerHandPanel.getHeight() / 2 - CARD_HEIGHT / 2
+            );
+        } else {
+            // Per i bot: dall'area delle loro carte
+            if (players.size() == 2) {
+                // Bot in alto
+                Point opponentPos = opponentArea.getLocationOnScreen();
+                return new Point(
+                        opponentPos.x + opponentArea.getWidth() / 2 - CARD_WIDTH / 2,
+                        opponentPos.y + opponentArea.getHeight() - 30
+                );
+            } else {
+                // Bot laterali o in alto (3-4 giocatori)
+                int humanIdx = players.indexOf(humanPlayer);
+                int relativePos = (playerIdx - humanIdx + players.size()) % players.size();
+
+                if (relativePos == 1) {
+                    // Bot sinistro
+                    Point leftPos = leftBotPanel.getLocationOnScreen();
+                    return new Point(
+                            leftPos.x + leftBotPanel.getWidth() / 2 - CARD_WIDTH / 2,
+                            leftPos.y + leftBotPanel.getHeight() / 2
+                    );
+                } else if (relativePos == players.size() - 1) {
+                    // Bot destro
+                    Point rightPos = rightBotPanel.getLocationOnScreen();
+                    return new Point(
+                            rightPos.x + rightBotPanel.getWidth() / 2 - CARD_WIDTH / 2,
+                            rightPos.y + rightBotPanel.getHeight() / 2
+                    );
+                } else {
+                    // Bot in alto
+                    Point topPos = opponentArea.getLocationOnScreen();
+                    return new Point(
+                            topPos.x + opponentArea.getWidth() / 2 - CARD_WIDTH / 2,
+                            topPos.y + opponentArea.getHeight() - 30
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Anima il volo di una carta con traiettoria curva più realistica.
+     */
+    private void animateCardFlightCurved(JLabel card, int startX, int startY, int endX, int endY, Runnable onComplete) {
+        final int steps = 20;
+        final int delay = 50;
+
+        Timer flyTimer = new Timer(delay, null);
+        final int[] step = {0};
+
+        // Calcola il punto di controllo per la curva (più alto rispetto alla linea retta)
+        int midX = (startX + endX) / 2;
+        int midY = Math.min(startY, endY) - 50; // Arco verso l'alto
+
+        flyTimer.addActionListener(_ -> {
+            step[0]++;
+            double t = (double) step[0] / steps;
+
+            // Easing con accelerazione all'inizio e decelerazione alla fine
+            double easedT = t < 0.5
+                    ? 2 * t * t
+                    : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+            // Curva di Bezier quadratica per traiettoria realistica
+            double currentX = Math.pow(1 - easedT, 2) * startX +
+                    2 * (1 - easedT) * easedT * midX +
+                    Math.pow(easedT, 2) * endX;
+
+            double currentY = Math.pow(1 - easedT, 2) * startY +
+                    2 * (1 - easedT) * easedT * midY +
+                    Math.pow(easedT, 2) * endY;
+
+            // Scala la carta leggermente durante il volo
+            double scale = 1.0 - (Math.sin(t * Math.PI) * 0.1); // Max 10% scaling
+            int scaledWidth = (int) (CARD_WIDTH * scale);
+            int scaledHeight = (int) (CARD_HEIGHT * scale);
+
+            // Rotazione leggera della carta
+            // (Per semplicità usiamo solo scaling, ma potresti aggiungere rotazione con Graphics2D)
+
+            card.setBounds(
+                    (int) currentX - (scaledWidth - CARD_WIDTH) / 2,
+                    (int) currentY - (scaledHeight - CARD_HEIGHT) / 2,
+                    scaledWidth,
+                    scaledHeight
+            );
+            card.getParent().repaint();
+
+            if (step[0] >= steps) {
+                flyTimer.stop();
+                if (onComplete != null) {
+                    Timer delayTimer = new Timer(50, _ -> onComplete.run());
+                    delayTimer.setRepeats(false);
+                    delayTimer.start();
+                }
+            }
+        });
+
+        flyTimer.start();
     }
 
 
@@ -1489,205 +1581,548 @@ public class GameView extends JFrame {
 
     public void showDealingAnimation(List<Giocatore> players, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
-            JPanel animationOverlay = new JPanel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    Graphics2D g2d = (Graphics2D) g;
-                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2d.setColor(new Color(0, 0, 0, 150));
-                    g2d.fillRect(0, 0, getWidth(), getHeight());
-                }
-            };
-            animationOverlay.setLayout(null);
-            animationOverlay.setOpaque(false);
-            animationOverlay.setBounds(0, 0, getWidth(), getHeight());
+            // Crea overlay con sfondo semi-trasparente
+            JPanel animationOverlay = createAnimationOverlay();
 
             JPanel glassPane = (JPanel) getGlassPane();
             glassPane.setLayout(null);
+            glassPane.removeAll();
             glassPane.add(animationOverlay);
             glassPane.setVisible(true);
 
             int centerX = getWidth() / 2 - CARD_WIDTH / 2;
             int centerY = getHeight() / 2 - CARD_HEIGHT / 2;
 
-            // Calcola posizioni target per TUTTI i giocatori
-            int numPlayers = players.size();
-            int[][] targetPositions = new int[numPlayers][2];
-
-            Point tableOnScreen = tableOval.getLocationOnScreen();
-            Point frameOnScreen = this.getLocationOnScreen();
-            int offsetX = tableOnScreen.x - frameOnScreen.x;
-            int offsetY = tableOnScreen.y - frameOnScreen.y;
-
-            // Usa computeSlotPositions per ottenere le posizioni corrette
-            int[][] slotPos = computeSlotPositions();
-            for (int i = 0; i < numPlayers; i++) {
-                targetPositions[i][0] = slotPos[i][0] + offsetX;
-                targetPositions[i][1] = slotPos[i][1] + offsetY;
-            }
-
-            JLabel dealingLabel = new JLabel("Distribuzione carte...");
-            dealingLabel.setFont(new Font("Georgia", Font.BOLD, 28));
-            dealingLabel.setForeground(TEXT_GOLD);
-            dealingLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            dealingLabel.setBounds((getWidth() - 400) / 2, centerY - 80, 400, 40);
+            // Label "Distribuzione carte..."
+            JLabel dealingLabel = createDealingLabel(centerY);
             animationOverlay.add(dealingLabel);
 
-            // Mazzo centrale
-            Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
-            for (int i = 0; i < 5; i++) {
-                JLabel deckCard = new JLabel(new ImageIcon(cardBackImg));
-                deckCard.setBounds(centerX + i * 2, centerY - i * 2, CARD_WIDTH, CARD_HEIGHT);
+            // Mazzo centrale animato
+            List<JLabel> deckCards = createAnimatedDeck(centerX, centerY);
+            for (JLabel deckCard : deckCards) {
                 animationOverlay.add(deckCard);
             }
 
+            // Calcola posizioni target per tutti i giocatori
+            int numPlayers = players.size();
+            Point[] targetPositions = calculatePlayerTargetPositions(numPlayers);
+
             animationOverlay.repaint();
 
-            int cardsPerPlayer = 10;
-            Timer dealTimer = new Timer(ANIMATION_DELAY_MS, null);
-            final int[] currentCard = {0};
+            final int cardsPerPlayer = 10;
             final int totalCards = numPlayers * cardsPerPlayer;
+            final int[] currentCard = {0};
+            final int dealDelay = this.dealDelayMs; // usa il campo configurabile
 
-            dealTimer.addActionListener(evt -> {
+            Timer dealTimer = new Timer(dealDelay, null);
+
+            dealTimer.addActionListener(_ -> {
                 if (currentCard[0] >= totalCards) {
                     dealTimer.stop();
-                    dealingLabel.setText("Pronto!");
-                    Timer fadeOutTimer = new Timer(800, evt2 -> {
-                        glassPane.remove(animationOverlay);
-                        glassPane.setVisible(false);
-                        glassPane.repaint();
-                        if (onComplete != null) onComplete.run();
-                    });
-                    fadeOutTimer.setRepeats(false);
-                    fadeOutTimer.start();
+                    finalizeDealingAnimation(dealingLabel, deckCards, glassPane, animationOverlay, onComplete);
                     return;
                 }
 
                 int playerIndex = currentCard[0] % numPlayers;
-                int targetX = targetPositions[playerIndex][0];
-                int targetY = targetPositions[playerIndex][1];
+                int cardNumber = currentCard[0] / numPlayers;
 
-                int cardNum = currentCard[0] / numPlayers;
-                int offset = cardNum * 3; // Offset ridotto
-                targetX += offset;
+                Point targetPos = targetPositions[playerIndex];
 
+                int offsetX = cardNumber * 2;
+                int offsetY = cardNumber * 2;
+                int finalX = targetPos.x + offsetX;
+                int finalY = targetPos.y + offsetY;
+
+                // Crea la carta volante
+                Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
                 JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
                 flyingCard.setBounds(centerX, centerY, CARD_WIDTH, CARD_HEIGHT);
                 animationOverlay.add(flyingCard);
                 animationOverlay.setComponentZOrder(flyingCard, 0);
-                animationOverlay.repaint();
 
-                animateCardFlight(flyingCard, centerX, centerY, targetX, targetY);
+                // Effetto: rimuovi una carta dal mazzo visivo (come prima)
+                if (!deckCards.isEmpty() && currentCard[0] % 3 == 0) {
+                    JLabel topCard = deckCards.remove(deckCards.size() - 1);
+                    animationOverlay.remove(topCard);
+                }
+                
+
+                // Anima la carta verso il giocatore con curva realistica
+                // Se vuoi il volo più lento, aumenta steps/delay in animateDealingCardFlight
+                animateDealingCardFlight(flyingCard, centerX, centerY, finalX, finalY, playerIndex);
+                // riproduci il suono "card played" per ogni carta distribuita
+                if (audioManager != null) {
+                    // chiamata non bloccante: AudioManager crea e avvia un Clip per ogni effetto
+                    audioManager.playCardSound();
+                }
+
                 currentCard[0]++;
+                animationOverlay.repaint();
             });
 
             dealTimer.start();
         });
     }
 
-    private JPanel getPanel() {
-        JPanel animationOverlay = new JPanel() {
+    private void finalizeDealingAnimation(JLabel dealingLabel, List<JLabel> deckCards,
+                                          JPanel glassPane, JPanel overlay, Runnable onComplete) {
+        // Cambia testo
+        dealingLabel.setText("Pronto!");
+
+        // Rimuovi le carte del mazzo rimaste
+        for (JLabel deckCard : deckCards) {
+            overlay.remove(deckCard);
+        }
+        overlay.repaint();
+
+        // Fade out dell'overlay
+        Timer fadeOutTimer = new Timer(20, null);
+        final float[] alpha = {1f};
+
+        fadeOutTimer.addActionListener(_ -> {
+            alpha[0] -= 0.05f;
+
+            if (alpha[0] <= 0f) {
+                fadeOutTimer.stop();
+                glassPane.remove(overlay);
+                glassPane.setVisible(false);
+                glassPane.repaint();
+
+                // Callback finale
+                if (onComplete != null) {
+                    onComplete.run();
+                }
+            } else {
+                overlay.repaint();
+            }
+        });
+
+        // Aspetta un momento prima del fade out
+        Timer delayTimer = new Timer(800, _ -> fadeOutTimer.start());
+        delayTimer.setRepeats(false);
+        delayTimer.start();
+    }
+
+    private JLabel createDealingLabel(int centerY) {
+        JLabel label = new JLabel("Distribuzione carte...") {
+            private float glowAlpha = 0f;
+            private boolean increasing = true;
+
+            {
+                Timer glowTimer = new Timer(30, _ -> {
+                    if (increasing) {
+                        glowAlpha += 0.05f;
+                        if (glowAlpha >= 1f) {
+                            glowAlpha = 1f;
+                            increasing = false;
+                        }
+                    } else {
+                        glowAlpha -= 0.05f;
+                        if (glowAlpha <= 0.3f) {
+                            glowAlpha = 0.3f;
+                            increasing = true;
+                        }
+                    }
+                    repaint();
+                });
+                glowTimer.start();
+            }
+
             @Override
             protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g;
+                Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+                // Ombra
                 g2d.setColor(new Color(0, 0, 0, 150));
-                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.drawString(getText(), 3, getHeight() - 5);
+
+                // Glow effect
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glowAlpha * 0.5f));
+                g2d.setColor(TEXT_GOLD);
+                for (int i = 1; i <= 3; i++) {
+                    g2d.drawString(getText(), -i, getHeight() - 8 - i);
+                    g2d.drawString(getText(), i, getHeight() - 8 - i);
+                }
+
+                // Testo principale
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                g2d.setColor(TEXT_GOLD);
+                g2d.drawString(getText(), 0, getHeight() - 8);
+
+                g2d.dispose();
             }
         };
-        animationOverlay.setLayout(null);
-        animationOverlay.setOpaque(false);
-        animationOverlay.setBounds(0, 0, getWidth(), getHeight());
-        return animationOverlay;
+
+        label.setFont(new Font("Georgia", Font.BOLD, 32));
+        label.setForeground(TEXT_GOLD);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+
+        FontMetrics fm = label.getFontMetrics(label.getFont());
+        int labelWidth = fm.stringWidth("Distribuzione carte...") + 40;
+        int labelHeight = fm.getHeight() + 20;
+
+        label.setBounds(
+                (getWidth() - labelWidth) / 2,
+                centerY - 100,
+                labelWidth,
+                labelHeight
+        );
+
+        return label;
     }
 
-    public void showDrawAnimationToPlayerHand(Giocatore player, Runnable onComplete) {
-        SwingUtilities.invokeLater(() -> {
-            JLabel deckLabel = null;
-            for (Component comp : tableOval.getComponents()) {
-                if (comp instanceof JLabel && ((JLabel) comp).getToolTipText() != null
-                        && ((JLabel) comp).getToolTipText().contains("Carte nel mazzo")) {
-                    deckLabel = (JLabel) comp;
-                    break;
+    private List<JLabel> createAnimatedDeck(int centerX, int centerY) {
+        List<JLabel> deckCards = new ArrayList<>();
+        Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
+
+        // Crea un mazzo visivo di 8 carte impilate
+        for (int i = 0; i < 8; i++) {
+            JLabel deckCard = new JLabel(new ImageIcon(cardBackImg));
+            int offsetX = i * 2;
+            int offsetY = -i * 2;
+            deckCard.setBounds(centerX + offsetX, centerY + offsetY, CARD_WIDTH, CARD_HEIGHT);
+            deckCards.add(deckCard);
+        }
+
+        return deckCards;
+    }
+
+    private Point[] calculatePlayerTargetPositions(int numPlayers) {
+        Point frameOrigin = getLocationOnScreen();
+        Point[] positions = new Point[numPlayers];
+
+        int humanIdx = players.indexOf(humanPlayer);
+
+        for (int i = 0; i < numPlayers; i++) {
+            Point targetPos = null;
+
+            if (i == humanIdx) {
+                // GIOCATORE UMANO: verso la sua mano in basso
+                try {
+                    Point handPos = playerHandPanel.getLocationOnScreen();
+                    targetPos = new Point(
+                            handPos.x - frameOrigin.x + playerHandPanel.getWidth() / 2 - CARD_WIDTH / 2,
+                            handPos.y - frameOrigin.y - 20 // Leggermente sopra la mano
+                    );
+                } catch (Exception e) {
+                    // Fallback
+                    targetPos = new Point(
+                            getWidth() / 2 - CARD_WIDTH / 2,
+                            getHeight() - 200
+                    );
+                }
+            } else {
+                // BOT: verso le loro aree
+                int relativePos = (i - humanIdx + numPlayers) % numPlayers;
+
+                if (numPlayers == 2) {
+                    // 1 vs 1: bot in alto
+                    try {
+                        Point opponentPos = opponentArea.getLocationOnScreen();
+                        targetPos = new Point(
+                                opponentPos.x - frameOrigin.x + opponentArea.getWidth() / 2 - CARD_WIDTH / 2,
+                                opponentPos.y - frameOrigin.y + opponentArea.getHeight() - 40
+                        );
+                    } catch (Exception e) {
+                        targetPos = new Point(
+                                getWidth() / 2 - CARD_WIDTH / 2,
+                                120
+                        );
+                    }
+                } else if (numPlayers == 3) {
+                    // 3 giocatori
+                    if (relativePos == 1) {
+                        // Bot a SINISTRA
+                        try {
+                            Point leftPos = leftBotPanel.getLocationOnScreen();
+                            targetPos = new Point(
+                                    leftPos.x - frameOrigin.x + leftBotPanel.getWidth() / 2 - CARD_WIDTH / 2,
+                                    leftPos.y - frameOrigin.y + leftBotPanel.getHeight() / 2 - CARD_HEIGHT / 2
+                            );
+                        } catch (Exception e) {
+                            targetPos = new Point(80, getHeight() / 2);
+                        }
+                    } else {
+                        // Bot in ALTO
+                        try {
+                            Point topPos = opponentArea.getLocationOnScreen();
+                            targetPos = new Point(
+                                    topPos.x - frameOrigin.x + opponentArea.getWidth() / 2 - CARD_WIDTH / 2,
+                                    topPos.y - frameOrigin.y + opponentArea.getHeight() - 40
+                            );
+                        } catch (Exception e) {
+                            targetPos = new Point(getWidth() / 2, 120);
+                        }
+                    }
+                } else if (numPlayers == 4) {
+                    // 4 giocatori
+                    if (relativePos == 1) {
+                        // Bot a SINISTRA
+                        try {
+                            Point leftPos = leftBotPanel.getLocationOnScreen();
+                            targetPos = new Point(
+                                    leftPos.x - frameOrigin.x + leftBotPanel.getWidth() / 2 - CARD_WIDTH / 2,
+                                    leftPos.y - frameOrigin.y + leftBotPanel.getHeight() / 2 - CARD_HEIGHT / 2
+                            );
+                        } catch (Exception e) {
+                            targetPos = new Point(80, getHeight() / 2);
+                        }
+                    } else if (relativePos == 2) {
+                        // Bot in ALTO
+                        try {
+                            Point topPos = opponentArea.getLocationOnScreen();
+                            targetPos = new Point(
+                                    topPos.x - frameOrigin.x + opponentArea.getWidth() / 2 - CARD_WIDTH / 2,
+                                    topPos.y - frameOrigin.y + opponentArea.getHeight() - 40
+                            );
+                        } catch (Exception e) {
+                            targetPos = new Point(getWidth() / 2, 120);
+                        }
+                    } else {
+                        // Bot a DESTRA
+                        try {
+                            Point rightPos = rightBotPanel.getLocationOnScreen();
+                            targetPos = new Point(
+                                    rightPos.x - frameOrigin.x + rightBotPanel.getWidth() / 2 - CARD_WIDTH / 2,
+                                    rightPos.y - frameOrigin.y + rightBotPanel.getHeight() / 2 - CARD_HEIGHT / 2
+                            );
+                        } catch (Exception e) {
+                            targetPos = new Point(getWidth() - 150, getHeight() / 2);
+                        }
+                    }
                 }
             }
-            if (deckLabel == null) {
-                if (onComplete != null) onComplete.run();
-                return;
+
+            // Assicura che ci sia sempre una posizione valida
+            if (targetPos == null) {
+                targetPos = new Point(getWidth() / 2, getHeight() / 2);
             }
 
-            Point tableOnScreen = tableOval.getLocationOnScreen();
-            Point deckOnScreen = deckLabel.getLocationOnScreen();
-            int deckX = deckOnScreen.x - tableOnScreen.x + deckLabel.getWidth() / 2 - CARD_WIDTH / 2;
-            int deckY = deckOnScreen.y - tableOnScreen.y + deckLabel.getHeight() / 2 - CARD_HEIGHT / 2;
+            positions[i] = targetPos;
+        }
 
-            int destX, destY;
-
-            if (player == humanPlayer) {
-                // Use the center of the visible playerHandPanel as destination so visual position is unchanged
-                Point handOnScreen = playerHandPanel.getLocationOnScreen();
-                destX = handOnScreen.x - tableOnScreen.x + playerHandPanel.getWidth() / 2 - CARD_WIDTH / 2;
-                destY = handOnScreen.y - tableOnScreen.y + playerHandPanel.getHeight() / 2 - CARD_HEIGHT / 2;
-            } else {
-                int idx = players.indexOf(player);
-                int[][] positions = computeSlotPositions();
-                destX = positions[idx][0];
-                destY = positions[idx][1];
-            }
-
-            JPanel overlay = new JPanel(null);
-            overlay.setOpaque(false);
-            overlay.setBounds(0, 0, tableOval.getWidth(), tableOval.getHeight());
-
-            Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
-            JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
-            flyingCard.setBounds(deckX, deckY, CARD_WIDTH, CARD_HEIGHT);
-            overlay.add(flyingCard);
-
-            tableOval.add(overlay, 0);
-            tableOval.setComponentZOrder(overlay, 0);
-            tableOval.repaint();
-
-            animateCardFlight(flyingCard, deckX, deckY, destX, destY);
-
-            Timer cleanup = new Timer(CARD_FLY_DURATION_MS + 40, e -> {
-                tableOval.remove(overlay);
-                tableOval.repaint();
-                if (onComplete != null) onComplete.run();
-            });
-            cleanup.setRepeats(false);
-            cleanup.start();
-        });
+        return positions;
     }
 
-    private void animateCardFlight(JLabel card, int startX, int startY, int endX, int endY) {
-        final int steps = 15;
-        final int delay = GameView.CARD_FLY_DURATION_MS / steps;
+    private void animateDealingCardFlight(JLabel card, int startX, int startY,
+                                          int endX, int endY, int playerIndex) {
+        final int steps = 24;
+        final int delay = 45;  // 40ms per step = 480ms totale
 
         Timer flyTimer = new Timer(delay, null);
         final int[] step = {0};
 
-        flyTimer.addActionListener(evt -> {
+        // Calcola punto di controllo per curva
+        int midX = (startX + endX) / 2 + (playerIndex % 2 == 0 ? -30 : 30); // Varia la curva
+        int midY = (startY + endY) / 2 - 40;
+
+        flyTimer.addActionListener(_ -> {
             step[0]++;
             double t = (double) step[0] / steps;
+
+            // Easing veloce (ease-out)
             double easedT = 1 - Math.pow(1 - t, 3);
-            int currentX = (int) (startX + (endX - startX) * easedT);
-            int currentY = (int) (startY + (endY - startY) * easedT);
-            double arc = Math.sin(t * Math.PI) * CARD_ARC_HEIGHT;
-            currentY -= (int) arc;
-            double scale = 1.0 - (t * CARD_SCALE_FACTOR);
+
+            // Curva di Bezier
+            double currentX = Math.pow(1 - easedT, 2) * startX +
+                    2 * (1 - easedT) * easedT * midX +
+                    Math.pow(easedT, 2) * endX;
+
+            double currentY = Math.pow(1 - easedT, 2) * startY +
+                    2 * (1 - easedT) * easedT * midY +
+                    Math.pow(easedT, 2) * endY;
+
+            // Scaling durante il volo
+            double scale = 1.0 + (Math.sin(t * Math.PI) * 0.15); // Ingrandisce e rimpicciolisce
             int scaledWidth = (int) (CARD_WIDTH * scale);
             int scaledHeight = (int) (CARD_HEIGHT * scale);
-            card.setBounds(currentX, currentY, scaledWidth, scaledHeight);
-            card.getParent().repaint();
+
+            card.setBounds(
+                    (int) currentX - (scaledWidth - CARD_WIDTH) / 2,
+                    (int) currentY - (scaledHeight - CARD_HEIGHT) / 2,
+                    scaledWidth,
+                    scaledHeight
+            );
+
+            // Fade out graduale alla fine
+            if (t > 0.8) {
+                float alpha = 1f - ((float)(t - 0.8) / 0.2f) * 0.7f;
+                card.setEnabled(alpha > 0.3f);
+            }
 
             if (step[0] >= steps) {
                 flyTimer.stop();
+                // Rimuovi la carta volante dopo l'animazione
+                Container parent = card.getParent();
+                if (parent != null) {
+                    parent.remove(card);
+                    parent.repaint();
+                }
             }
         });
 
         flyTimer.start();
     }
+
+    private JPanel createAnimationOverlay() {
+        JPanel overlay = new JPanel() {
+            private float alpha = 0f;
+            private Timer fadeTimer;
+
+            {
+                fadeTimer = new Timer(20, _ -> {
+                    alpha += 0.05f;
+                    if (alpha >= 1f) {
+                        alpha = 1f;
+                        fadeTimer.stop();
+                    }
+                    repaint();
+                });
+                fadeTimer.start();
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
+                g2d.setColor(new Color(0, 0, 0, 180));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        overlay.setLayout(null);
+        overlay.setOpaque(false);
+        overlay.setBounds(0, 0, getWidth(), getHeight());
+        return overlay;
+    }
+
+
+    /**
+     * Mostra l'animazione realistica di pescata carta dal mazzo alla mano del giocatore.
+     */
+    public void showDrawAnimationToPlayerHand(Giocatore player, Runnable onComplete) {
+        SwingUtilities.invokeLater(() -> {
+            // Trova il mazzo sul tavolo
+            JLabel deckLabel = findDeckLabel();
+            if (deckLabel == null) {
+                if (onComplete != null) onComplete.run();
+                return;
+            }
+
+            // Posizione di partenza: mazzo
+            Point deckOnScreen = deckLabel.getLocationOnScreen();
+            Point frameOrigin = getLocationOnScreen();
+
+            int startX = deckOnScreen.x - frameOrigin.x;
+            int startY = deckOnScreen.y - frameOrigin.y;
+
+            // Posizione di destinazione: mano del giocatore
+            Point destPoint = getPlayerHandDestination(player);
+            if (destPoint == null) {
+                if (onComplete != null) onComplete.run();
+                return;
+            }
+
+            int destX = destPoint.x - frameOrigin.x;
+            int destY = destPoint.y - frameOrigin.y;
+
+            // Crea overlay per l'animazione
+            JPanel glassPane = (JPanel) getGlassPane();
+            glassPane.setLayout(null);
+            glassPane.setVisible(true);
+
+            // Crea la carta che "vola" dal mazzo
+            Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
+            JLabel flyingCard = new JLabel(new ImageIcon(cardBackImg));
+            flyingCard.setBounds(startX, startY, CARD_WIDTH, CARD_HEIGHT);
+            glassPane.add(flyingCard);
+            glassPane.repaint();
+
+            // Anima il volo con curva realistica
+            animateCardFlightCurved(flyingCard, startX, startY, destX, destY, () -> {
+                // Cleanup
+                glassPane.remove(flyingCard);
+                glassPane.setVisible(false);
+                glassPane.repaint();
+
+                if (onComplete != null) onComplete.run();
+            });
+        });
+    }
+
+    /**
+     * Trova il label del mazzo sul tavolo.
+     */
+    private JLabel findDeckLabel() {
+        for (Component comp : tableOval.getComponents()) {
+            if (comp instanceof JLabel label) {
+                if (label.getToolTipText() != null &&
+                        label.getToolTipText().contains("Carte nel mazzo")) {
+                    return label;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Ottiene la posizione di destinazione della carta pescata per un giocatore.
+     */
+    private Point getPlayerHandDestination(Giocatore player) {
+        if (player == humanPlayer) {
+            // Destinazione: centro della mano del giocatore umano
+            Point handPos = playerHandPanel.getLocationOnScreen();
+            return new Point(
+                    handPos.x + playerHandPanel.getWidth() / 2,
+                    handPos.y + playerHandPanel.getHeight() / 2
+            );
+        } else {
+            // Destinazione: area delle carte del bot
+            int playerIdx = players.indexOf(player);
+            if (playerIdx < 0) return null;
+
+            int humanIdx = players.indexOf(humanPlayer);
+            int relativePos = (playerIdx - humanIdx + players.size()) % players.size();
+
+            if (players.size() == 2) {
+                // Bot in alto
+                Point opponentPos = opponentArea.getLocationOnScreen();
+                return new Point(
+                        opponentPos.x + opponentArea.getWidth() / 2,
+                        opponentPos.y + opponentArea.getHeight() / 2
+                );
+            } else {
+                // 3-4 giocatori
+                if (relativePos == 1) {
+                    // Bot sinistro
+                    Point leftPos = leftBotPanel.getLocationOnScreen();
+                    return new Point(
+                            leftPos.x + leftBotPanel.getWidth() / 2,
+                            leftPos.y + leftBotPanel.getHeight() / 2
+                    );
+                } else if (relativePos == players.size() - 1) {
+                    // Bot destro
+                    Point rightPos = rightBotPanel.getLocationOnScreen();
+                    return new Point(
+                            rightPos.x + rightBotPanel.getWidth() / 2,
+                            rightPos.y + rightBotPanel.getHeight() / 2
+                    );
+                } else {
+                    // Bot in alto
+                    Point topPos = opponentArea.getLocationOnScreen();
+                    return new Point(
+                            (int) (topPos.x + topPos.getY() / 2),
+                            topPos.y + opponentArea.getHeight() / 2
+                    );
+                }
+            }
+        }
+    }
+
+
 
     public void showGameOver(String result) {
         SwingUtilities.invokeLater(() -> {
@@ -1699,7 +2134,7 @@ public class GameView extends JFrame {
 
                 {
                     Timer fadeIn = new Timer(18, null);
-                    fadeIn.addActionListener(evt -> {
+                    fadeIn.addActionListener(_ -> {
                         alpha += 0.07f;
                         if (alpha >= 1f) {
                             alpha = 1f;
@@ -1748,9 +2183,9 @@ public class GameView extends JFrame {
             backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            backButton.addActionListener(e -> {
+            backButton.addActionListener(_ -> {
                 Timer fadeOut = new Timer(16, null);
-                fadeOut.addActionListener(evt -> {
+                fadeOut.addActionListener(_ -> {
                     overlay.setVisible(false);
                     getGlassPane().setVisible(false);
                     controller.onReturnToMenu();
@@ -1781,7 +2216,7 @@ public class GameView extends JFrame {
     public void fadeIn() {
         Timer fadeTimer = new Timer(16, null);
         final float[] alpha = {0.0f};
-        fadeTimer.addActionListener(e -> {
+        fadeTimer.addActionListener(_ -> {
             alpha[0] += 0.05f;
             if (alpha[0] >= 1.0f) {
                 alpha[0] = 1.0f;

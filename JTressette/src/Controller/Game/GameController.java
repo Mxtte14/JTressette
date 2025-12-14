@@ -52,7 +52,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         this.humanPlayer = human;
 
         // Crea view
-        this.view = new GameView(gameState, humanPlayer, this);
+        this.view = new GameView(gameState, humanPlayer, this, audioManager);
 
         // Handle chiusura finestra
         view.addWindowListener(new WindowAdapter() {
