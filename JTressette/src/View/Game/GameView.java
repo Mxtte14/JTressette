@@ -98,6 +98,7 @@ public class GameView extends JFrame {
     private void initUI() {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(1100, 750);
+        setMinimumSize(new Dimension(900, 650)); // Prevent window from becoming too small
         setResizable(true); // allow resize for testing; layout adapts
         setLocationRelativeTo(null);
 
@@ -583,18 +584,29 @@ public class GameView extends JFrame {
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+            // Calculate corner radius based on table dimensions to prevent rendering issues
+            // The arc diameter should never exceed the smaller dimension
+            int w = getWidth();
+            int h = getHeight();
+            
+            // Ensure minimum dimensions to make table visible
+            if (w < 20 || h < 20) return;
+            
+            int maxArc = Math.min(w - 8, h - 8);
+            int cornerArc = Math.min(90, Math.max(10, maxArc / 2));
+
             // Shadow
             g2d.setColor(new Color(0, 0, 0, 80));
-            g2d.fill(new RoundRectangle2D.Double(6, 6, getWidth() - 12, getHeight() - 12, 90, 90));
+            g2d.fill(new RoundRectangle2D.Double(6, 6, w - 12, h - 12, cornerArc, cornerArc));
 
             // Table fill
             g2d.setColor(new Color(35, 130, 75));
-            g2d.fill(new RoundRectangle2D.Double(4, 4, getWidth() - 8, getHeight() - 8, 90, 90));
+            g2d.fill(new RoundRectangle2D.Double(4, 4, w - 8, h - 8, cornerArc, cornerArc));
 
             // Border (thinner)
             g2d.setColor(FELT_BORDER);
             g2d.setStroke(new BasicStroke(6));
-            g2d.draw(new RoundRectangle2D.Double(4, 4, getWidth() - 8, getHeight() - 8, 90, 90));
+            g2d.draw(new RoundRectangle2D.Double(4, 4, w - 8, h - 8, cornerArc, cornerArc));
         }
     }
 
