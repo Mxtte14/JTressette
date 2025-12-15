@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * GameViewSwing: Swing-based view for the card game following MVC pattern.
@@ -84,7 +85,7 @@ public class GameView extends JFrame {
     private final int dealDelayMs = 800;
     
     // Flag per impedire l'aggiornamento del tavolo durante le animazioni delle carte
-    private volatile boolean cardAnimationInProgress = false;
+    private final AtomicBoolean cardAnimationInProgress = new AtomicBoolean(false);
 
     public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller, Model.Audio.AudioManager audioManager) {
         super("JTressette - Partita in Corso");
@@ -968,7 +969,7 @@ public class GameView extends JFrame {
         SwingUtilities.invokeLater(() -> {
             updatePlayerHand();
             // Non aggiornare le carte sul tavolo se c'è un'animazione in corso
-            if (!cardAnimationInProgress) {
+            if (!cardAnimationInProgress.get()) {
                 updateTableCards();
             }
             updateOpponentArea();
@@ -1380,11 +1381,11 @@ public class GameView extends JFrame {
      */
     public void showCardPlayed(Giocatore player, Cards card, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
-            cardAnimationInProgress = true;
+            cardAnimationInProgress.set(true);
             
             int playerIdx = players.indexOf(player);
             if (playerIdx < 0) {
-                cardAnimationInProgress = false;
+                cardAnimationInProgress.set(false);
                 if (onComplete != null) onComplete.run();
                 return;
             }
@@ -1432,7 +1433,7 @@ public class GameView extends JFrame {
                 glassPane.repaint();
                 updateTableCards();
                 
-                cardAnimationInProgress = false;
+                cardAnimationInProgress.set(false);
                 
                 // Notifica il completamento dell'animazione
                 if (onComplete != null) {

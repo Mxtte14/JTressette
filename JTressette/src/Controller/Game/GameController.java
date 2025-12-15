@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -135,26 +136,24 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
                         
-                        // Usa un oggetto di sincronizzazione per aspettare il completamento dell'animazione
-                        final Object animationLock = new Object();
-                        final boolean[] animationComplete = {false};
+                        // Usa CountDownLatch per aspettare il completamento dell'animazione
+                        final CountDownLatch animationLatch = new CountDownLatch(1);
                         
                         SwingUtilities.invokeLater(() -> {
                             view.showCardPlayed(current, played, () -> {
-                                synchronized (animationLock) {
-                                    animationComplete[0] = true;
-                                    animationLock.notify();
-                                }
+                                // Notifica il completamento dell'animazione
+                                animationLatch.countDown();
                             });
                             view.log(finalCurrent.getName() + " ha giocato " + finalPlayed);
                             // Non chiamare refresh qui - verrà fatto dopo l'animazione
                         });
                         
                         // Aspetta che l'animazione sia completata
-                        synchronized (animationLock) {
-                            while (!animationComplete[0]) {
-                                animationLock.wait();
-                            }
+                        try {
+                            animationLatch.await();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            throw e;
                         }
 
 
