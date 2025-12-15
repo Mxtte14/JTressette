@@ -134,16 +134,34 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
+                        
+                        // Usa un oggetto di sincronizzazione per aspettare il completamento dell'animazione
+                        final Object animationLock = new Object();
+                        final boolean[] animationComplete = {false};
+                        
                         SwingUtilities.invokeLater(() -> {
-                            view.showCardPlayed(current, played);
+                            view.showCardPlayed(current, played, () -> {
+                                synchronized (animationLock) {
+                                    animationComplete[0] = true;
+                                    animationLock.notify();
+                                }
+                            });
                             view.log(finalCurrent.getName() + " ha giocato " + finalPlayed);
-                            view.refresh();
+                            // Non chiamare refresh qui - verrà fatto dopo l'animazione
                         });
+                        
+                        // Aspetta che l'animazione sia completata
+                        synchronized (animationLock) {
+                            while (!animationComplete[0]) {
+                                animationLock.wait();
+                            }
+                        }
 
 
                         // Se la presa/trick è stata completata
                         if (gameState.getTrickCards().size() == gameState.getPlayers().size()) {
-                            Thread.sleep(1500);
+                            // Aspetta un momento per vedere tutte le carte sul tavolo
+                            Thread.sleep(800);
 
                             final Giocatore trickWinner = gameState.getLastTrickWinner();
                             final int cardsWon = gameState.getLastTrickCardsWon();

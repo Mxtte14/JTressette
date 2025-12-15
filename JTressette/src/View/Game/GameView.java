@@ -82,6 +82,9 @@ public class GameView extends JFrame {
     // gap used for hand cards (calculated)
     private int handCardGapUsed = HAND_GAP;
     private final int dealDelayMs = 800;
+    
+    // Flag per impedire l'aggiornamento del tavolo durante le animazioni delle carte
+    private volatile boolean cardAnimationInProgress = false;
 
     public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller, Model.Audio.AudioManager audioManager) {
         super("JTressette - Partita in Corso");
@@ -964,7 +967,10 @@ public class GameView extends JFrame {
         MenuImpostazioni settings = MenuImpostazioni.getInstance();
         SwingUtilities.invokeLater(() -> {
             updatePlayerHand();
-            updateTableCards();
+            // Non aggiornare le carte sul tavolo se c'è un'animazione in corso
+            if (!cardAnimationInProgress) {
+                updateTableCards();
+            }
             updateOpponentArea();
             if (settings.isShowScore()) { updateScores(); }
             if (settings.isShowMessages()) { updateStatus(); }
@@ -1367,11 +1373,21 @@ public class GameView extends JFrame {
      * Mostra l'animazione di una carta giocata dalla mano del giocatore al tavolo.
      * L'animazione parte dalla posizione della mano (o area del giocatore) e arriva
      * alla posizione finale sul tavolo con un effetto fluido.
+     * 
+     * @param player Il giocatore che ha giocato la carta
+     * @param card La carta giocata
+     * @param onComplete Callback chiamato quando l'animazione è completata
      */
-    public void showCardPlayed(Giocatore player, Cards card) {
+    public void showCardPlayed(Giocatore player, Cards card, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
+            cardAnimationInProgress = true;
+            
             int playerIdx = players.indexOf(player);
-            if (playerIdx < 0) return;
+            if (playerIdx < 0) {
+                cardAnimationInProgress = false;
+                if (onComplete != null) onComplete.run();
+                return;
+            }
 
             int[][] positions = computeSlotPositions();
 
@@ -1415,6 +1431,13 @@ public class GameView extends JFrame {
                 glassPane.setVisible(false);
                 glassPane.repaint();
                 updateTableCards();
+                
+                cardAnimationInProgress = false;
+                
+                // Notifica il completamento dell'animazione
+                if (onComplete != null) {
+                    onComplete.run();
+                }
             });
         });
     }
