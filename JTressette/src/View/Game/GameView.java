@@ -49,9 +49,9 @@ public class GameView extends JFrame {
 
     // Table sizing constraints
     private static final int TABLE_MIN_W = 540;
-    private static final int TABLE_MIN_H = 280;
-    private static final int TABLE_MAX_W = 780;
-    private static final int TABLE_MAX_H = 440;
+    private static final int TABLE_MIN_H = 240;
+    private static final int TABLE_MAX_W = 650;
+    private static final int TABLE_MAX_H = 280;
 
 
     private final GameState gameState;
@@ -85,11 +85,32 @@ public class GameView extends JFrame {
 
     public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller, Model.Audio.AudioManager audioManager) {
         super("JTressette - Partita in Corso");
+        
+        // Validate inputs
+        if (gameState == null) {
+            throw new IllegalArgumentException("GameState cannot be null");
+        }
+        if (humanPlayer == null) {
+            throw new IllegalArgumentException("HumanPlayer cannot be null");
+        }
+        if (controller == null) {
+            throw new IllegalArgumentException("Controller cannot be null");
+        }
+        if (audioManager == null) {
+            throw new IllegalArgumentException("AudioManager cannot be null");
+        }
+        
         this.gameState = gameState;
         this.humanPlayer = humanPlayer;
         this.controller = controller;
         this.players = gameState.getPlayers();
         this.audioManager = audioManager;
+        
+        // Validate players list
+        if (this.players == null || this.players.isEmpty()) {
+            throw new IllegalStateException("Players list cannot be null or empty");
+        }
+        
         // Preload card images
         CardImageLoader.preloadImages();
         initUI();
@@ -325,7 +346,7 @@ public class GameView extends JFrame {
             }
         });
 
-        exitButton.addActionListener(_ -> controller.onExitGame());
+        exitButton.addActionListener(e -> controller.onExitGame());
         return exitButton;
     }
 
@@ -880,7 +901,7 @@ public class GameView extends JFrame {
             animationProgress = 0f;
 
             Timer animTimer = new Timer(16, null);
-            animTimer.addActionListener(_ -> {
+            animTimer.addActionListener(e -> {
                 animationProgress += 0.15f;
                 if (animationProgress >= 1.0f) {
                     animationProgress = 1.0f;
@@ -1463,7 +1484,7 @@ public class GameView extends JFrame {
         int midX = (startX + endX) / 2;
         int midY = Math.min(startY, endY) - 50; // Arco verso l'alto
 
-        flyTimer.addActionListener(_ -> {
+        flyTimer.addActionListener(e -> {
             step[0]++;
             double t = (double) step[0] / steps;
 
@@ -1500,7 +1521,7 @@ public class GameView extends JFrame {
             if (step[0] >= steps) {
                 flyTimer.stop();
                 if (onComplete != null) {
-                    Timer delayTimer = new Timer(50, _ -> onComplete.run());
+                    Timer delayTimer = new Timer(50, e2 -> onComplete.run());
                     delayTimer.setRepeats(false);
                     delayTimer.start();
                 }
@@ -1548,7 +1569,7 @@ public class GameView extends JFrame {
         tableOval.revalidate();
         tableOval.repaint();
 
-        Timer removeTimer = new Timer(1200, _ -> {
+        Timer removeTimer = new Timer(1200, e -> {
             tableOval.remove(winnerLabel);
             tableOval.revalidate();
             tableOval.repaint();
@@ -1561,7 +1582,7 @@ public class GameView extends JFrame {
         Timer fadeTimer = new Timer(50, null);
         final float[] alpha = {1.0f};
 
-        fadeTimer.addActionListener(_ -> {
+        fadeTimer.addActionListener(e -> {
             alpha[0] -= 0.1f;
             if (alpha[0] <= 0) {
                 fadeTimer.stop();
@@ -1616,7 +1637,7 @@ public class GameView extends JFrame {
 
             Timer dealTimer = new Timer(dealDelay, null);
 
-            dealTimer.addActionListener(_ -> {
+            dealTimer.addActionListener(e -> {
                 if (currentCard[0] >= totalCards) {
                     dealTimer.stop();
                     finalizeDealingAnimation(dealingLabel, deckCards, glassPane, animationOverlay, onComplete);
@@ -1679,7 +1700,7 @@ public class GameView extends JFrame {
         Timer fadeOutTimer = new Timer(20, null);
         final float[] alpha = {1f};
 
-        fadeOutTimer.addActionListener(_ -> {
+        fadeOutTimer.addActionListener(e -> {
             alpha[0] -= 0.05f;
 
             if (alpha[0] <= 0f) {
@@ -1698,7 +1719,7 @@ public class GameView extends JFrame {
         });
 
         // Aspetta un momento prima del fade out
-        Timer delayTimer = new Timer(800, _ -> fadeOutTimer.start());
+        Timer delayTimer = new Timer(800, e -> fadeOutTimer.start());
         delayTimer.setRepeats(false);
         delayTimer.start();
     }
@@ -1709,7 +1730,7 @@ public class GameView extends JFrame {
             private boolean increasing = true;
 
             {
-                Timer glowTimer = new Timer(30, _ -> {
+                Timer glowTimer = new Timer(30, e -> {
                     if (increasing) {
                         glowAlpha += 0.05f;
                         if (glowAlpha >= 1f) {
@@ -1918,7 +1939,7 @@ public class GameView extends JFrame {
         int midX = (startX + endX) / 2 + (playerIndex % 2 == 0 ? -30 : 30); // Varia la curva
         int midY = (startY + endY) / 2 - 40;
 
-        flyTimer.addActionListener(_ -> {
+        flyTimer.addActionListener(e -> {
             step[0]++;
             double t = (double) step[0] / steps;
 
@@ -1972,7 +1993,7 @@ public class GameView extends JFrame {
             private Timer fadeTimer;
 
             {
-                fadeTimer = new Timer(20, _ -> {
+                fadeTimer = new Timer(20, e -> {
                     alpha += 0.05f;
                     if (alpha >= 1f) {
                         alpha = 1f;
@@ -2134,7 +2155,7 @@ public class GameView extends JFrame {
 
                 {
                     Timer fadeIn = new Timer(18, null);
-                    fadeIn.addActionListener(_ -> {
+                    fadeIn.addActionListener(e -> {
                         alpha += 0.07f;
                         if (alpha >= 1f) {
                             alpha = 1f;
@@ -2183,9 +2204,9 @@ public class GameView extends JFrame {
             backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
             backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            backButton.addActionListener(_ -> {
+            backButton.addActionListener(e -> {
                 Timer fadeOut = new Timer(16, null);
-                fadeOut.addActionListener(_ -> {
+                fadeOut.addActionListener(e2 -> {
                     overlay.setVisible(false);
                     getGlassPane().setVisible(false);
                     controller.onReturnToMenu();
@@ -2216,7 +2237,7 @@ public class GameView extends JFrame {
     public void fadeIn() {
         Timer fadeTimer = new Timer(16, null);
         final float[] alpha = {0.0f};
-        fadeTimer.addActionListener(_ -> {
+        fadeTimer.addActionListener(e -> {
             alpha[0] += 0.05f;
             if (alpha[0] >= 1.0f) {
                 alpha[0] = 1.0f;

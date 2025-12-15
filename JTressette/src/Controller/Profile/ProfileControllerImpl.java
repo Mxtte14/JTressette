@@ -39,7 +39,6 @@ public class ProfileControllerImpl implements ProfileController {
     @Override
     public void setAvatar(File imageFile) {
         if (imageFile == null || !imageFile.exists()) return;
-        // Opzione: qui puoi copiare il file nella cartella dell'app; per semplicità salvo l'assoluto
         profile.setAvatarPath(imageFile.getAbsolutePath());
         saveAsync();
     }
