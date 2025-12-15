@@ -153,7 +153,8 @@ public class GameController implements MenuImpostazioni.SettingsListener {
                             animationLatch.await();
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            throw e;
+                            // L'eccezione è già gestita dal try-catch esterno
+                            return;
                         }
 
 
