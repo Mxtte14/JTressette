@@ -34,6 +34,12 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
     public GameController(List<Giocatore> players, Runnable onGameEnd) {
         this.onGameEnd = onGameEnd;
+        
+        // Validate input
+        if (players == null || players.isEmpty()) {
+            throw new IllegalArgumentException("Players list cannot be null or empty");
+        }
+        
         this.gameState = new GameState(players); // Direttamente!
         this.gameExecutor = Executors.newSingleThreadExecutor();
         this.audioManager = new AudioManager();
@@ -50,6 +56,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
             }
         }
         this.humanPlayer = human;
+        
+        // Validate that we have a human player
+        if (this.humanPlayer == null) {
+            throw new IllegalStateException("No human player found in the game");
+        }
 
         // Crea view
         this.view = new GameView(gameState, humanPlayer, this, audioManager);
