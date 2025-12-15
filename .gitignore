@@ -1,0 +1,15 @@
+# Build artifacts
+out/
+
+# Temporary files
+/tmp/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
