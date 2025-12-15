@@ -1,32 +1,49 @@
 package Model.Game;
 
 /**
- * Observer interface for GameState changes.
- * Views and controllers can implement this to be notified of game state changes.
+ * Interfaccia Observer per monitorare i cambiamenti di stato del gioco.
+ * Implementa il pattern Observer per notificare le viste e i controller
+ * degli eventi significativi che avvengono durante una partita.
+ * 
+ * <p>Le classi che implementano questa interfaccia possono registrarsi
+ * presso un GameState per ricevere notifiche in tempo reale degli eventi di gioco.</p>
  */
 public interface GameStateObserver {
     /**
-     * Called when a card is played.
+     * Chiamato quando un giocatore gioca una carta.
+     * Permette di aggiornare l'interfaccia utente mostrando la carta giocata.
+     * 
+     * @param player il giocatore che ha giocato la carta
+     * @param card la carta che è stata giocata
      */
     void onCardPlayed(Giocatore player, Cards card);
 
     /**
-     * Called when a trick is completed.
+     * Chiamato quando una presa (trick) viene completata.
+     * Avviene quando tutti i giocatori hanno giocato una carta nel turno corrente.
+     * 
+     * @param winner il giocatore che ha vinto la presa
+     * @param cardsWon il numero di carte vinte nella presa
      */
     void onTrickCompleted(Giocatore winner, int cardsWon);
 
     /**
-     * Called when cards are dealt.
+     * Chiamato quando le carte vengono distribuite ai giocatori.
+     * Segnala l'inizio di una nuova mano o partita.
      */
     void onCardsDealt();
 
     /**
-     * Called when a player's turn changes.
+     * Chiamato quando cambia il turno di gioco.
+     * Indica quale giocatore deve giocare la prossima carta.
+     * 
+     * @param currentPlayer il giocatore a cui tocca giocare
      */
     void onTurnChanged(Giocatore currentPlayer);
 
     /**
-     * Called when the game finishes.
+     * Chiamato quando la partita termina.
+     * Segnala che tutte le carte sono state giocate e la partita è conclusa.
      */
     void onGameFinished();
 }

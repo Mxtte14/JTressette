@@ -8,24 +8,62 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * Bot semplice/strategico che cambia comportamento secondo la Difficulty:
- * - EASY: scelta casuale tra mosse legali
- * - MEDIUM: gioca la carta con maggiore forza tra le mosse legali
- * - HARD: se può vincere la presa gioca la minima carta che vince, altrimenti scarta la minima carta
+ * Implementazione di un giocatore artificiale (bot) controllato dal computer.
+ * Il comportamento strategico del bot varia in base al livello di difficoltà impostato:
+ * <ul>
+ *   <li><b>EASY</b>: scelta casuale tra le mosse legali disponibili</li>
+ *   <li><b>MEDIUM</b>: gioca la carta con maggiore forza tra le mosse legali,
+ *       cerca di vincere la presa con la carta minima necessaria</li>
+ *   <li><b>HARD</b>: strategia avanzata che considera le carte già giocate,
+ *       i punti nella presa corrente e le carte rimanenti in gioco</li>
+ * </ul>
  */
 public class Bot implements Giocatore {
+    /** Nome identificativo del bot */
     private final String name;
+    
+    /** Livello di difficoltà che determina la strategia di gioco del bot */
     private final Difficoltà difficulty;
+    
+    /** Generatore di numeri casuali per le scelte del bot */
     private final Random rnd = new Random();
 
+    /**
+     * Costruttore del bot.
+     * 
+     * @param name il nome identificativo del bot
+     * @param difficulty il livello di difficoltà che determina l'intelligenza artificiale del bot
+     */
     public Bot(String name, Difficoltà difficulty) {
         this.name = name;
         this.difficulty = difficulty;
     }
 
+    /**
+     * Restituisce il nome del bot.
+     * 
+     * @return il nome identificativo del bot
+     */
     @Override public String getName() { return name; }
+    
+    /**
+     * Verifica se questo giocatore è un bot.
+     * 
+     * @return sempre true per questa implementazione
+     */
     @Override public boolean isBot() { return true; }
 
+    /**
+     * Sceglie la carta da giocare in base alla strategia determinata dal livello di difficoltà.
+     * <ul>
+     *   <li><b>EASY</b>: selezione casuale</li>
+     *   <li><b>MEDIUM</b>: cerca di vincere con la carta minima o scarta la carta più debole</li>
+     *   <li><b>HARD</b>: applica una strategia euristica avanzata considerando punti e carte rimanenti</li>
+     * </ul>
+     * 
+     * @param state lo stato corrente della partita
+     * @return l'indice della carta scelta nella mano del bot, o -1 se non ci sono mosse legali
+     */
     @Override
     public int chooseCard(GameState state) {
         int[] legal = state.getLegalMoves(this);
@@ -66,6 +104,21 @@ public class Bot implements Giocatore {
         return 0;
     }
 
+    /**
+     * Implementazione della strategia di gioco avanzata per il livello HARD.
+     * Utilizza un'euristica sofisticata che considera:
+     * <ul>
+     *   <li>Le carte già giocate e quelle nella presa corrente</li>
+     *   <li>I punti accumulabili nella presa</li>
+     *   <li>Le carte punto rimanenti nel seme di mano</li>
+     *   <li>Se la mossa può vincere la presa o meno</li>
+     * </ul>
+     * La strategia tenta di minimizzare lo spreco di carte forti e massimizzare i punti vinti.
+     * 
+     * @param state lo stato corrente della partita
+     * @param legal array degli indici delle mosse legali disponibili
+     * @return l'indice della carta migliore da giocare secondo l'euristica
+     */
     private int chooseCardHard(GameState state, int[] legal) {
         // Informazioni pubbliche
         var trickCards = state.getTrickCards();
