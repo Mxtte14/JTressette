@@ -17,21 +17,56 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
- * GameControllerSwing: Controller for the game following MVC pattern.
- * Gestisce tutta la logica della partita (distribuzione, trick, pescata post trick, vincitore, UI update...).
- * NON dipende da Engine.
+ * Controller principale del gioco che gestisce la logica di una partita di Tressette.
+ * Segue il pattern MVC separando la logica di gioco dalla presentazione.
+ * 
+ * <p>Responsabilità principali:</p>
+ * <ul>
+ *   <li>Coordinare il flusso di gioco tra turni dei giocatori</li>
+ *   <li>Gestire la distribuzione e la pescata delle carte</li>
+ *   <li>Determinare i vincitori delle prese e della partita</li>
+ *   <li>Aggiornare la vista con animazioni e feedback visivi</li>
+ *   <li>Gestire l'audio (musica di sottofondo ed effetti sonori)</li>
+ *   <li>Generare statistiche e record della partita</li>
+ *   <li>Applicare le impostazioni di gioco (volume, effetti)</li>
+ * </ul>
+ * 
+ * <p>Il controller utilizza un ExecutorService per eseguire il loop di gioco
+ * su un thread separato, evitando di bloccare l'interfaccia grafica.</p>
  */
 public class GameController implements MenuImpostazioni.SettingsListener {
 
+    /** Stato corrente della partita contenente carte, punteggi e giocatori */
     private final GameState gameState;
+    
+    /** Riferimento al giocatore umano per gestire l'input dell'utente */
     private final GiocatoreUmano humanPlayer;
+    
+    /** Vista principale del gioco (interfaccia grafica) */
     private final GameView view;
+    
+    /** Callback da invocare al termine della partita per tornare al menu */
     private final Runnable onGameEnd;
+    
+    /** Gestore audio per musica ed effetti sonori */
     private final AudioManager audioManager;
 
+    /** Executor per eseguire il loop di gioco su un thread separato */
     private final ExecutorService gameExecutor;
+    
+    /** Flag volatile per controllare l'esecuzione del loop di gioco */
     private volatile boolean gameRunning = false;
 
+    /**
+     * Costruttore del controller di gioco.
+     * Inizializza lo stato di gioco, la vista, l'audio e registra i listener necessari.
+     * Valida che la lista dei giocatori contenga almeno un giocatore umano.
+     * 
+     * @param players lista dei giocatori partecipanti (deve contenere almeno un GiocatoreUmano)
+     * @param onGameEnd callback da invocare quando la partita termina o viene abbandonata
+     * @throws IllegalArgumentException se la lista dei giocatori è nulla o vuota
+     * @throws IllegalStateException se non viene trovato nessun giocatore umano
+     */
     public GameController(List<Giocatore> players, Runnable onGameEnd) {
         this.onGameEnd = onGameEnd;
         
@@ -76,6 +111,17 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
     /**
      * Avvia la partita.
+     * Esegue le seguenti operazioni:
+     * <ul>
+     *   <li>Imposta il flag gameRunning a true</li>
+     *   <li>Avvia la musica di sottofondo con effetto fade-in</li>
+     *   <li>Mostra la finestra di gioco con animazione</li>
+     *   <li>Riproduce l'animazione di distribuzione delle carte</li>
+     *   <li>Distribuisce 10 carte a ciascun giocatore</li>
+     *   <li>Avvia il loop principale di gioco su un thread separato</li>
+     * </ul>
+     * 
+     * <p>Il volume della musica viene applicato dalle impostazioni correnti.</p>
      */
     public void startGame() {
         gameRunning = true;
@@ -103,7 +149,24 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Loop principale della partita (gestisce trick, pescata, avanzamento, UI).
+     * Loop principale della partita.
+     * Gestisce l'alternanza dei turni tra giocatori, la giocata delle carte,
+     * il completamento delle prese, la pescata di nuove carte e l'aggiornamento della vista.
+     * 
+     * <p>Funzionamento del loop:</p>
+     * <ol>
+     *   <li>Determina il giocatore corrente</li>
+     *   <li>Richiede la scelta di una carta (attendendo input per giocatori umani)</li>
+     *   <li>Valida e gioca la carta scelta</li>
+     *   <li>Riproduce animazioni ed effetti sonori</li>
+     *   <li>Se la presa è completata: determina il vincitore, assegna punti, pesca nuove carte</li>
+     *   <li>Avanza al turno successivo</li>
+     *   <li>Ripete fino al termine della partita</li>
+     * </ol>
+     * 
+     * <p>Al termine mostra la schermata di game over con i risultati.</p>
+     * 
+     * <p>Gestisce InterruptedException per permettere l'interruzione controllata del thread.</p>
      */
     private void runGameLoop() {
         try {
@@ -199,6 +262,14 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         }
     }
 
+    /**
+     * Calcola il risultato finale della partita.
+     * Determina il vincitore in base ai punteggi e riproduce il suono appropriato
+     * (vittoria o sconfitta) se gli effetti sonori sono abilitati.
+     * 
+     * @return stringa descrittiva del risultato (es. "Vincitore: Mario (punti: 8 1/3)")
+     *         o "Pareggio" se non c'è un chiaro vincitore
+     */
     private String calculateResult() {
         var scores = gameState.getScores();
         var winner = scores.entrySet().stream()
@@ -222,7 +293,10 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Quando il giocatore umano gioca una carta (col click sulla UI).
+     * Chiamato quando il giocatore umano clicca su una carta nell'interfaccia.
+     * Trasmette la scelta al GiocatoreUmano che la sta attendendo nel suo turno.
+     * 
+     * @param cardIndex indice della carta cliccata nella mano del giocatore (0-based)
      */
     public void onCardPlayed(int cardIndex) {
         if (humanPlayer != null) {
@@ -231,7 +305,16 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Permette di tornare al menu terminata la partita
+     * Gestisce il ritorno al menu principale dopo la conclusione della partita.
+     * Esegue le operazioni di pulizia necessarie:
+     * <ul>
+     *   <li>Ferma il loop di gioco impostando gameRunning a false</li>
+     *   <li>Chiude l'executor del gioco</li>
+     *   <li>Rimuove il listener delle impostazioni</li>
+     *   <li>Effettua fade-out dell'audio</li>
+     *   <li>Chiude la finestra di gioco con animazione</li>
+     *   <li>Invoca la callback onGameEnd per tornare al menu</li>
+     * </ul>
      */
     public void onReturnToMenu() {
         // pulizie
@@ -265,7 +348,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Chiusura partita.
+     * Gestisce la chiusura forzata della partita (es. chiusura della finestra).
+     * Simile a onReturnToMenu ma può essere chiamato in qualsiasi momento
+     * per abbandonare la partita in corso.
+     * 
+     * <p>Esegue le stesse operazioni di pulizia di onReturnToMenu.</p>
      */
     public void onExitGame() {
         gameRunning = false;
@@ -300,7 +387,17 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Ottieni il game record per lo storico.
+     * Genera un record della partita completata per lo storico del profilo.
+     * Il record include:
+     * <ul>
+     *   <li>Data e ora della partita</li>
+     *   <li>Nomi degli avversari</li>
+     *   <li>Nome e punteggio del vincitore</li>
+     *   <li>Punteggio del giocatore umano</li>
+     *   <li>Esperienza guadagnata calcolata in base a punti, carte vinte e vittoria</li>
+     * </ul>
+     * 
+     * @return oggetto GamesRecord con tutte le statistiche della partita
      */
     public GamesRecord getGameRecord() {
         String date = Instant.now().toString();
@@ -328,6 +425,22 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore, (Integer) experienceFromGame(humanPlayer, winner, myPoints, myCardsWon));
     }
 
+    /**
+     * Calcola i punti esperienza guadagnati dal giocatore umano nella partita.
+     * Il calcolo si basa su:
+     * <ul>
+     *   <li>5 XP per ogni punto ottenuto</li>
+     *   <li>2 XP per ogni carta vinta</li>
+     *   <li>50 XP bonus se il giocatore ha vinto</li>
+     *   <li>20 XP bonus partecipazione se il giocatore ha perso</li>
+     * </ul>
+     * 
+     * @param humanPlayer il giocatore umano
+     * @param winner il vincitore della partita
+     * @param myPoints punti ottenuti dal giocatore umano
+     * @param myCardsWon numero di carte vinte dal giocatore umano
+     * @return punti esperienza totali guadagnati
+     */
     private Object experienceFromGame(GiocatoreUmano humanPlayer, Giocatore winner, int myPoints, int myCardsWon) {
         int experience = 0;
         experience += myPoints * 5; // XP per punto
@@ -340,10 +453,22 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         return experience;
     }
 
+    /**
+     * Restituisce la vista del gioco.
+     * 
+     * @return la finestra di gioco (GameView)
+     */
     public GameView getView() {
         return view;
     }
 
+    /**
+     * Callback invocato quando le impostazioni di gioco vengono modificate.
+     * Applica i cambiamenti al volume dell'audio e aggiorna la vista.
+     * Implementa l'interfaccia MenuImpostazioni.SettingsListener.
+     * 
+     * @param settings le nuove impostazioni da applicare
+     */
     @Override
     public void onSettingsChanged(MenuImpostazioni settings) {
         // Apply volume changes to audio

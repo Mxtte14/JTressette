@@ -8,38 +8,79 @@ import javax.sound.sampled.*;
 import javax.swing.Timer;
 
 /**
- * AudioManager - Manages audio playback with support for transitions (fade in/out),
- * volume control, and one-shot sound effects.
- *
- * Sound indices:
- * 0 - backgroundMenu (menu background music)
- * 1 - MenuSelectionClick (click sound for menu selections)
- * 2 - cardPlayed (sound when a card is played)
- * 3 - backGame (game background music)
+ * Gestore centralizzato dell'audio del gioco.
+ * Gestisce la riproduzione di musica di sottofondo ed effetti sonori con supporto per:
+ * <ul>
+ *   <li>Transizioni audio (fade-in e fade-out)</li>
+ *   <li>Controllo del volume dinamico</li>
+ *   <li>Riproduzione in loop per musica di sottofondo</li>
+ *   <li>Effetti sonori one-shot senza interrompere l'audio principale</li>
+ * </ul>
+ * 
+ * <p><b>Indici audio disponibili:</b></p>
+ * <ul>
+ *   <li>0 - BACKGROUND_MENU: musica di sottofondo del menu principale</li>
+ *   <li>1 - MENU_SELECTION_CLICK: suono click per selezioni menu</li>
+ *   <li>2 - CARD_PLAYED: suono quando si gioca una carta</li>
+ *   <li>3 - BACKGROUND_GAME: musica di sottofondo durante la partita</li>
+ *   <li>4 - CARD_DRAW: suono quando si pesca una carta</li>
+ *   <li>5 - CARD_DEALING: suono durante la distribuzione delle carte</li>
+ *   <li>6 - VICTORY: suono di vittoria</li>
+ *   <li>7 - DEFEAT: suono di sconfitta</li>
+ * </ul>
  */
 public class AudioManager {
 
+    /** Logger per la registrazione di eventi ed errori audio */
     private static final Logger LOGGER = Logger.getLogger(AudioManager.class.getName());
 
-    // Audio constants
+    /** Indice audio: musica di sottofondo del menu */
     public static final int BACKGROUND_MENU = 0;
+    
+    /** Indice audio: click di selezione menu */
     public static final int MENU_SELECTION_CLICK = 1;
+    
+    /** Indice audio: suono carta giocata */
     public static final int CARD_PLAYED = 2;
+    
+    /** Indice audio: musica di sottofondo del gioco */
     public static final int BACKGROUND_GAME = 3;
+    
+    /** Indice audio: suono pesca carta */
     public static final int CARD_DRAW = 4;
+    
+    /** Indice audio: suono distribuzione carte */
     public static final int CARD_DEALING = 5;
+    
+    /** Indice audio: suono vittoria */
     public static final int VICTORY = 6;
+    
+    /** Indice audio: suono sconfitta */
     public static final int DEFEAT = 7;
 
-    // Volume scaling constant - AudioManager max safe volume
+    /** Costante di scalatura del volume massimo sicuro (0.4 = 40% del massimo) */
     public static final float MAX_VOLUME_SCALE = 0.4f;
 
+    /** Clip audio principale attualmente in riproduzione */
     private Clip clip;
+    
+    /** Array degli URL dei file audio */
     private final URL[] soundURL = new URL[30];
+    
+    /** Volume corrente (da 0.0 a 1.0) */
     private float currentVolume = 1.0f;
+    
+    /** Timer per gestire le transizioni fade */
     private Timer fadeTimer;
+    
+    /** Flag che indica se è in corso una transizione fade */
     private boolean isFading = false;
 
+    /**
+     * Costruttore dell'AudioManager.
+     * Inizializza gli URL dei file audio caricandoli dalle risorse del progetto.
+     * I file devono trovarsi nella directory /res/audio/.
+     */
     public AudioManager() {
         soundURL[BACKGROUND_MENU] = getClass().getResource("/res/audio/backgroundMenu.wav");
         soundURL[MENU_SELECTION_CLICK] = getClass().getResource("/res/audio/SelectionClick.wav");
@@ -51,6 +92,13 @@ public class AudioManager {
         soundURL[DEFEAT] = getClass().getResource("/res/audio/defeat.wav");
     }
 
+    /**
+     * Imposta il file audio da riprodurre.
+     * Chiude l'eventuale clip precedente e apre quello nuovo.
+     * Il volume viene applicato automaticamente al nuovo clip.
+     * 
+     * @param i indice del file audio da caricare (usare le costanti pubbliche)
+     */
     public void setFile(int i) {
         try {
             if (clip != null && clip.isOpen()) {
@@ -69,6 +117,10 @@ public class AudioManager {
         }
     }
 
+    /**
+     * Avvia la riproduzione dell'audio dal inizio.
+     * Riporta il clip alla posizione iniziale e inizia la riproduzione.
+     */
     public void start() {
         if (clip != null) {
             clip.setFramePosition(0);
@@ -76,12 +128,19 @@ public class AudioManager {
         }
     }
 
+    /**
+     * Ferma la riproduzione dell'audio corrente.
+     */
     public void stop() {
         if (clip != null) {
             clip.stop();
         }
     }
 
+    /**
+     * Attiva la riproduzione in loop continuo dell'audio.
+     * Ideale per musica di sottofondo.
+     */
     public void loop() {
         if (clip != null) {
             clip.loop(Clip.LOOP_CONTINUOUSLY);
@@ -89,8 +148,11 @@ public class AudioManager {
     }
 
     /**
-     * Set the volume of the current clip.
-     * @param volume Volume level from 0.0 (silent) to 1.0 (full volume)
+     * Imposta il volume del clip audio corrente.
+     * Il volume viene limitato automaticamente tra 0.0 e MAX_VOLUME_SCALE (0.4)
+     * per evitare distorsioni o livelli pericolosi.
+     * 
+     * @param volume livello del volume da 0.0 (silenzio) a 1.0 (volume massimo)
      */
     public void setVolume(float volume) {
         currentVolume = Math.max(0.0f, Math.min(0.4f, volume));
@@ -109,17 +171,21 @@ public class AudioManager {
     }
 
     /**
-     * Get the current volume level.
-     * @return Volume level from 0.0 to 1.0
+     * Restituisce il livello di volume corrente.
+     * 
+     * @return volume corrente da 0.0 a 1.0
      */
     public float getVolume() {
         return currentVolume;
     }
 
     /**
-     * Fade out the current audio over a specified duration.
-     * @param durationMs Duration of fade in milliseconds
-     * @param onComplete Callback to run when fade completes (can be null)
+     * Esegue un effetto fade-out (dissolvenza in uscita) sull'audio corrente.
+     * Il volume viene ridotto gradualmente fino a zero in un tempo specificato,
+     * dopo di che l'audio viene fermato e viene invocato il callback opzionale.
+     * 
+     * @param durationMs durata del fade-out in millisecondi
+     * @param onComplete callback da eseguire al completamento del fade (può essere null)
      */
     public void fadeOut(int durationMs, Runnable onComplete) {
         if (clip == null || !clip.isRunning()) {
@@ -158,9 +224,12 @@ public class AudioManager {
     }
 
     /**
-     * Fade in the audio over a specified duration.
-     * @param durationMs Duration of fade in milliseconds
-     * @param targetVolume Target volume level (0.0 to 1.0)
+     * Esegue un effetto fade-in (dissolvenza in entrata) sull'audio.
+     * L'audio parte da volume zero e viene aumentato gradualmente fino al volume target.
+     * La riproduzione inizia automaticamente all'avvio del fade-in.
+     * 
+     * @param durationMs durata del fade-in in millisecondi
+     * @param targetVolume volume target da raggiungere (da 0.0 a 1.0)
      */
     public void fadeIn(int durationMs, float targetVolume) {
         if (clip == null) {
@@ -196,9 +265,11 @@ public class AudioManager {
 
 
     /**
-     * Play a one-shot sound effect without interrupting the main audio.
-     * Creates a new clip for the sound effect.
-     * @param soundIndex Index of the sound to play
+     * Riproduce un effetto sonoro one-shot senza interrompere l'audio principale.
+     * Crea un nuovo clip temporaneo per l'effetto che viene chiuso automaticamente
+     * al termine della riproduzione.
+     * 
+     * @param soundIndex indice del suono da riprodurre (usare le costanti pubbliche)
      */
     public void playSoundEffect(int soundIndex) {
         if (soundURL[soundIndex] == null) {
@@ -224,7 +295,8 @@ public class AudioManager {
     }
 
     /**
-     * Play the menu selection click sound effect.
+     * Riproduce il suono di click del menu.
+     * Effetto sonoro one-shot per confermare selezioni nel menu.
      */
     public void playMenuClick() {
         playSoundEffect(MENU_SELECTION_CLICK);
@@ -233,32 +305,41 @@ public class AudioManager {
 
 
     /**
-     * Play the draw effect sound.
+     * Riproduce il suono di pesca carta.
+     * Effetto sonoro one-shot quando si pesca una nuova carta dal mazzo.
      */
     public void playDrawSound() {
         playSoundEffect(CARD_DRAW);
     }
+    
     /**
-     * Play the card played sound effect.
+     * Riproduce il suono di carta giocata.
+     * Effetto sonoro one-shot quando un giocatore gioca una carta.
      */
     public void playCardSound() {
         playSoundEffect(CARD_PLAYED);
     }
 
     /**
-     * Play the victory sound effect.
+     * Riproduce il suono di vittoria.
+     * Effetto sonoro one-shot al termine di una partita vinta.
      */
     public void playVictorySound() {
         playSoundEffect(VICTORY);
     }
 
     /**
-     * Play the defeat sound effect.
+     * Riproduce il suono di sconfitta.
+     * Effetto sonoro one-shot al termine di una partita persa.
      */
     public void playDefeatSound() {
         playSoundEffect(DEFEAT);
     }
 
+    /**
+     * Ferma il timer di fade se è attivo.
+     * Metodo interno per gestire le transizioni.
+     */
     private void stopFadeTimer() {
         if (fadeTimer != null && fadeTimer.isRunning()) {
             fadeTimer.stop();
@@ -267,15 +348,18 @@ public class AudioManager {
     }
 
     /**
-     * Check if audio is currently playing.
-     * @return true if playing, false otherwise
+     * Verifica se l'audio è attualmente in riproduzione.
+     * 
+     * @return true se sta riproducendo, false altrimenti
      */
     public boolean isPlaying() {
         return clip != null && clip.isRunning();
     }
 
     /**
-     * Close and release audio resources.
+     * Chiude e rilascia tutte le risorse audio.
+     * Ferma eventuali timer di fade, l'audio e chiude il clip.
+     * Questo metodo dovrebbe essere chiamato quando l'AudioManager non è più necessario.
      */
     public void close() {
         stopFadeTimer();
