@@ -19,30 +19,96 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Pannello del profilo utente con interfaccia moderna in stile poker.
+ * Visualizza e permette di modificare le informazioni del profilo includendo:
+ * <ul>
+ *   <li>Avatar personalizzabile (con cambio immagine tramite file chooser)</li>
+ *   <li>Nome utente editabile</li>
+ *   <li>Sistema di livelli ed esperienza con barra di progresso</li>
+ *   <li>Statistiche aggregate (partite totali, vittorie)</li>
+ *   <li>Storico delle partite recenti in formato tabella</li>
+ * </ul>
+ *
+ * <p>Il pannello implementa ProfileListener per reagire automaticamente
+ * agli aggiornamenti del profilo e mantenere sincronizzata l'interfaccia.</p>
+ *
+ * <p>Lo stile visivo utilizza una palette verde scuro (feltro da poker)
+ * con accenti oro/dorati, coerente con il design generale del gioco.</p>
+ *
+ * @author JTressette Team
+ * @version 1.0
+ */
 public class ProfileMenu extends JPanel implements ProfileListener {
+    /** Container principale con CardLayout per la navigazione */
     private final JPanel cards;
+    
+    /** Controller del profilo per salvare modifiche */
     private final ProfileController controller;
+    
+    /** Campo di testo per modificare il nome utente */
     private JTextField nameField;
+    
+    /** Label che visualizza l'avatar del giocatore */
     private JLabel avatarLabel;
+    
+    /** Tabella per visualizzare lo storico delle partite */
     private JTable historyTable;
+    
+    /** Modello dati della tabella dello storico */
     private DefaultTableModel tableModel;
+    
+    /** Label che mostra le statistiche aggregate */
     private JLabel statsLabel;
+    
+    /** Label che visualizza il livello corrente */
     private JLabel levelLabel;
+    
+    /** Barra di progresso per l'esperienza */
     private JProgressBar expBar;
+    
+    /** Label che mostra XP corrente/necessari per livello */
     private JLabel expLabel;
 
-    // Modern colors - Updated to match HomeMenu style (green, gold, black)
-    private static final Color BACKGROUND_COLOR = new Color(10, 25, 15); // Dark green background
-    private static final Color PANEL_BG_COLOR = new Color(20, 50, 30, 200); // Semi-transparent dark green
-    private static final Color PRIMARY_COLOR = new Color(35, 130, 75); // Poker table green
-    private static final Color ACCENT_COLOR = new Color(46, 160, 90); // Lighter green for hover
-    private static final Color TEXT_COLOR = new Color(255, 248, 220); // Light gold text
-    private static final Color SECONDARY_TEXT_COLOR = new Color(200, 200, 180); // Dimmer gold
-    private static final Color SUCCESS_COLOR = new Color(46, 204, 113); // Bright green
-    private static final Color BORDER_COLOR = new Color(255, 215, 0, 100); // Gold border
-    private static final Color LEVEL_BADGE_BG = new Color(231, 76, 60); // Red badge
-    private static final Color EXP_BAR_COLOR = new Color(255, 215, 0); // Gold progress bar
+    // Colori moderni ispirati al tema poker (verde feltro e oro)
+    /** Colore di sfondo principale */
+    private static final Color BACKGROUND_COLOR = new Color(10, 25, 15);
+    
+    /** Colore pannelli semitrasparenti */
+    private static final Color PANEL_BG_COLOR = new Color(20, 50, 30, 200);
+    
+    /** Colore primario verde tavolo poker */
+    private static final Color PRIMARY_COLOR = new Color(35, 130, 75);
+    
+    /** Colore accento verde più chiaro */
+    private static final Color ACCENT_COLOR = new Color(46, 160, 90);
+    
+    /** Colore testo oro chiaro */
+    private static final Color TEXT_COLOR = new Color(255, 248, 220);
+    
+    /** Colore testo secondario oro attenuato */
+    private static final Color SECONDARY_TEXT_COLOR = new Color(200, 200, 180);
+    
+    /** Colore verde brillante per successi */
+    private static final Color SUCCESS_COLOR = new Color(46, 204, 113);
+    
+    /** Colore bordi dorati semitrasparenti */
+    private static final Color BORDER_COLOR = new Color(255, 215, 0, 100);
+    
+    /** Colore sfondo badge livello rosso */
+    private static final Color LEVEL_BADGE_BG = new Color(231, 76, 60);
+    
+    /** Colore oro per barra esperienza */
+    private static final Color EXP_BAR_COLOR = new Color(255, 215, 0);
 
+    /**
+     * Costruttore del pannello profilo.
+     * Inizializza l'interfaccia e si registra come listener del controller
+     * per ricevere aggiornamenti automatici del profilo.
+     *
+     * @param cards pannello principale con CardLayout per la navigazione tra schermate
+     * @param controller controller del profilo per gestire modifiche e salvataggi
+     */
     public ProfileMenu(JPanel cards, ProfileController controller) {
         this.cards = cards;
         this.controller = controller;

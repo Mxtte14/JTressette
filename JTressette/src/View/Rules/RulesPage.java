@@ -7,28 +7,57 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- * Pagina che mostra le regole del gioco in forma testuale (HTML) e supporta immagini
- * prese dalle risorse del progetto. Ora presenta un overlay "professionale"
- * con uno sfondo a due colori ispirato al feltro da poker e testo in colore crema.
+ * Pagina che mostra le regole del gioco di Tressette.
+ * Presenta le regole in formato HTML con supporto per:
+ * <ul>
+ *   <li>Testo formattato con diverse dimensioni (titoli 24pt, testo 16pt)</li>
+ *   <li>Liste puntate e numerate</li>
+ *   <li>Immagini delle carte caricate dalle risorse</li>
+ *   <li>Scrolling per contenuti lunghi</li>
+ * </ul>
  *
- * La card viene aggiunta al container esterno (CardLayout) con la chiave "RULES".
+ * <p>Lo stile visivo è ispirato al feltro da poker con due toni di verde
+ * e testo in colore crema per alta leggibilità. I titoli sono evidenziati
+ * in oro per mantenere coerenza con il design generale del gioco.</p>
  *
- * Aggiornamento: dimensioni testo e titoli modificate come richiesto:
- * - testo principale, liste e note: 16pt
- * - titoli (h2, h3): 24pt
+ * <p>Il pannello è trasparente e viene visualizzato come "card" nel CardLayout
+ * principale con chiave "RULES". Include un pulsante "Indietro" per tornare
+ * al menu principale.</p>
+ *
+ * @author JTressette Team
+ * @version 1.0
  */
 public class RulesPage extends JPanel {
 
+    /** Container principale con CardLayout per la navigazione */
     private final JPanel cards;
+    
+    /** Editor pane che visualizza il contenuto HTML delle regole */
     private final JEditorPane htmlPane;
 
-    // colori ispirati al feltro da poker e agli accenti delle carte
-    private static final Color FELT_TOP = new Color(6, 94, 57);      // verde feltro (più scuro)
-    private static final Color FELT_BOTTOM = new Color(18, 121, 75); // verde feltro (più chiaro)
-    private static final Color PANEL_BG = new Color(0, 0, 0, 120);   // overlay scuro semitrasparente
-    private static final Color TEXT_CREME = new Color(245, 235, 221); // crema per il testo
-    private static final Color TITLE_GOLD = new Color(255, 215, 0);   // oro per il titolo
+    // Colori ispirati al feltro da poker e agli accenti delle carte
+    /** Verde feltro scuro per la parte superiore del gradiente */
+    private static final Color FELT_TOP = new Color(6, 94, 57);
+    
+    /** Verde feltro chiaro per la parte inferiore del gradiente */
+    private static final Color FELT_BOTTOM = new Color(18, 121, 75);
+    
+    /** Overlay scuro semitrasparente per migliorare la leggibilità */
+    private static final Color PANEL_BG = new Color(0, 0, 0, 120);
+    
+    /** Colore crema per il testo principale */
+    private static final Color TEXT_CREME = new Color(245, 235, 221);
+    
+    /** Colore oro per i titoli */
+    private static final Color TITLE_GOLD = new Color(255, 215, 0);
 
+    /**
+     * Costruttore della pagina delle regole.
+     * Inizializza il pannello con sfondo gradiente, crea l'editor HTML
+     * per visualizzare le regole e configura il pulsante di navigazione.
+     *
+     * @param cards pannello principale con CardLayout per tornare al menu
+     */
     public RulesPage(JPanel cards) {
         this.cards = cards;
         setOpaque(false); // lasciamo vedere lo sfondo sotto l'overlay

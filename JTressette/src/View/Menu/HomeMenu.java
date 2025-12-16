@@ -15,51 +15,126 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 /**
- * HomeMenu - Menu principale con box dimensionato in base al testo delle opzioni.
+ * Menu principale del gioco JTressette con interfaccia grafica moderna.
+ * Presenta le opzioni di gioco principali con effetti visuali accattivanti:
+ * <ul>
+ *   <li>Sfondo con immagine personalizzata e vignettatura</li>
+ *   <li>Pannello menu con gradiente verde feltro e bordi dorati</li>
+ *   <li>Titolo con effetti glow e gradienti oro</li>
+ *   <li>Opzioni menu con cursore animato e highlighting</li>
+ *   <li>Profilo utente compatto con avatar, nome e livello</li>
+ * </ul>
  *
- * Modifiche:
- * - Calcolo di uno scale sicuro (clamp a [0.6, 1.6]).
- * - Impostazione esplicita di MenuOption.setScale(scale) prima di misurare e disegnare.
- * - DrawMenuPanel misura i testi in base alla scala delle opzioni e dimensiona il box di conseguenza.
+ * <p>Le opzioni disponibili sono:</p>
+ * <ol>
+ *   <li><b>Gioca:</b> avvia una nuova partita</li>
+ *   <li><b>Regole:</b> visualizza le regole del Tressette</li>
+ *   <li><b>Profilo:</b> gestisce il profilo utente</li>
+ *   <li><b>Impostazioni:</b> configura audio e preferenze</li>
+ *   <li><b>Esci:</b> chiude l'applicazione</li>
+ * </ol>
+ *
+ * <p>Il pannello è responsive e si adatta a diverse risoluzioni mantenendo
+ * le proporzioni (design base: 1100x720). Implementa ProfileListener per
+ * aggiornare automaticamente nome, avatar e livello quando il profilo cambia.</p>
+ *
+ * @author JTressette Team
+ * @version 1.0
  */
 public class HomeMenu extends JPanel implements ProfileListener {
 
+    /** Logger per la registrazione di eventi */
     private static final Logger LOGGER = Logger.getLogger(HomeMenu.class.getName());
 
+    /** Larghezza di design base per il calcolo dello scaling */
     private static final int DESIGN_WIDTH = 1100;
+    
+    /** Altezza di design base per il calcolo dello scaling */
     private static final int DESIGN_HEIGHT = 720;
 
+    /** Immagine di sfondo del menu */
     BufferedImage background;
+    
+    /** Array delle opzioni del menu (public per compatibilità con Cursor) */
     public MenuOption[] options;
+    
+    /** Cursore di selezione visuale (public per compatibilità esistente) */
     public Controller.Game.Cursor cursor;
+    
+    /** Indice dell'opzione correntemente selezionata */
     private int selectedOption = 0;
 
+    // Palette colori per il tema poker moderno (verde feltro, oro, nero)
+    /** Colore overlay semitrasparente per sfondo */
     private static final Color OVERLAY_COLOR = new Color(0, 0, 0, 100);
+    
+    /** Oro primario per titoli */
     private static final Color TITLE_GOLD = new Color(255, 215, 0);
+    
+    /** Oro chiaro per gradienti */
     private static final Color TITLE_GOLD_LIGHT = new Color(255, 235, 130);
+    
+    /** Bordo dorato semitrasparente per pannello */
     private static final Color PANEL_BORDER = new Color(255, 215, 0, 100);
+    
+    /** Ombra pannello */
     private static final Color PANEL_SHADOW = new Color(0, 0, 0, 80);
+    
+    /** Verde scuro per gradiente superiore pannello */
     private static final Color PANEL_GRADIENT_TOP = new Color(10, 60, 35, 200);
+    
+    /** Verde scuro per gradiente inferiore pannello */
     private static final Color PANEL_GRADIENT_BOTTOM = new Color(5, 40, 25, 220);
+    
+    /** Bordo interno dorato sottile */
     private static final Color PANEL_INNER_BORDER = new Color(255, 215, 0, 30);
+    
+    /** Effetto glow dorato per titolo */
     private static final Color TITLE_GLOW = new Color(255, 215, 0, 40);
+    
+    /** Ombra per sottotitolo */
     private static final Color SUBTITLE_SHADOW = new Color(0, 0, 0, 100);
+    
+    /** Colore sottotitolo */
     private static final Color SUBTITLE_COLOR = new Color(220, 210, 190);
+    
+    /** Array di colori per effetto ombra multipla */
     private static final Color[] SHADOW_COLORS = {
             new Color(0, 0, 0, 130), new Color(0, 0, 0, 110),
             new Color(0, 0, 0, 90), new Color(0, 0, 0, 70)
     };
+    
+    /** Fattore per calcolo raggio vignettatura */
     private static final float VIGNETTE_RADIUS_FACTOR = 0.8f;
 
+    /** Font principale per il titolo */
     private static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 56);
+    
+    /** Font per il sottotitolo */
     private static final Font SUBTITLE_FONT = new Font("Georgia", Font.ITALIC, 18);
 
+    /** Label per avatar compatto in alto */
     private JLabel avatarSmallLabel;
+    
+    /** Label per nome utente compatto */
     private JLabel nameSmallLabel;
+    
+    /** Label per badge livello */
     private JLabel levelBadgeLabel;
+    
+    /** Callback da eseguire al click sull'area profilo */
     private Runnable onProfileClick;
+    
+    /** Dimensione avatar in pixel */
     private int avatarSize = 46;
 
+    /**
+     * Costruttore del menu principale.
+     * Inizializza lo sfondo, le opzioni del menu, il cursore di selezione
+     * e il pannello profilo. Registra i listener per mouse, resize e profilo.
+     *
+     * @param controller controller del profilo per visualizzare e aggiornare i dati utente
+     */
     public HomeMenu(ProfileController controller) {
         loadBackground();
 

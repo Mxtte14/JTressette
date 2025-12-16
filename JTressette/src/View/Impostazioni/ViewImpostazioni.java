@@ -6,11 +6,44 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * Pannello delle impostazioni del gioco JTressette.
+ * Fornisce un'interfaccia grafica per modificare le preferenze utente incluse:
+ * <ul>
+ *   <li>Volume generale dell'audio (0-100)</li>
+ *   <li>Abilitazione/disabilitazione effetti sonori</li>
+ *   <li>Visualizzazione del punteggio durante la partita</li>
+ *   <li>Visualizzazione dei messaggi di sistema</li>
+ *   <li>Modalità schermo intero</li>
+ * </ul>
+ *
+ * <p>Le modifiche vengono salvate automaticamente sul file system
+ * quando l'utente interagisce con i controlli.</p>
+ *
+ * <p>Il pannello è trasparente per permettere la visualizzazione dello
+ * sfondo del menu sottostante, mantenendo continuità visiva con la home screen.</p>
+ *
+ * @author JTressette Team
+ * @version 1.0
+ */
 public class ViewImpostazioni extends JPanel {
+    /** Istanza delle impostazioni globali del gioco */
     private final MenuImpostazioni settings;
+    
+    /** Slider per il controllo del volume (0-100) */
     private final JSlider volumeSlider;
+    
+    /** Checkbox per abilitare/disabilitare effetti sonori, punteggi, messaggi e fullscreen */
     private final JCheckBox effectsBox, showScoreBox, showMessagesBox, fullscreenBox;
 
+    /**
+     * Costruttore della vista impostazioni.
+     * Inizializza tutti i controlli con i valori correnti delle impostazioni
+     * e registra i listener per salvare automaticamente le modifiche.
+     *
+     * @param settings istanza delle impostazioni del gioco (se null, usa getInstance())
+     * @param onBack callback da eseguire quando si preme il pulsante "Indietro"
+     */
     public ViewImpostazioni(MenuImpostazioni settings, Runnable onBack) {
         this.settings = settings != null ? settings : MenuImpostazioni.getInstance();
 
