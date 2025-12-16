@@ -16,67 +16,145 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * GameViewSwing: Swing-based view for the card game following MVC pattern.
- * Displays the table, player's hand, opponent hands (face down), and cards played.
- * Styled like an online poker server with a green felt table.
- * Uses actual card images from src/res/Cards/.
- * Modifiche principali in questa versione:
- * - VerticalCardStackPanel per disporre carte verticalmente dal basso verso l'alto.
- * - Top opponent (quando visualizzato verticalmente) usa la stessa dimensione e comportamento
- *   dei bot laterali; lo spazio riservato dipende dal numero di carte (preferred size calcolata).
- * - left/right panels vengono adattati per tener conto della larghezza delle carte laterali.
+ * Vista grafica principale del gioco di Tressette implementata con Swing.
+ * Segue il pattern architetturale MVC come componente View.
+ *
+ * <p>Caratteristiche principali:</p>
+ * <ul>
+ *   <li>Tavolo da gioco stilizzato come feltro da poker verde</li>
+ *   <li>Visualizzazione carte del giocatore umano (fronte) in basso</li>
+ *   <li>Visualizzazione carte avversari (retro) sui lati e in alto</li>
+ *   <li>Area centrale per carte giocate nella presa corrente</li>
+ *   <li>Pannello laterale con log, punteggi e statistiche</li>
+ *   <li>Animazioni per giocate, prese e pescate di carte</li>
+ *   <li>Effetti audio coordinati con le azioni di gioco</li>
+ *   <li>Effetto fade-in/fade-out per transizioni</li>
+ * </ul>
+ *
+ * <p>Layout responsive con adattamento dinamico:</p>
+ * <ul>
+ *   <li>Dimensione carte proporzionale alla finestra</li>
+ *   <li>Disposizione verticale per avversari laterali</li>
+ *   <li>Scrolling orizzontale per mano del giocatore se necessario</li>
+ *   <li>Tavolo ovale con dimensioni adattive</li>
+ * </ul>
+ *
+ * <p>Le immagini delle carte vengono caricate da risorse tramite CardImageLoader.
+ * La vista si aggiorna automaticamente quando lo stato del gioco cambia.</p>
+ *
+ * @author JTressette Team
+ * @version 1.0
  */
 public class GameView extends JFrame {
 
-    // Colors inspired by poker table felt
+    // Palette colori ispirata al feltro da poker
+    /** Colore verde feltro principale */
     private static final Color FELT_GREEN = new Color(26, 117, 65);
+    
+    /** Colore verde feltro scuro per ombre e gradienti */
     private static final Color FELT_DARK = new Color(18, 85, 47);
+    
+    /** Colore bordo marrone legno */
     private static final Color FELT_BORDER = new Color(100, 70, 40);
+    
+    /** Colore oro per testo importante */
     private static final Color TEXT_GOLD = new Color(255, 215, 0);
+    
+    /** Colore bianco per testo normale */
     private static final Color TEXT_WHITE = Color.WHITE;
 
-    // Dimensioni carte anche dinamico
+    // Dimensioni carte con adattamento dinamico
+    /** Larghezza base carta */
     private static final int CARD_WIDTH = 60;
+    
+    /** Altezza base carta */
     private static final int CARD_HEIGHT = 86;
-    private static final int HAND_GAP = 5; // gap between hand cards
+    
+    /** Spazio tra carte nella mano */
+    private static final int HAND_GAP = 5;
+    
+    /** Larghezza minima carte mano giocatore */
     private static final int HAND_CARD_MIN_WIDTH = 45;
+    
+    /** Larghezza massima carte mano giocatore */
     private static final int HAND_CARD_MAX_WIDTH = 85;
-    private int handCardWidth = 60;  // default
+    
+    /** Larghezza corrente carte mano giocatore (adattiva) */
+    private int handCardWidth = 60;
+    
+    /** Altezza corrente carte mano giocatore (calcolata proporzionalmente) */
     private int handCardHeight = (int) Math.round(handCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
-    // Side (bot) card size (will be computed relative to handCardWidth)
+    /** Larghezza carte laterali bot (proporzionale a handCardWidth) */
     private int sideCardWidth = (int) (handCardWidth * 0.78);
+    
+    /** Altezza carte laterali bot (calcolata proporzionalmente) */
     private int sideCardHeight = (int) Math.round(sideCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
-    // Table sizing constraints
+    // Vincoli dimensionali tavolo ovale
+    /** Larghezza minima tavolo */
     private static final int TABLE_MIN_W = 540;
+    
+    /** Altezza minima tavolo */
     private static final int TABLE_MIN_H = 240;
+    
+    /** Larghezza massima tavolo */
     private static final int TABLE_MAX_W = 650;
+    
+    /** Altezza massima tavolo */
     private static final int TABLE_MAX_H = 280;
 
 
+    /** Stato corrente della partita */
     private final GameState gameState;
+    
+    /** Riferimento al giocatore umano */
     private final GiocatoreUmano humanPlayer;
+    
+    /** Controller di gioco per gestire le azioni */
     private final GameController controller;
 
-    // UI components that need updating
+    // Componenti UI che necessitano di aggiornamenti frequenti
+    /** Pannello mano giocatore */
     private JPanel playerHandPanel;
+    
+    /** Scroll pane per mano giocatore */
     private JScrollPane handScrollPane;
+    
+    /** Area avversari in alto */
     private JPanel opponentArea;
+    
+    /** Pannello bot lato sinistro */
     private JPanel leftBotPanel;
+    
+    /** Pannello bot lato destro */
     private JPanel rightBotPanel;
+    
+    /** Label stato partita */
     private JLabel statusLabel;
+    
+    /** Label punteggio */
     private JLabel scoreLabel;
+    
+    /** Area log messaggi */
     private JPanel logArea;
+    
+    /** Pulsante gioca (non utilizzato attualmente) */
     private JButton playButton;
+    
+    /** Label contatore carte vinte */
     private JLabel wonCardsLabel;
-    private JPanel tableOval; // actual table panel
+    
+    /** Pannello tavolo ovale centrale */
+    private JPanel tableOval;
 
-    // layered pane reference for placing player's cards directly on screen (not inside playerHandPanel)
+    /** Layered pane per gestire sovrapposizioni carte */
     private JLayeredPane layeredPaneRef;
+    
+    /** Gestore audio per suoni ed effetti */
     private final Model.Audio.AudioManager audioManager;
 
-    // CardPanels representing the player's hand (they live on layeredPaneRef)
+    /** Lista pannelli carte nella mano del giocatore */
     private final List<CardPanel> cardPanels = new ArrayList<>();
     private final List<Giocatore> players;
 
