@@ -10,12 +10,33 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Gestore della persistenza del profilo utente su file system.
+ * Utilizza il formato Properties di Java per salvare e caricare i dati del profilo.
+ *
+ * <p>Il profilo viene salvato nella directory home dell'utente in una cartella nascosta
+ * ".jtressette" con il nome "profile.properties".</p>
+ *
+ * <p>Funzionalità principali:</p>
+ * <ul>
+ *   <li>Salvataggio atomico per prevenire corruzione dei dati</li>
+ *   <li>Caricamento con gestione retrocompatibilità</li>
+ *   <li>Creazione automatica directory se non esiste</li>
+ *   <li>Gestione errori con fallback su profilo di default</li>
+ *   <li>Serializzazione di tutti i game records con statistiche complete</li>
+ * </ul>
+ */
 public class StorageProfile {
+    /** Logger per registrare eventi ed errori */
     private static final Logger LOG = Logger.getLogger(StorageProfile.class.getName());
+
+    /** Nome della directory di salvataggio (nascosta) */
     private static final String DIR_NAME = ".jtressette";
+
+    /** Nome del file del profilo */
     private static final String FILE_NAME = "profile.properties";
 
-    // Chiavi per le proprietà
+    // Chiavi per le proprietà nel file
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EXPERIENCE = "experience";
     private static final String KEY_AVATAR_PATH = "avatarPath";
@@ -25,15 +46,31 @@ public class StorageProfile {
     private static final String KEY_GAMES_COUNT = "gamesCount";
     private static final String KEY_GAME_PREFIX = "game.";
 
+    /** Percorso alla directory del profilo */
     private final Path profileDir;
+
+    /** Percorso al file del profilo */
     private final Path profileFile;
 
+    /**
+     * Costruttore dello StorageProfile.
+     * Determina automaticamente la directory home dell'utente e
+     * imposta i percorsi per la directory e il file del profilo.
+     */
     public StorageProfile() {
         String userHome = System.getProperty("user.home");
         this.profileDir = Paths.get(userHome, DIR_NAME);
         this.profileFile = profileDir.resolve(FILE_NAME);
     }
 
+    /**
+     * Carica il profilo dal file o crea un profilo di default se non esiste.
+     * Se il file non esiste, crea un nuovo profilo con username "Giocatore",
+     * lo salva su disco e lo restituisce.
+     * In caso di errore di caricamento, restituisce un profilo di default senza salvarlo.
+     *
+     * @return il profilo utente caricato o un profilo di default
+     */
     public UserProfile loadOrCreateDefault() {
         try {
             if (Files.notExists(profileFile)) {
@@ -54,6 +91,11 @@ public class StorageProfile {
 
     /**
      * Carica il profilo dal file properties.
+     * Gestisce la retrocompatibilità con vecchie versioni del formato.
+     * Se alcuni campi mancano, usa valori di default.
+     *
+     * @return il profilo caricato dal file
+     * @throws IOException se si verifica un errore di lettura
      */
     private UserProfile loadFromFile() throws IOException {
         Properties props = new Properties();
@@ -111,6 +153,13 @@ public class StorageProfile {
         return profile;
     }
 
+    /**
+     * Calcola la somma dell'esperienza di tutte le partite.
+     * Utilizzato come fallback quando il campo esperienza totale non è presente nel file.
+     *
+     * @param games lista dei record di partite
+     * @return somma totale dell'esperienza
+     */
     private int sumExperienceFromGames(List<GamesRecord> games) {
         if (games == null) return 0;
         return games.stream()
@@ -119,7 +168,12 @@ public class StorageProfile {
     }
 
     /**
-     * Carica i game records dalle proprietà (includiamo ora experience, myPoints e myCardsWon se presenti).
+     * Carica i record delle partite dalle proprietà del file.
+     * Legge tutti i campi inclusi esperienza, punti e carte vinte se presenti.
+     * Utilizza Stream API per costruire efficientemente la lista.
+     *
+     * @param props oggetto Properties contenente i dati
+     * @return lista dei record di partite caricati
      */
     private List<GamesRecord> loadGamesFromProperties(Properties props) {
         String countStr = props.getProperty(KEY_GAMES_COUNT, "0");
@@ -152,6 +206,14 @@ public class StorageProfile {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Effettua il parsing sicuro di una stringa in intero.
+     * In caso di errore restituisce il valore di default.
+     *
+     * @param value stringa da convertire
+     * @param defaultValue valore da restituire in caso di errore
+     * @return intero parsato o valore di default
+     */
     private int parseIntOrDefault(String value, int defaultValue) {
         try {
             return Integer.parseInt(value);
@@ -161,7 +223,22 @@ public class StorageProfile {
     }
 
     /**
-     * Salva il profilo utente su file.
+     * Salva il profilo utente su file in modo atomico e thread-safe.
+     *
+     * <p>Il salvataggio avviene in due fasi per garantire l'atomicità:</p>
+     * <ol>
+     *   <li>Scrive i dati in un file temporaneo (.tmp)</li>
+     *   <li>Sposta atomicamente il file temporaneo sopra quello originale</li>
+     * </ol>
+     *
+     * <p>Questo approccio previene la corruzione dei dati in caso di interruzione
+     * durante il salvataggio (crash, spegnimento, ecc.).</p>
+     *
+     * <p>Il metodo è sincronizzato per garantire che solo un thread alla volta
+     * possa salvare il profilo.</p>
+     *
+     * @param profile il profilo da salvare
+     * @throws IOException se si verifica un errore di scrittura
      */
     public synchronized void save(UserProfile profile) throws IOException {
         if (Files.notExists(profileDir)) {

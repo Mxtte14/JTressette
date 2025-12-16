@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -34,12 +35,12 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
     public GameController(List<Giocatore> players, Runnable onGameEnd) {
         this.onGameEnd = onGameEnd;
-        
+
         // Validate input
         if (players == null || players.isEmpty()) {
             throw new IllegalArgumentException("Players list cannot be null or empty");
         }
-        
+
         this.gameState = new GameState(players); // Direttamente!
         this.gameExecutor = Executors.newSingleThreadExecutor();
         this.audioManager = new AudioManager();
@@ -56,7 +57,7 @@ public class GameController implements MenuImpostazioni.SettingsListener {
             }
         }
         this.humanPlayer = human;
-        
+
         // Validate that we have a human player
         if (this.humanPlayer == null) {
             throw new IllegalStateException("No human player found in the game");
@@ -134,16 +135,33 @@ public class GameController implements MenuImpostazioni.SettingsListener {
 
                         final Cards finalPlayed = played;
                         final Giocatore finalCurrent = current;
+
+                        // Usa CountDownLatch per aspettare il completamento dell'animazione
+                        final CountDownLatch animationLatch = new CountDownLatch(1);
+
                         SwingUtilities.invokeLater(() -> {
-                            view.showCardPlayed(current, played);
+                            view.showCardPlayed(current, played, () -> {
+                                // Notifica il completamento dell'animazione
+                                animationLatch.countDown();
+                            });
                             view.log(finalCurrent.getName() + " ha giocato " + finalPlayed);
-                            view.refresh();
+                            // Non chiamare refresh qui - verrà fatto dopo l'animazione
                         });
+
+                        // Aspetta che l'animazione sia completata
+                        try {
+                            animationLatch.await();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            // L'eccezione è già gestita dal try-catch esterno
+                            return;
+                        }
 
 
                         // Se la presa/trick è stata completata
                         if (gameState.getTrickCards().size() == gameState.getPlayers().size()) {
-                            Thread.sleep(1500);
+                            // Aspetta un momento per vedere tutte le carte sul tavolo
+                            Thread.sleep(800);
 
                             final Giocatore trickWinner = gameState.getLastTrickWinner();
                             final int cardsWon = gameState.getLastTrickCardsWon();

@@ -17,13 +17,32 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.awt.CardLayout;
 
+/**
+ * Classe principale dell'applicazione JTressette.
+ * Gestisce l'inizializzazione del gioco, la navigazione tra i menu e l'avvio delle partite.
+ * Coordina le interazioni tra il modello (Model), la vista (View) e il controller (Controller)
+ * seguendo il pattern architetturale MVC.
+ */
 public class JTressette {
 
+    /** Logger per la registrazione degli eventi dell'applicazione */
     private static final Logger LOG = Logger.getLogger(JTressette.class.getName());
+
+    /** Frame principale del menu dell'applicazione */
     private final MenuFrame frame;
+
+    /** Controller per la gestione del profilo utente */
     private final ProfileController profileController;
+
+    /** Gestore delle impostazioni del gioco */
     private final MenuImpostazioni impostazioni;
 
+    /**
+     * Costruttore della classe JTressette.
+     * Inizializza tutti i componenti principali dell'applicazione:
+     * storage dei dati, profilo utente, impostazioni, interfaccia grafica,
+     * listener del mouse e timer per il repaint.
+     */
     public JTressette() {
         // Inizializza storage e controller (Model + Controller)
         StorageProfile storage = new StorageProfile();
@@ -43,6 +62,15 @@ public class JTressette {
         setupRepaintTimer();
     }
 
+    /**
+     * Configura il listener del mouse per gestire i click sulle opzioni del menu principale.
+     * Gestisce le seguenti opzioni (basate su indice 0-based):
+     * - 0: Avvia nuova partita
+     * - 1: Mostra regole del gioco
+     * - 2: Accesso al profilo utente
+     * - 3: Impostazioni del gioco
+     * - 4: Uscita dall'applicazione
+     */
     // Gestione click mouse menu principale
     // Sostituisci il metodo setupMouseListener() nel tuo JTressette.java con questa versione
     private void setupMouseListener() {
@@ -93,6 +121,10 @@ public class JTressette {
         });
     }
 
+    /**
+     * Aggiunge il pannello delle impostazioni al CardLayout del frame principale.
+     * Permette la navigazione verso la schermata di configurazione del gioco.
+     */
     private void addSettingsPanelCard() {
         JPanel cards = frame.getCardsPanel(); // Usa il vero pannello card
         ViewImpostazioni panelImpostazioni = new ViewImpostazioni(impostazioni, frame::showMenu);
@@ -100,12 +132,22 @@ public class JTressette {
     }
 
 
+    /**
+     * Mostra la schermata delle impostazioni utilizzando il CardLayout.
+     * Effettua il passaggio alla card "IMPOSTAZIONI".
+     */
     private void showSettings() {
         JPanel cards = frame.getCardsPanel();
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "IMPOSTAZIONI");
     }
 
+    /**
+     * Gestisce l'avvio di una nuova partita.
+     * Mostra il dialogo di setup per la selezione dei giocatori,
+     * gestisce la transizione della musica, inizializza il GameController
+     * e registra la partita al termine del gioco.
+     */
     private void onStartGame() {
         UserProfile profile = profileController.getProfile();
         GameSetup setup = new GameSetup(frame, profile);
@@ -146,11 +188,23 @@ public class JTressette {
         }));
     }
 
+    /**
+     * Configura il timer per il repaint periodico del pannello principale.
+     * Il timer si attiva ogni 16 millisecondi (~60 FPS) per garantire
+     * un'animazione fluida dell'interfaccia utente.
+     */
     private void setupRepaintTimer() {
         Timer timer = new Timer(16, e -> frame.panel.repaint());
         timer.start();
     }
 
+    /**
+     * Metodo principale che avvia l'applicazione JTressette.
+     * Crea l'istanza dell'applicazione sul thread di dispatching degli eventi Swing (EDT)
+     * per garantire la thread-safety delle operazioni sulla GUI.
+     *
+     * @param args argomenti della linea di comando (non utilizzati)
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(JTressette::new);
     }

@@ -3,42 +3,82 @@ package View.Menu;
 import java.awt.*;
 
 /**
- * Rappresenta un'opzione del menu principale con stile moderno.
- * Include effetti di ombra, hover con gradiente e font eleganti.
+ * Rappresenta una singola opzione selezionabile nel menu principale.
+ * Gestisce la renderizzazione visuale con effetti moderni come:
+ * <ul>
+ *   <li>Gradienti dorati per le opzioni selezionate</li>
+ *   <li>Effetti glow e ombreggiature</li>
+ *   <li>Indicatori di selezione animati (frecce)</li>
+ *   <li>Scaling dinamico per adattarsi a diverse risoluzioni</li>
+ * </ul>
  *
- * Ora supporta uno scale factor via setScale(double) così il testo e gli indicatori
- * possono crescere/rimpicciolire in base alla dimensione della pagina.
+ * <p>Lo stile visivo è ispirato ai menu dei giochi moderni con
+ * palette di colori dorata e crema su sfondo scuro.</p>
+ *
+ * <p>Supporta lo scaling dell'UI tramite il metodo setScale() per
+ * adattarsi a schermi di dimensioni diverse mantenendo proporzioni coerenti.</p>
  */
 public class MenuOption {
 
+    /** Testo visualizzato per questa opzione */
     public String text;
-    public int y;       // posizione verticale dell'opzione
-    public int x = 100; // posizione orizzontale del testo (modificabile)
 
-    // Colori moderni per il menu
+    /** Posizione verticale (coordinata y) dell'opzione sullo schermo */
+    public int y;
+
+    /** Posizione orizzontale (coordinata x) del testo */
+    public int x = 100;
+
+    /** Colore oro primario per testo selezionato */
     private static final Color GOLD_PRIMARY = new Color(255, 215, 0);
+
+    /** Colore oro chiaro per gradienti */
     private static final Color GOLD_LIGHT = new Color(255, 235, 100);
+
+    /** Colore crema per testo non selezionato */
     private static final Color TEXT_CREAM = new Color(255, 248, 220);
+
+    /** Colore ombra per testo selezionato */
     private static final Color SHADOW_COLOR = new Color(0, 0, 0, 150);
+
+    /** Colore effetto glow */
     private static final Color GLOW_COLOR = new Color(255, 215, 0, 80);
+
+    /** Colore ombra per testo non selezionato */
     private static final Color UNSELECTED_SHADOW = new Color(0, 0, 0, 100);
 
-    // Font base (dimensione base, poi scalata)
+    /** Nome font utilizzato per il menu */
     private static final String MENU_FONT_FAMILY = "Georgia";
+
+    /** Dimensione base del font (prima dello scaling) */
     private static final int MENU_FONT_BASE_SIZE = 32;
+
+    /** Dimensione base del font per opzioni selezionate */
     private static final int MENU_FONT_SELECTED_BASE_SIZE = 36;
+
+    /** Stile del font (grassetto) */
     private static final int MENU_FONT_STYLE = Font.BOLD;
 
-    // scale factor (1.0 = base size). Viene impostato da HomeMenu prima di disegnare.
+    /** Fattore di scala dell'UI (1.0 = dimensione base) */
     private double uiScale = 1.0;
 
+    /**
+     * Costruttore di MenuOption.
+     *
+     * @param text il testo da visualizzare per questa opzione
+     * @param y la posizione verticale dell'opzione
+     */
     public MenuOption(String text, int y) {
         this.text = text;
         this.y = y;
     }
 
     /**
-     * Set UI scale for this option. Typical values >= 0.6 and <= 2.0.
+     * Imposta il fattore di scala per l'UI di questa opzione.
+     * Valori tipici vanno da 0.6 a 2.0.
+     * Valori non validi (<= 0) vengono normalizzati a 1.0.
+     *
+     * @param scale fattore di scala da applicare
      */
     public void setScale(double scale) {
         if (scale <= 0) scale = 1.0;
@@ -46,15 +86,22 @@ public class MenuOption {
     }
 
     /**
-     * Safe getter per uiScale: evita valori non validi e ritorna 1.0 come fallback.
+     * Restituisce il fattore di scala corrente in modo sicuro.
+     * Se il valore interno non è valido, restituisce 1.0 come fallback.
+     *
+     * @return fattore di scala valido (sempre > 0)
      */
     public double uiScaleSafe() {
         return uiScale > 0 ? uiScale : 1.0;
     }
 
     /**
-     * Restituisce la larghezza in pixel prevista per questa opzione (usando la scala applicata).
-     * Utile per dimensionare il box che la conterrà.
+     * Calcola la larghezza preferita in pixel per questa opzione.
+     * Utilizza il font scalato per determinare lo spazio necessario.
+     * Utile per il layout e il dimensionamento dei container.
+     *
+     * @param g2d contesto grafico per misurare il testo
+     * @return larghezza in pixel necessaria per il testo
      */
     public int getPreferredWidth(Graphics2D g2d) {
         Font f = new Font(MENU_FONT_FAMILY, MENU_FONT_STYLE, Math.max(8, (int) Math.round(MENU_FONT_BASE_SIZE * uiScale)));
@@ -63,7 +110,11 @@ public class MenuOption {
     }
 
     /**
-     * Restituisce l'altezza di riga prevista per questa opzione usando la scala applicata.
+     * Calcola l'altezza della linea di testo prevista per questa opzione.
+     * Utilizza il font scalato per determinare l'altezza.
+     *
+     * @param g2d contesto grafico per misurare il testo
+     * @return altezza in pixel della linea di testo
      */
     public int getLineHeight(Graphics2D g2d) {
         Font f = new Font(MENU_FONT_FAMILY, MENU_FONT_STYLE, Math.max(8, (int) Math.round(MENU_FONT_BASE_SIZE * uiScale)));
@@ -71,6 +122,17 @@ public class MenuOption {
         return fm.getHeight();
     }
 
+    /**
+     * Disegna l'opzione del menu con tutti gli effetti visuali.
+     * Applica stili diversi in base allo stato di selezione:
+     * <ul>
+     *   <li><b>Selezionata:</b> gradiente oro, effetto glow, ombra profonda, indicatore freccia</li>
+     *   <li><b>Non selezionata:</b> testo crema con ombra leggera</li>
+     * </ul>
+     *
+     * @param g contesto grafico per il disegno
+     * @param selected true se l'opzione è attualmente selezionata
+     */
     public void draw(Graphics g, boolean selected) {
         Graphics2D g2d = (Graphics2D) g;
 
@@ -129,7 +191,18 @@ public class MenuOption {
     }
 
     /**
-     * Disegna un indicatore di selezione (freccia stilizzata), scalato con uiScale.
+     * Disegna l'indicatore di selezione (freccia stilizzata) accanto all'opzione.
+     * L'indicatore viene scalato in base a uiScale e include:
+     * <ul>
+     *   <li>Forma triangolare (freccia verso destra)</li>
+     *   <li>Gradiente dorato</li>
+     *   <li>Ombra</li>
+     *   <li>Bordo sottile bianco</li>
+     * </ul>
+     *
+     * @param g2d contesto grafico 2D per il disegno avanzato
+     * @param ix coordinata x di partenza dell'indicatore
+     * @param iy coordinata y centrale dell'indicatore
      */
     private void drawSelectionIndicator(Graphics2D g2d, int ix, int iy) {
         int w = Math.max(8, (int) Math.round(18 * uiScale));
