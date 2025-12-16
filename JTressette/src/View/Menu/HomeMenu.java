@@ -176,6 +176,13 @@ public class HomeMenu extends JPanel implements ProfileListener {
         SwingUtilities.invokeLater(this::adjustResponsiveLayout);
     }
 
+    /**
+     * Crea il pannello superiore moderno con avatar, nome utente e badge livello.
+     * Il pannello include un contenitore cliccabile che permette l'accesso rapido al profilo.
+     * L'avatar è visualizzato con una cornice dorata e il livello in un badge circolare.
+     *
+     * @return pannello superiore configurato con elementi profilo
+     */
     private JPanel createModernTopPanel() {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         topPanel.setOpaque(false);
@@ -239,6 +246,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         return topPanel;
     }
 
+    /**
+     * Adatta il layout responsivo in base alle dimensioni della finestra.
+     * Ridimensiona dinamicamente avatar, badge livello e font del nome utente
+     * mantenendo proporzioni coerenti con lo scale factor calcolato.
+     */
     private void adjustResponsiveLayout() {
         int w = Math.max(1, getWidth());
         double scale = getClampedScale();
@@ -259,6 +271,13 @@ public class HomeMenu extends JPanel implements ProfileListener {
         repaint();
     }
 
+    /**
+     * Configura i listener del mouse per gestire hover e click sulle opzioni del menu.
+     * Il metodo registra listener per movimento e click del mouse, gestendo:
+     * - Evidenziazione opzioni durante l'hover
+     * - Cambio cursore quando si passa sopra un'opzione
+     * - Registrazione della selezione al click
+     */
     private void setupMouseListeners() {
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override public void mouseMoved(MouseEvent e) {
@@ -296,7 +315,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
     }
 
     /**
-     * Compute raw scale and clamp it to a safe range [0.6, 1.6].
+     * Calcola il fattore di scala adattivo e lo limita a un intervallo sicuro [0.6, 1.6].
+     * Il fattore di scala viene calcolato in base al rapporto tra dimensioni correnti
+     * e dimensioni di design, utilizzando il minimo tra scala orizzontale e verticale.
+     *
+     * @return fattore di scala limitato nell'intervallo [0.6, 1.6]
      */
     private double getClampedScale() {
         int w = Math.max(1, getWidth());
@@ -307,7 +330,18 @@ public class HomeMenu extends JPanel implements ProfileListener {
         return Math.max(0.6, Math.min(1.6, raw));
     }
 
+    /**
+     * Restituisce l'indice dell'opzione attualmente selezionata.
+     *
+     * @return indice dell'opzione selezionata (1-based, 0 se nessuna selezione)
+     */
     public int getSelectedOption() { return selectedOption; }
+    
+    /**
+     * Imposta il callback da eseguire quando si clicca sull'area profilo.
+     *
+     * @param r runnable da eseguire al click sul profilo
+     */
     public void setOnProfileClick(Runnable r) { this.onProfileClick = r; }
 
     @Override
@@ -339,6 +373,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         });
     }
 
+    /**
+     * Carica l'immagine di sfondo del menu dalle risorse.
+     * L'immagine viene cercata nel percorso /res/default_images/sfondo_1.jpg.
+     * In caso di errore, viene registrato un messaggio di log ma l'applicazione continua.
+     */
     private void loadBackground() {
         try (java.io.InputStream is = getClass().getResourceAsStream("/res/default_images/sfondo_1.jpg")) {
             if (is == null) { LOGGER.severe("Immagine di sfondo non trovata"); return; }
@@ -390,6 +429,15 @@ public class HomeMenu extends JPanel implements ProfileListener {
         drawFooter(g2d, w, h, clamped);
     }
 
+    /**
+     * Disegna l'effetto vignetta radiale sullo sfondo.
+     * L'effetto crea un gradiente radiale che scurisce i bordi dell'immagine,
+     * focalizzando l'attenzione verso il centro dello schermo.
+     *
+     * @param g2d contesto grafico 2D per il disegno
+     * @param w larghezza dell'area da disegnare
+     * @param h altezza dell'area da disegnare
+     */
     private void drawVignette(Graphics2D g2d, int w, int h) {
         int centerX = w/2;
         int centerY = h/2;
@@ -401,6 +449,17 @@ public class HomeMenu extends JPanel implements ProfileListener {
         g2d.setPaint(prev);
     }
 
+    /**
+     * Disegna il pannello contenitore del menu con ombre, gradienti e bordi.
+     * Il pannello si adatta dinamicamente alle dimensioni della finestra e al contenuto testuale.
+     * Include effetti visuali come ombra esterna, gradiente verde, bordo dorato e bordo interno.
+     * Posiziona automaticamente le opzioni del menu all'interno del pannello.
+     *
+     * @param g2d contesto grafico 2D per il disegno
+     * @param w larghezza totale della finestra
+     * @param h altezza totale della finestra
+     * @param scale fattore di scala per adattamento responsive
+     */
     private void drawMenuPanel(Graphics2D g2d, int w, int h, double scale) {
         // Font più grande per le opzioni
         int optionBase = 32;
@@ -489,6 +548,16 @@ public class HomeMenu extends JPanel implements ProfileListener {
         }
     }
 
+    /**
+     * Disegna il titolo "JTressette" e il sottotitolo con effetti grafici avanzati.
+     * Include ombre multiple, effetto glow dorato, gradiente oro sul testo principale
+     * e un sottotitolo descrittivo. Le dimensioni si adattano al fattore di scala delle opzioni.
+     *
+     * @param g2d contesto grafico 2D per il disegno
+     * @param w larghezza totale della finestra
+     * @param h altezza totale della finestra
+     * @param optionScale fattore di scala applicato alle opzioni (usato per calcolare dimensione titolo)
+     */
     private void drawTitleUsingOptionSize(Graphics2D g2d, int w, int h, double optionScale) {
         int optionBase = 32;
         // Aumentato il moltiplicatore da 1.0 a 1.8 per un titolo molto più grande
@@ -543,6 +612,16 @@ public class HomeMenu extends JPanel implements ProfileListener {
         g2d.drawString(subtitle, subX, subY);
     }
 
+    /**
+     * Disegna il footer decorativo nella parte inferiore dello schermo.
+     * Crea una linea orizzontale con gradiente dorato che va dal centro verso i bordi,
+     * con trasparenza che aumenta verso le estremità.
+     *
+     * @param g2d contesto grafico 2D per il disegno
+     * @param w larghezza totale della finestra
+     * @param h altezza totale della finestra
+     * @param scale fattore di scala per adattamento responsive
+     */
     private void drawFooter(Graphics2D g2d, int w, int h, double scale) {
         int footerY = h - (int)Math.round(40*scale);
         GradientPaint lg = new GradientPaint(Math.max(80, w/12), footerY, new Color(255,215,0,0), w/2, footerY, new Color(255,215,0,100));
