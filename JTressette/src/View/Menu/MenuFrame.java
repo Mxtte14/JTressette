@@ -10,17 +10,48 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * MenuFrame: contiene le card e gestisce la navigazione.
- * Ora è "View" e riceve il ProfileController per passarlo alle sottoview.
+ * Frame principale del menu dell'applicazione JTressette.
+ * Gestisce la navigazione tra le diverse schermate utilizzando un CardLayout
+ * e coordina la riproduzione dell'audio di sottofondo.
+ *
+ * <p>Schermate gestite:</p>
+ * <ul>
+ *   <li><b>MENU:</b> menu principale (HomeMenu)</li>
+ *   <li><b>PROFILE:</b> profilo utente (ProfileMenu)</li>
+ *   <li><b>RULES:</b> regole del gioco (RulesPage)</li>
+ *   <li><b>IMPOSTAZIONI:</b> configurazioni (ViewImpostazioni)</li>
+ * </ul>
+ *
+ * <p>Implementa SettingsListener per reagire ai cambiamenti di configurazione
+ * come volume, fullscreen e altre opzioni di gioco.</p>
+ *
+ * @author JTressette Team
+ * @version 1.0
  */
 public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListener {
 
-    public final HomeMenu panel; // mantiene nome e visibilità originale per compatibilità
+    /** Pannello principale del menu home (public per compatibilità con codice esistente) */
+    public final HomeMenu panel;
+    
+    /** Container con CardLayout per la navigazione tra schermate */
     private final JPanel cards;
+    
+    /** Pannello del profilo utente */
     private ProfileMenu profilePanel;
+    
+    /** Pannello delle regole del gioco */
     private RulesPage rulesPanel;
+    
+    /** Gestore centralizzato dell'audio */
     private final AudioManager audioManager = new AudioManager();
 
+    /**
+     * Costruttore del frame principale.
+     * Inizializza tutte le schermate, la musica di sottofondo e registra i listener.
+     * Configura le dimensioni della finestra e la rende visibile.
+     *
+     * @param controller il controller del profilo utente per gestire i dati dell'utente
+     */
     public MenuFrame(ProfileController controller) {
         super("JTressette");
 
@@ -63,15 +94,18 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
     }
 
     /**
-     * Get the audio manager for audio control.
-     * @return The AudioManager instance
+     * Restituisce il gestore audio per controllo esterno.
+     * Permette ad altri componenti di interagire con il sistema audio.
+     *
+     * @return istanza di AudioManager
      */
     public AudioManager getAudioManager() {
         return audioManager;
     }
 
     /**
-     * Play menu selection click sound.
+     * Riproduce il suono di click per confermare le selezioni del menu.
+     * Il suono viene riprodotto solo se gli effetti sonori sono abilitati nelle impostazioni.
      */
     public void playMenuClick() {
         // Only play if sound effects are enabled
@@ -81,14 +115,16 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
     }
 
     /**
-     * Stop the menu background music (for transitioning to game).
+     * Ferma la musica di sottofondo del menu.
+     * Utilizzato quando si passa a una schermata di gioco con musica propria.
      */
     public void stopMenuMusic() {
         audioManager.stop();
     }
 
     /**
-     * Resume menu background music.
+     * Riprende la riproduzione della musica di sottofondo del menu.
+     * Utilizzato quando si torna al menu dalla partita o da altre schermate.
      */
     public void resumeMenuMusic() {
         audioManager.setFile(AudioManager.BACKGROUND_MENU);
@@ -96,8 +132,11 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
     }
 
     /**
-     * Transition from menu music to game music with fade effect.
-     * @param onTransitionComplete Callback when transition is complete
+     * Gestisce la transizione da musica del menu a musica di gioco con effetto fade.
+     * La musica del menu viene gradualmente ridotta (fade-out) e poi viene eseguito
+     * il callback fornito per avviare la musica di gioco.
+     *
+     * @param onTransitionComplete callback da eseguire al completamento del fade-out (può essere null)
      */
     public void transitionToGameMusic(Runnable onTransitionComplete) {
         audioManager.fadeOut(800, () -> {
@@ -107,10 +146,20 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
         });
     }
 
+    /**
+     * Restituisce il pannello principale con CardLayout.
+     * Permette l'accesso al container delle card per aggiungere nuove schermate.
+     *
+     * @return il pannello con CardLayout che contiene tutte le schermate
+     */
     public JPanel getCardsPanel() {
         return cards;
     }
 
+    /**
+     * Mostra la schermata delle impostazioni.
+     * Ferma la musica durante la navigazione alla schermata impostazioni.
+     */
     public void showSettings() {
         // Implementa la logica per mostrare le impostazioni se necessario
         audioManager.stop();
@@ -149,6 +198,12 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
         }
     }
 
+    /**
+     * Callback invocato quando le impostazioni vengono modificate.
+     * Applica i cambiamenti di volume all'audio e aggiorna la modalità fullscreen.
+     *
+     * @param settings l'oggetto MenuImpostazioni con i nuovi valori
+     */
     @Override
     public void onSettingsChanged(MenuImpostazioni settings) {
         // Apply volume changes
@@ -158,12 +213,25 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
         updateFullscreen(settings);
     }
 
+    /**
+     * Applica il volume corrente delle impostazioni all'audio manager.
+     * Converte il volume da scala 0-100 a scala 0.0-MAX_VOLUME_SCALE.
+     *
+     * @param settings oggetto impostazioni contenente il livello del volume
+     */
     private void updateAudioVolume(MenuImpostazioni settings) {
         // Convert 0-100 volume to 0.0-MAX_VOLUME_SCALE range (AudioManager's max safe volume)
         float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
         audioManager.setVolume(volume);
     }
 
+    /**
+     * Applica o rimuove la modalità fullscreen in base alle impostazioni.
+     * Gestisce la transizione tra modalità finestra e schermo intero,
+     * ricreando la finestra per applicare le modifiche.
+     *
+     * @param settings oggetto impostazioni contenente lo stato fullscreen
+     */
     private void updateFullscreen(MenuImpostazioni settings) {
         SwingUtilities.invokeLater(() -> {
             GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
