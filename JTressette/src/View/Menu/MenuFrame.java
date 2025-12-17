@@ -130,6 +130,10 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
         return cards;
     }
 
+    /**
+     * Mostra la schermata delle impostazioni.
+     * Ferma la riproduzione audio del menu.
+     */
     public void showSettings() {
         // Implementa la logica per mostrare le impostazioni se necessario
         audioManager.stop();
