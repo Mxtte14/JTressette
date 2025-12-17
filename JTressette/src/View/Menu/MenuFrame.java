@@ -15,7 +15,7 @@ import java.awt.*;
  */
 public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListener {
 
-    /** Pannello del menu principale */
+    /** Pannello del menu principale (mantiene nome e visibilità originale per compatibilità) */
     public final HomeMenu panel;
     
     /** Pannello contenitore con CardLayout */
