@@ -33,6 +33,14 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     private final ExecutorService gameExecutor;
     private volatile boolean gameRunning = false;
 
+    /**
+     * Costruttore del controller del gioco.
+     * Inizializza lo stato del gioco, l'audio manager e la vista.
+     *
+     * @param players lista dei giocatori partecipanti alla partita
+     * @param onGameEnd callback da eseguire al termine della partita
+     * @throws IllegalArgumentException se la lista dei giocatori è null o vuota
+     */
     public GameController(List<Giocatore> players, Runnable onGameEnd) {
         this.onGameEnd = onGameEnd;
 
@@ -240,7 +248,10 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Quando il giocatore umano gioca una carta (col click sulla UI).
+     * Gestisce la giocata di una carta da parte del giocatore umano.
+     * Invia la scelta della carta al giocatore umano per la processazione.
+     *
+     * @param cardIndex l'indice della carta selezionata nella mano del giocatore
      */
     public void onCardPlayed(int cardIndex) {
         if (humanPlayer != null) {
@@ -318,7 +329,10 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Ottieni il game record per lo storico.
+     * Crea e restituisce il record della partita per lo storico.
+     * Include informazioni su data, avversari, vincitore, punteggi ed esperienza.
+     *
+     * @return il record della partita appena conclusa
      */
     public GamesRecord getGameRecord() {
         String date = Instant.now().toString();
@@ -358,6 +372,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         return experience;
     }
 
+    /**
+     * Restituisce la vista del gioco.
+     *
+     * @return la vista del gioco associata a questo controller
+     */
     public GameView getView() {
         return view;
     }

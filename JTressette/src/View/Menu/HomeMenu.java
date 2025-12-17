@@ -29,9 +29,16 @@ public class HomeMenu extends JPanel implements ProfileListener {
     private static final int DESIGN_WIDTH = 1100;
     private static final int DESIGN_HEIGHT = 720;
 
+    /** Immagine di sfondo del menu */
     BufferedImage background;
+    
+    /** Array di opzioni del menu */
     public MenuOption[] options;
+    
+    /** Cursore per la navigazione del menu */
     public Controller.Game.Cursor cursor;
+    
+    /** Indice dell'opzione attualmente selezionata */
     private int selectedOption = 0;
 
     private static final Color OVERLAY_COLOR = new Color(0, 0, 0, 100);
@@ -54,12 +61,26 @@ public class HomeMenu extends JPanel implements ProfileListener {
     private static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 56);
     private static final Font SUBTITLE_FONT = new Font("Georgia", Font.ITALIC, 18);
 
+    /** Etichetta per l'avatar piccolo nell'angolo */
     private JLabel avatarSmallLabel;
+    
+    /** Etichetta per il nome utente nell'angolo */
     private JLabel nameSmallLabel;
+    
+    /** Etichetta per il badge del livello */
     private JLabel levelBadgeLabel;
+    
+    /** Callback da eseguire quando si clicca sul profilo */
     private Runnable onProfileClick;
+    
+    /** Dimensione dell'avatar in pixel */
     private int avatarSize = 46;
 
+    /**
+     * Costruttore del menu principale.
+     *
+     * @param controller il controller del profilo per gestire i dati utente
+     */
     public HomeMenu(ProfileController controller) {
         loadBackground();
 
@@ -232,7 +253,18 @@ public class HomeMenu extends JPanel implements ProfileListener {
         return Math.max(0.6, Math.min(1.6, raw));
     }
 
+    /**
+     * Restituisce l'indice dell'opzione attualmente selezionata.
+     *
+     * @return l'indice dell'opzione selezionata (0-based)
+     */
     public int getSelectedOption() { return selectedOption; }
+    
+    /**
+     * Imposta il callback da eseguire quando si clicca sul profilo.
+     *
+     * @param r il callback da eseguire
+     */
     public void setOnProfileClick(Runnable r) { this.onProfileClick = r; }
 
     @Override

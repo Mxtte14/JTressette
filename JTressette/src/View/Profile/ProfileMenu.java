@@ -19,16 +19,41 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Pannello per la gestione del profilo utente.
+ * Visualizza e permette la modifica delle informazioni del profilo,
+ * inclusi nome utente, avatar, statistiche e storico delle partite.
+ * Implementa ProfileListener per ricevere aggiornamenti sul profilo.
+ */
 public class ProfileMenu extends JPanel implements ProfileListener {
+    /** Pannello contenitore con CardLayout per la navigazione */
     private final JPanel cards;
+    
+    /** Controller del profilo per gestire le operazioni */
     private final ProfileController controller;
+    
+    /** Campo di testo per il nome utente */
     private JTextField nameField;
+    
+    /** Etichetta per visualizzare l'avatar */
     private JLabel avatarLabel;
+    
+    /** Tabella per lo storico delle partite */
     private JTable historyTable;
+    
+    /** Modello della tabella per lo storico */
     private DefaultTableModel tableModel;
+    
+    /** Etichetta per le statistiche del giocatore */
     private JLabel statsLabel;
+    
+    /** Etichetta per il livello del giocatore */
     private JLabel levelLabel;
+    
+    /** Barra di progresso per l'esperienza */
     private JProgressBar expBar;
+    
+    /** Etichetta per visualizzare i punti esperienza */
     private JLabel expLabel;
 
     // Modern colors - Updated to match HomeMenu style (green, gold, black)
@@ -43,6 +68,12 @@ public class ProfileMenu extends JPanel implements ProfileListener {
     private static final Color LEVEL_BADGE_BG = new Color(231, 76, 60); // Red badge
     private static final Color EXP_BAR_COLOR = new Color(255, 215, 0); // Gold progress bar
 
+    /**
+     * Costruttore del menu profilo.
+     *
+     * @param cards il pannello contenitore con CardLayout per la navigazione
+     * @param controller il controller del profilo per gestire le operazioni sul profilo
+     */
     public ProfileMenu(JPanel cards, ProfileController controller) {
         this.cards = cards;
         this.controller = controller;
@@ -533,6 +564,10 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         }
     }
 
+    /**
+     * Aggiorna l'interfaccia con i dati dal modello.
+     * Ricarica il profilo dal controller e aggiorna tutti i componenti visivi.
+     */
     public void refreshFromModel() {
         UserProfile p = controller.getProfile();
         if (p != null) onProfileUpdated(p);

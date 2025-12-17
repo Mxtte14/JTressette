@@ -18,15 +18,33 @@ import java.util.Random;
  * Dopo che l'utente preme "Avvia" la dialog si chiude e getPlayers() restituisce la lista.
  */
 public class GameSetup extends JDialog {
+    /** Etichetta per il nome del giocatore */
     private final JLabel nameLabel;
+    
+    /** Combo box per selezionare il numero di bot */
     private final JComboBox<Integer> nbBox = new JComboBox<>(new Integer[]{1,2,3});
+    
+    /** Pannello contenente i controlli per i bot */
     private final JPanel botsPanel = new JPanel(new GridLayout(3, 1, 4, 4));
+    
+    /** Lista dei campi di testo per i nomi dei bot */
     private final List<JTextField> botNameFields = new ArrayList<>();
+    
+    /** Lista dei combo box per le difficoltà dei bot */
     private final List<JComboBox<Difficoltà>> botDiffBoxes = new ArrayList<>();
 
+    /** Lista dei giocatori configurati */
     private List<Giocatore> players = null;
+    
+    /** Nome del giocatore umano */
     private final String playerName;
 
+    /**
+     * Costruttore del dialogo di configurazione della partita.
+     *
+     * @param owner la finestra proprietaria del dialogo
+     * @param profile il profilo utente da cui ottenere il nome del giocatore
+     */
     public GameSetup(Window owner, UserProfile profile) {
         super(owner, "Impostazioni partita", ModalityType.APPLICATION_MODAL);
         // Get player name from profile, or use default
@@ -121,7 +139,10 @@ public class GameSetup extends JDialog {
     }
 
     /**
-     * Mostra la dialog (modal). Restituisce la lista di players o null se annullato.
+     * Mostra la dialog modale e restituisce la lista di giocatori configurati.
+     * La lista include il giocatore umano e i bot configurati con nome e difficoltà.
+     *
+     * @return la lista di giocatori configurati, o null se la dialog viene annullata
      */
     public List<Giocatore> showDialogAndGetPlayers() {
         setVisible(true);

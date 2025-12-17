@@ -15,12 +15,26 @@ import java.awt.*;
  */
 public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListener {
 
-    public final HomeMenu panel; // mantiene nome e visibilità originale per compatibilità
+    /** Pannello del menu principale */
+    public final HomeMenu panel;
+    
+    /** Pannello contenitore con CardLayout */
     private final JPanel cards;
+    
+    /** Pannello del profilo */
     private ProfileMenu profilePanel;
+    
+    /** Pannello delle regole */
     private RulesPage rulesPanel;
+    
+    /** Gestore audio per suoni ed effetti */
     private final AudioManager audioManager = new AudioManager();
 
+    /**
+     * Costruttore della finestra del menu.
+     *
+     * @param controller il controller del profilo per gestire i dati utente
+     */
     public MenuFrame(ProfileController controller) {
         super("JTressette");
 
@@ -107,6 +121,11 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
         });
     }
 
+    /**
+     * Restituisce il pannello contenitore con CardLayout.
+     *
+     * @return il pannello con CardLayout per la navigazione
+     */
     public JPanel getCardsPanel() {
         return cards;
     }

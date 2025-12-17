@@ -76,7 +76,7 @@ public class MenuOption {
     /**
      * Imposta il fattore di scala per l'UI di questa opzione.
      * Valori tipici vanno da 0.6 a 2.0.
-     * Valori non validi (<= 0) vengono normalizzati a 1.0.
+     * Valori non validi (&lt;= 0) vengono normalizzati a 1.0.
      *
      * @param scale fattore di scala da applicare
      */

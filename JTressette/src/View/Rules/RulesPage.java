@@ -19,7 +19,10 @@ import java.net.URL;
  */
 public class RulesPage extends JPanel {
 
+    /** Pannello contenitore con CardLayout per la navigazione */
     private final JPanel cards;
+    
+    /** Editor pane per visualizzare le regole in formato HTML */
     private final JEditorPane htmlPane;
 
     // colori ispirati al feltro da poker e agli accenti delle carte
@@ -29,6 +32,11 @@ public class RulesPage extends JPanel {
     private static final Color TEXT_CREME = new Color(245, 235, 221); // crema per il testo
     private static final Color TITLE_GOLD = new Color(255, 215, 0);   // oro per il titolo
 
+    /**
+     * Costruttore della pagina delle regole.
+     *
+     * @param cards il pannello contenitore con CardLayout per la navigazione
+     */
     public RulesPage(JPanel cards) {
         this.cards = cards;
         setOpaque(false); // lasciamo vedere lo sfondo sotto l'overlay

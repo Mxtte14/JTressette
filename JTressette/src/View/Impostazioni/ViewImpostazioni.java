@@ -6,11 +6,27 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * Pannello per la gestione delle impostazioni del gioco.
+ * Permette la configurazione di volume, effetti, visualizzazione punteggi,
+ * messaggi e modalità fullscreen.
+ */
 public class ViewImpostazioni extends JPanel {
+    /** Istanza delle impostazioni del menu */
     private final MenuImpostazioni settings;
+    
+    /** Slider per il controllo del volume */
     private final JSlider volumeSlider;
+    
+    /** Checkbox per abilitare/disabilitare effetti, punteggi, messaggi e fullscreen */
     private final JCheckBox effectsBox, showScoreBox, showMessagesBox, fullscreenBox;
 
+    /**
+     * Costruttore del pannello delle impostazioni.
+     *
+     * @param settings le impostazioni del menu da configurare
+     * @param onBack callback da eseguire quando si preme il pulsante Indietro
+     */
     public ViewImpostazioni(MenuImpostazioni settings, Runnable onBack) {
         this.settings = settings != null ? settings : MenuImpostazioni.getInstance();
 
@@ -94,7 +110,10 @@ public class ViewImpostazioni extends JPanel {
         return btn;
     }
 
-    // Card stile HomeMenu
+    /**
+     * Pannello personalizzato con effetto vetro trasparente.
+     * Utilizzato per creare un overlay semitrasparente con gradienti e bordi decorativi.
+     */
     public static class GlassPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
