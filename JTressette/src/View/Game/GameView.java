@@ -28,65 +28,136 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class GameView extends JFrame {
 
-    // Colors inspired by poker table felt
+    /** Colore verde per lo sfondo del tavolo */
     private static final Color FELT_GREEN = new Color(26, 117, 65);
+
+    /** Colore verde scuro per lo sfondo del tavolo */
     private static final Color FELT_DARK = new Color(18, 85, 47);
+
+    /** Colore bordo del tavolo */
     private static final Color FELT_BORDER = new Color(100, 70, 40);
+
+    /** Colore testo oro */
     private static final Color TEXT_GOLD = new Color(255, 215, 0);
+
+    /** Colore testo bianco */
     private static final Color TEXT_WHITE = Color.WHITE;
 
-    // Dimensioni carte anche dinamico
+    /** Larghezza standard di una carta in pixel */
     private static final int CARD_WIDTH = 60;
+    
+    /** Altezza standard di una carta in pixel */
     private static final int CARD_HEIGHT = 86;
-    private static final int HAND_GAP = 5; // gap between hand cards
+    
+    /** Spazio tra le carte nella mano del giocatore */
+    private static final int HAND_GAP = 5;
+    
+    /** Larghezza minima delle carte nella mano */
     private static final int HAND_CARD_MIN_WIDTH = 45;
+    
+    /** Larghezza massima delle carte nella mano */
     private static final int HAND_CARD_MAX_WIDTH = 85;
-    private int handCardWidth = 60;  // default
+    
+    /** Larghezza effettiva delle carte nella mano del giocatore */
+    private int handCardWidth = 60;
+    
+    /** Altezza effettiva delle carte nella mano del giocatore */
     private int handCardHeight = (int) Math.round(handCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
-    // Side (bot) card size (will be computed relative to handCardWidth)
+    /** Larghezza delle carte degli avversari laterali */
     private int sideCardWidth = (int) (handCardWidth * 0.78);
+    
+    /** Altezza delle carte degli avversari laterali */
     private int sideCardHeight = (int) Math.round(sideCardWidth * ((double) CARD_HEIGHT / CARD_WIDTH));
 
-    // Table sizing constraints
+    /** Larghezza minima del tavolo da gioco */
     private static final int TABLE_MIN_W = 540;
+    
+    /** Altezza minima del tavolo da gioco */
     private static final int TABLE_MIN_H = 240;
+    
+    /** Larghezza massima del tavolo da gioco */
     private static final int TABLE_MAX_W = 650;
+    
+    /** Altezza massima del tavolo da gioco */
     private static final int TABLE_MAX_H = 280;
 
 
+    /** Stato corrente del gioco */
     private final GameState gameState;
+    
+    /** Giocatore umano */
     private final GiocatoreUmano humanPlayer;
+    
+    /** Controller del gioco */
     private final GameController controller;
 
-    // UI components that need updating
+    /** Pannello contenente le carte nella mano del giocatore */
     private JPanel playerHandPanel;
+    
+    /** Scroll pane per la mano del giocatore */
     private JScrollPane handScrollPane;
+    
+    /** Area per visualizzare gli avversari */
     private JPanel opponentArea;
+    
+    /** Pannello per il bot di sinistra */
     private JPanel leftBotPanel;
+    
+    /** Pannello per il bot di destra */
     private JPanel rightBotPanel;
+    
+    /** Etichetta per lo stato del gioco */
     private JLabel statusLabel;
+    
+    /** Etichetta per il punteggio */
     private JLabel scoreLabel;
+    
+    /** Area per i messaggi di log */
     private JPanel logArea;
+    
+    /** Pulsante per giocare la carta selezionata */
     private JButton playButton;
+    
+    /** Etichetta per il conteggio delle carte vinte */
     private JLabel wonCardsLabel;
-    private JPanel tableOval; // actual table panel
+    
+    /** Pannello del tavolo da gioco ovale */
+    private JPanel tableOval;
 
-    // layered pane reference for placing player's cards directly on screen (not inside playerHandPanel)
+    /** Riferimento al layered pane per posizionare le carte del giocatore */
     private JLayeredPane layeredPaneRef;
+    
+    /** Gestore audio per suoni ed effetti */
     private final Model.Audio.AudioManager audioManager;
 
-    // CardPanels representing the player's hand (they live on layeredPaneRef)
+    /** Lista dei pannelli delle carte del giocatore */
     private final List<CardPanel> cardPanels = new ArrayList<>();
+    
+    /** Lista di tutti i giocatori */
     private final List<Giocatore> players;
 
-    // gap used for hand cards (calculated)
+    /** Spaziatura effettiva usata tra le carte nella mano */
     private int handCardGapUsed = HAND_GAP;
+    
+    /** Ritardo in millisecondi per l'animazione di distribuzione */
     private final int dealDelayMs = 800;
     
-    // Flag per impedire l'aggiornamento del tavolo durante le animazioni delle carte
+    /** Flag per impedire l'aggiornamento del tavolo durante le animazioni delle carte */
     private final AtomicBoolean cardAnimationInProgress = new AtomicBoolean(false);
 
+    /**
+     * Costruttore della vista del gioco.
+     * Inizializza l'interfaccia grafica per la partita, inclusi il tavolo da gioco,
+     * le mani dei giocatori, i pulsanti di controllo e le animazioni.
+     *
+     * @param gameState lo stato corrente del gioco
+     * @param humanPlayer il giocatore umano
+     * @param controller il controller del gioco per gestire le azioni
+     * @param audioManager il gestore audio per riprodurre suoni ed effetti
+     * @throws IllegalArgumentException se uno dei parametri è null
+     * @throws IllegalStateException se la lista dei giocatori è null o vuota
+     */
     public GameView(GameState gameState, GiocatoreUmano humanPlayer, GameController controller, Model.Audio.AudioManager audioManager) {
         super("JTressette - Partita in Corso");
         
@@ -120,6 +191,7 @@ public class GameView extends JFrame {
         initUI();
     }
 
+    /** Inizializza l'interfaccia utente del gioco */
     private void initUI() {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(1100, 750);
@@ -230,6 +302,7 @@ public class GameView extends JFrame {
         refresh();
     }
 
+    /** Ricalcola le dimensioni del layout in base alla dimensione della finestra */
     private void recomputeLayoutSizes() {
         int contentW = getContentPane().getWidth();
         int contentH = getContentPane().getHeight();
@@ -252,6 +325,7 @@ public class GameView extends JFrame {
         recomputeHandCardSize();
     }
 
+    /** Ricalcola le dimensioni delle carte nella mano del giocatore in base alla larghezza disponibile */
     private void recomputeHandCardSize() {
         int contentW = getContentPane().getWidth();
 
@@ -311,22 +385,53 @@ public class GameView extends JFrame {
         }
     }
 
-    // Custom panel with gradient background
+    /**
+    * La classe GradientPanel è una personalizzazione di JPanel che disegna
+    * uno sfondo composto da due gradienti verticali, creando un effetto simile
+    * a un panno verde, con alternanza di tonalità scure e verdi standard.
+    * <p>
+    * Questa classe è utile per creare uno sfondo visivamente accattivante
+    * che richiama la superficie di un tavolo da gioco, come nei giochi di carte.
+    * </p>
+    */
     private static class GradientPanel extends JPanel {
+    	/**
+         * Costruttore predefinito di GradientPanel.
+         * Inizializza il pannello con impostazioni predefinite.
+         */
+        private GradientPanel() {
+            super();
+        }
+        /**
+         * Questo metodo sovrascrive il comportamento predefinito di paintComponent
+         * per disegnare uno sfondo personalizzato a gradiente.
+         *
+         * @param g L'oggetto Graphics utilizzato per il rendering.
+         */
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g;
+
+            // Abilita il rendering di alta qualità per i gradienti.
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+            // Definisci e disegna il primo gradiente (metà superiore del pannello).
             GradientPaint gp = new GradientPaint(0, 0, FELT_DARK, 0, (float) getHeight() / 2, FELT_GREEN);
             g2d.setPaint(gp);
             g2d.fillRect(0, 0, getWidth(), getHeight() / 2);
+
+            // Definisci e disegna il secondo gradiente (metà inferiore del pannello).
             GradientPaint gp2 = new GradientPaint(0, (float) getHeight() / 2, FELT_GREEN, 0, getHeight(), FELT_DARK);
             g2d.setPaint(gp2);
             g2d.fillRect(0, getHeight() / 2, getWidth(), getHeight() / 2);
         }
     }
-
+    /**
+     * Crea il pulsante di uscita dalla partita.
+     *
+     * @return il pulsante configurato per abbandonare la partita.
+     */
     private JButton createExitButton() {
         JButton exitButton = new JButton("✕ Abbandona Partita");
         exitButton.setBackground(new Color(180, 40, 40));
@@ -354,7 +459,11 @@ public class GameView extends JFrame {
         return exitButton;
     }
 
-    // Keep createSideBotPanel simple - we'll insert specialized vertical stacks inside createOpponentBox when needed
+    /**
+     * Crea il pannello laterale per i bot.
+     *
+     * @return il pannello configurato per visualizzare le carte dei bot laterali.
+     */
     private JPanel createSideBotPanel() {
         JPanel panel = new JPanel();
         panel.setOpaque(false);
@@ -364,6 +473,11 @@ public class GameView extends JFrame {
         return panel;
     }
 
+    /**
+     * Crea l'area superiore per visualizzare gli avversari.
+     *
+     * @return il pannello configurato per l'area degli avversari.
+     */
     private JPanel createOpponentArea() {
         JPanel area = new JPanel();
         area.setOpaque(false);
@@ -376,9 +490,12 @@ public class GameView extends JFrame {
     // Sostituisci il metodo createOpponentBox con questa versione aggiornata:
 
     /**
-     * Create opponent box.
-     * - isVertical==true: vertical stack (per bot laterali)
-     * - isVertical==false: horizontal layout (per bot in alto)
+     * Crea il pannello per visualizzare le carte di un avversario.
+     * Il layout può essere verticale (per bot laterali) o orizzontale (per bot in alto).
+     *
+     * @param player il giocatore avversario di cui visualizzare le carte
+     * @param isVertical true per layout verticale (bot laterali), false per layout orizzontale (bot in alto)
+     * @return pannello contenente il nome del giocatore e le sue carte coperte
      */
     private JPanel createOpponentBox(Giocatore player, boolean isVertical) {
         JPanel box = new JPanel();
@@ -534,6 +651,12 @@ public class GameView extends JFrame {
         return box;
     }
 
+    /**
+     * Crea l'icona del mazzo di carte prese dall'utente con annesso numero di carte
+     *
+     * @param player il giocatore per cui si deve creare questa grafica
+     * @return l'icona blu delle carte prese per tutti i turni giocati fino ad ora
+     */
     private JPanel createOpponentWonCardsDeckIcon(Giocatore player) {
         JPanel deckIcon = new JPanel() {
             @Override
@@ -572,6 +695,11 @@ public class GameView extends JFrame {
         return deckIcon;
     }
 
+    /**
+     * Crea il pannello centrale per il tavolo da gioco ovale.
+     *
+     * @return il pannello configurato per il tavolo da gioco.
+     */
     private JPanel createTableCenter() {
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
@@ -584,6 +712,12 @@ public class GameView extends JFrame {
         return center;
     }
 
+    /**
+     * Crea l'immagine del mazzo di carte con il conteggio delle carte rimanenti.
+     * L'immagine mostra il dorso della carta e il numero di carte ancora nel mazzo.
+     *
+     * @return etichetta contenente l'immagine del mazzo e il conteggio delle carte
+     */
     private JLabel createDeckImage() {
         Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
         JLabel deckLabel = new JLabel(new ImageIcon(cardBackImg));
@@ -597,7 +731,14 @@ public class GameView extends JFrame {
         return deckLabel;
     }
 
+    /**
+     * Pannello che rappresenta il tavolo da gioco ovale.
+     * Disegna un tavolo con bordi arrotondati, ombreggiatura e
+     * decorazioni stilizzate per simulare un tavolo da poker professionale.
+     */
     private static class TablePanel extends JPanel {
+
+        /** Costruttore del pannello del tavolo */
         public TablePanel() {
             setOpaque(false);
         }
@@ -623,12 +764,27 @@ public class GameView extends JFrame {
         }
     }
 
-    // Vertical stack panel: arranges child components bottom-to-top with overlap and adapts preferred height
+
+    /**
+     * Pannello personalizzato per visualizzare una pila di carte sovrapposte verticalmente.
+     */
     private static class VerticalCardStackPanel extends JPanel {
+        /** Larghezza di ogni carta */
         private final int cardWidth;
+
+        /** Altezza di ogni carta */
         private final int cardHeight;
+
+        /** Quantità di sovrapposizione tra le carte */
         private final int overlap;
 
+        /**
+         * Costruttore per il pannello della pila di carte verticali.
+         *
+         * @param cardWidth larghezza delle carte
+         * @param cardHeight altezza delle carte
+         * @param overlap quantità di sovrapposizione tra le carte
+         */
         public VerticalCardStackPanel(int cardWidth, int cardHeight, int overlap) {
             this.cardWidth = cardWidth;
             this.cardHeight = cardHeight;
@@ -680,6 +836,12 @@ public class GameView extends JFrame {
         }
     }
 
+    /**
+     * Funzione utilizzata per creare l'area della mano e tutte le altre
+     * specifiche dell'unico utente umano
+     *
+     * @return la mano dell'utente
+     */
     private JPanel createPlayerArea() {
         JPanel area = new JPanel();
         area.setOpaque(false);
@@ -726,6 +888,13 @@ public class GameView extends JFrame {
         return area;
     }
 
+    /**
+     * Crea l'icona del mazzo delle carte vinte dal giocatore.
+     * Visualizza una pila di carte stilizzate che rappresentano
+     * il numero di carte vinte dal giocatore umano.
+     *
+     * @return il pannello dell'icona del mazzo delle carte vinte.
+     */
     private JPanel createWonCardsDeckIcon() {
         JPanel deckIcon = new JPanel() {
             @Override
@@ -763,6 +932,13 @@ public class GameView extends JFrame {
         return deckIcon;
     }
 
+    /**
+     * Crea il pannello delle informazioni di gioco.
+     * Visualizza lo stato della partita, il punteggio del giocatore
+     * e un'area di log per i messaggi di gioco.
+     *
+     * @return il pannello delle informazioni di gioco.
+     */
     private JPanel createInfoPanel() {
         MenuImpostazioni settings = MenuImpostazioni.getInstance();
         if (!settings.isShowScore() && !settings.isShowMessages()) {
@@ -826,6 +1002,11 @@ public class GameView extends JFrame {
         return panel;
     }
 
+    /**
+     * Crea un pannello JPanel con sfondo semi-trasparente e bordi arrotondati.
+     *
+     * @return il pannello JPanel configurato.
+     */
     private static JPanel getJPanel() {
         JPanel panel = new JPanel() {
             @Override
@@ -845,15 +1026,40 @@ public class GameView extends JFrame {
     }
 
     // CardPanel class supports arbitrary draw size
+    /**
+     * Pannello personalizzato per visualizzare una carta nella mano del giocatore.
+     */
     private class CardPanel extends JPanel {
+    	/** Booleano per tracciare se il mouse è sopra la carta */
         private boolean isHovered = false;
-        private boolean isAnimating = false;
-        private float animationProgress = 0f;
-        private final Image cardImage;
-        private final int drawWidth;
-        private final int drawHeight;
-        private final int handIndex; // index in player's hand
 
+        /** Booleano per definire lo stato dell'animazione */
+        private boolean isAnimating = false;
+
+        /** Progresso dell'animazione (da 0 a 1) */
+        private float animationProgress = 0f;
+
+        /** Immagine della carta */
+        private final Image cardImage;
+
+        /** larghezza della carta */
+        private final int drawWidth;
+
+        /** altezza della carta */
+        private final int drawHeight;
+
+        /** indice della carta nella mano del giocatore */
+        private final int handIndex;
+
+        /**
+         * Costruttore per il pannello della carta.
+         *
+         * @param card la carta che si vuole giocare
+         * @param index l'indice della carta nella mano del giocatore
+         * @param isPlayable indica se la carta è giocabile in questo turno
+         * @param drawWidth dimensioni della lunghezza della carta
+         * @param drawHeight dimensioni dell'altezza della carta
+         */
         public CardPanel(Cards card, int index, boolean isPlayable, int drawWidth, int drawHeight) {
             this.drawWidth = drawWidth;
             this.drawHeight = drawHeight;
@@ -898,6 +1104,12 @@ public class GameView extends JFrame {
             }
         }
 
+        /**
+         *
+         * Avvia l'animazione di selezione della carta.
+         *
+         * @param onComplete Runnable da eseguire al termine dell'animazione
+         */
         private void animateCardSelection(Runnable onComplete) {
             if (isAnimating) return;
 
@@ -964,6 +1176,11 @@ public class GameView extends JFrame {
         }
     }
 
+    /**
+     * Aggiorna la visualizzazione di tutti i componenti del gioco.
+     * Ricarica la mano del giocatore, le carte sul tavolo e l'area degli avversari.
+     * Se le impostazioni lo prevedono, aggiorna anche i punteggi visualizzati.
+     */
     public void refresh() {
         MenuImpostazioni settings = MenuImpostazioni.getInstance();
         SwingUtilities.invokeLater(() -> {
@@ -1058,8 +1275,11 @@ public class GameView extends JFrame {
     }
 
     /**
-     * Compute slot positions relative to current tableOval size.
-     * Returns positions for all players in their FIXED order.
+     * Calcola le posizioni degli slot per le carte giocate sul tavolo.
+     * Restituisce le posizioni relative alle dimensioni correnti del tavolo ovale.
+     * Le posizioni sono calcolate per tutti i giocatori nell'ordine fisso.
+     *
+     * @return array bidimensionale contenente le coordinate [x, y] per ogni giocatore
      */
     private int[][] computeSlotPositions() {
         int w = tableOval.getWidth() > 0 ? tableOval.getWidth() : tableOval.getPreferredSize().width;
@@ -1115,7 +1335,12 @@ public class GameView extends JFrame {
         return positions;
     }
 
-
+    /**
+     * Aggiorna le carte visualizzate sul tavolo da gioco.
+     * Posiziona il mazzo al centro e le carte giocate dai giocatori
+     * nelle posizioni calcolate in base al numero di giocatori.
+     * Evidenzia il turno corrente e mostra i nomi dei giocatori.
+     */
     private void updateTableCards() {
         tableOval.removeAll();
 
@@ -1333,11 +1558,17 @@ public class GameView extends JFrame {
         rightBotPanel.repaint();
     }
 
+    /**
+     * Aggiorna il punteggio visualizzato per il giocatore umano.
+     */
     private void updateScores() {
         String score = gameState.getScaledScoreString(humanPlayer);
         scoreLabel.setText("Punteggio: " + score);
     }
 
+    /**
+     * Aggiorna lo stato del gioco visualizzato nell'etichetta di stato.
+     */
     private void updateStatus() {
         Giocatore current = gameState.getCurrentPlayer();
         if (current == humanPlayer) {
@@ -1349,6 +1580,13 @@ public class GameView extends JFrame {
         }
     }
 
+    /**
+     * Registra un messaggio nel log di gioco.
+     * Il messaggio viene visualizzato nell'area log solo se le impostazioni
+     * di visualizzazione messaggi sono abilitate.
+     *
+     * @param message il messaggio da visualizzare nel log
+     */
     public void log(String message) {
         MenuImpostazioni settings = MenuImpostazioni.getInstance();
         if (!settings.isShowMessages()) {
@@ -1445,6 +1683,10 @@ public class GameView extends JFrame {
 
     /**
      * Ottiene la posizione di partenza della carta per un giocatore specifico.
+     * 
+     * @param player il giocatore del quale si vuole rilevare la posizione
+     * @param playerIdx l'indice del giocatore per calcolare di quale si tratti tra player, bot sx, bot alto, bot dx
+     * @return l'area del giocatore di interesse
      */
     private Point getPlayerCardStartPosition(Giocatore player, int playerIdx) {
         if (player == humanPlayer) {
@@ -1496,6 +1738,14 @@ public class GameView extends JFrame {
 
     /**
      * Anima il volo di una carta con traiettoria curva più realistica.
+     * 
+     * @param card l'immagine della carta che si vuole animare
+     * @param startX la posizione lungo le ascisse iniziale della carta
+     * @param startY la posizione lungo le ordinate iniziale della carta
+     * @param endX la posizione dove dovrà arrivare la carta per le ascisse
+     * @param endY la posizione dove dovrà arrivare la carta per l'ordinata
+     * @param onComplete callback chiamata quando l'animazione termina
+     * 
      */
     private void animateCardFlightCurved(JLabel card, int startX, int startY, int endX, int endY, Runnable onComplete) {
         final int steps = 20;
@@ -1556,6 +1806,10 @@ public class GameView extends JFrame {
     }
 
 
+    /**
+     * Pulisce il tavolo da gioco rimuovendo tutte le carte giocate.
+     * Rimuove le carte dal pannello del tavolo e dal layered pane.
+     */
     public void clearTable() {
         SwingUtilities.invokeLater(() -> {
             tableOval.removeAll();
@@ -1566,6 +1820,12 @@ public class GameView extends JFrame {
         });
     }
 
+    /**
+     * Mostra la notifica di presa vinta.
+     * Aggiorna il conteggio delle carte prese se il vincitore è il giocatore umano.
+     *
+     * @param winner il giocatore che ha vinto la presa
+     */
     public void showTrickWon(Giocatore winner) {
         SwingUtilities.invokeLater(() -> {
             if (winner == humanPlayer) {
@@ -1576,6 +1836,12 @@ public class GameView extends JFrame {
         });
     }
 
+    /**
+     * Mostra un indicatore visivo del vincitore della presa sul tavolo.
+     * L'indicatore appare per un breve periodo e poi scompare automaticamente.
+     *
+     * @param winner il giocatore che ha vinto la presa
+     */
     private void showWinnerIndicator(Giocatore winner) {
         JLabel winnerLabel = new JLabel("🏆 " + winner.getName() + " prende!");
         winnerLabel.setForeground(TEXT_GOLD);
@@ -1602,6 +1868,9 @@ public class GameView extends JFrame {
         removeTimer.start();
     }
 
+    /**
+     * Crea l'animazione che sposta le carte dal tavolo alla mano del vincitore
+     */
     private void animateCardsToWinner() {
         Timer fadeTimer = new Timer(50, null);
         final float[] alpha = {1.0f};
@@ -1619,11 +1888,22 @@ public class GameView extends JFrame {
         fadeTimer.start();
     }
 
+
+    /**
+     * Aggiorna la visualizzazione del conteggio delle carte prese dal giocatore umano.
+     */
     private void updateWonCardsDisplay() {
         int humanWonCards = gameState.getWonCardsCount(humanPlayer);
         wonCardsLabel.setText("Carte prese: " + humanWonCards);
     }
 
+    /**
+     * Mostra l'animazione di distribuzione delle carte all'inizio della partita.
+     * Le carte vengono distribuite con un effetto visivo dal centro verso ogni giocatore.
+     *
+     * @param players la lista dei giocatori a cui distribuire le carte
+     * @param onComplete callback da eseguire al termine dell'animazione
+     */
     public void showDealingAnimation(List<Giocatore> players, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
             // Crea overlay con sfondo semi-trasparente
@@ -1709,6 +1989,16 @@ public class GameView extends JFrame {
         });
     }
 
+    /**
+     * Finalizza l'animazione di distribuzione delle carte, rimuove le carte del mazzo rimaste
+     * e applica un effetto di fade out sull'overlay.
+     *
+     * @param dealingLabel l'etichetta che mostra lo stato della distribuzione
+     * @param deckCards la lista delle carte del mazzo visivo
+     * @param glassPane il pannello glass pane del frame
+     * @param overlay il pannello overlay dell'animazione
+     * @param onComplete callback chiamato al termine dell'animazione
+     */
     private void finalizeDealingAnimation(JLabel dealingLabel, List<JLabel> deckCards,
                                           JPanel glassPane, JPanel overlay, Runnable onComplete) {
         // Cambia testo
@@ -1748,6 +2038,12 @@ public class GameView extends JFrame {
         delayTimer.start();
     }
 
+    /**
+     * Crea l'etichetta animata "Distribuzione carte..." con effetto glow.
+     *
+     * @param centerY la coordinata Y centrale per posizionare l'etichetta
+     * @return l'etichetta JLabel con l'animazione glow
+     */
     private JLabel createDealingLabel(int centerY) {
         JLabel label = new JLabel("Distribuzione carte...") {
             private float glowAlpha = 0f;
@@ -1818,6 +2114,13 @@ public class GameView extends JFrame {
         return label;
     }
 
+    /**
+     * Crea il mazzo di carte visivo di carte impilate
+     *
+     * @param centerX la posizione lungo l' asse delle ascisse
+     * @param centerY la posizione lungo l' asse delle ordinate
+     * @return il mazzo di carte nella posizione di input
+     */
     private List<JLabel> createAnimatedDeck(int centerX, int centerY) {
         List<JLabel> deckCards = new ArrayList<>();
         Image cardBackImg = CardImageLoader.getScaledCardBackImage(CARD_WIDTH, CARD_HEIGHT);
@@ -1834,6 +2137,13 @@ public class GameView extends JFrame {
         return deckCards;
     }
 
+    /**
+     * Calcola le posizioni target per ogni giocatore durante la distribuzione delle carte.
+     * Le posizioni sono calcolate in base al numero di giocatori e alla loro disposizione sul tavolo.
+     *
+     * @param numPlayers il numero totale di giocatori nella partita
+     * @return un array di punti rappresentanti le posizioni target per ogni giocatore
+     */
     private Point[] calculatePlayerTargetPositions(int numPlayers) {
         Point frameOrigin = getLocationOnScreen();
         Point[] positions = new Point[numPlayers];
@@ -1951,6 +2261,16 @@ public class GameView extends JFrame {
         return positions;
     }
 
+    /**
+     * Anima il volo di una carta durante la distribuzione con una traiettoria curva e scaling.
+     *
+     * @param card l'immagine della carta che si vuole animare
+     * @param startX la posizione di partenza lungo le ascisse della carta
+     * @param startY la posizione di partenza lungo le ordinate della carta
+     * @param endX la posizione di arrivo lungo le ascisse della carta
+     * @param endY la posizione di arrivo lungo le ordinate della carta
+     * @param playerIndex l'indice del giocatore a cui viene distribuita la carta (per variare la curva)
+     */
     private void animateDealingCardFlight(JLabel card, int startX, int startY,
                                           int endX, int endY, int playerIndex) {
         final int steps = 24;
@@ -2011,6 +2331,13 @@ public class GameView extends JFrame {
         flyTimer.start();
     }
 
+
+    /**
+     * Crea un overlay semi-trasparente per l'animazione di distribuzione delle carte.
+     * L'overlay sfuma in entrata per coprire l'interfaccia di sfondo.
+     *
+     * @return il pannello overlay per l'animazione
+     */
     private JPanel createAnimationOverlay() {
         JPanel overlay = new JPanel() {
             private float alpha = 0f;
@@ -2047,6 +2374,11 @@ public class GameView extends JFrame {
 
     /**
      * Mostra l'animazione realistica di pescata carta dal mazzo alla mano del giocatore.
+     * L'animazione visualizza il movimento della carta dal mazzo alla posizione finale
+     * nella mano del giocatore.
+     *
+     * @param player il giocatore che pesca la carta
+     * @param onComplete callback da eseguire al termine dell'animazione
      */
     public void showDrawAnimationToPlayerHand(Giocatore player, Runnable onComplete) {
         SwingUtilities.invokeLater(() -> {
@@ -2100,6 +2432,8 @@ public class GameView extends JFrame {
 
     /**
      * Trova il label del mazzo sul tavolo.
+     * 
+     * @return il label delle carte presenti nel mazzo sul tavolo
      */
     private JLabel findDeckLabel() {
         for (Component comp : tableOval.getComponents()) {
@@ -2115,6 +2449,10 @@ public class GameView extends JFrame {
 
     /**
      * Ottiene la posizione di destinazione della carta pescata per un giocatore.
+     * 
+     * @param player il giocatore a cui è destinata la prossima azione
+     * 
+     * @return la posizione della mano del player messo in input
      */
     private Point getPlayerHandDestination(Giocatore player) {
         if (player == humanPlayer) {
@@ -2169,6 +2507,12 @@ public class GameView extends JFrame {
 
 
 
+    /**
+     * Mostra la schermata di fine partita con il risultato.
+     * Visualizza un overlay con il risultato finale e un pulsante per tornare al menu.
+     *
+     * @param result il messaggio con il risultato della partita
+     */
     public void showGameOver(String result) {
         SwingUtilities.invokeLater(() -> {
             // remove player's cards so overlay is clean
@@ -2258,6 +2602,10 @@ public class GameView extends JFrame {
         });
     }
 
+    /**
+     * Esegue un effetto di dissolvenza in entrata per la finestra.
+     * La finestra appare gradualmente aumentando progressivamente l'opacità.
+     */
     public void fadeIn() {
         Timer fadeTimer = new Timer(16, null);
         final float[] alpha = {0.0f};

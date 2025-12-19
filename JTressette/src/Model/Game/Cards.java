@@ -11,7 +11,7 @@ public class Cards {
      * I quattro semi tradizionali sono: DENARA, SPADE, BASTONI e COPPE.
      */
     public enum Segno {
-        /** Seme delle denara (monete) */
+        /** Seme delle denara */
         DENARA,
         /** Seme delle spade */
         SPADE,

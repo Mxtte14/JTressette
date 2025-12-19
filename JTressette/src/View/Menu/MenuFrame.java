@@ -15,12 +15,26 @@ import java.awt.*;
  */
 public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListener {
 
-    public final HomeMenu panel; // mantiene nome e visibilità originale per compatibilità
+    /** Pannello del menu principale (mantiene nome e visibilità originale per compatibilità) */
+    public final HomeMenu panel;
+
+    /** Pannello contenitore con CardLayout */
     private final JPanel cards;
+
+    /** Pannello del profilo */
     private ProfileMenu profilePanel;
+
+    /** Pannello delle regole */
     private RulesPage rulesPanel;
+
+    /** Gestore audio per suoni ed effetti */
     private final AudioManager audioManager = new AudioManager();
 
+    /**
+     * Costruttore della finestra del menu.
+     *
+     * @param controller il controller del profilo per gestire i dati utente
+     */
     public MenuFrame(ProfileController controller) {
         super("JTressette");
 
@@ -107,10 +121,19 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
         });
     }
 
+    /**
+     * Restituisce il pannello contenitore con CardLayout.
+     *
+     * @return il pannello con CardLayout per la navigazione
+     */
     public JPanel getCardsPanel() {
         return cards;
     }
 
+    /**
+     * Mostra la schermata delle impostazioni.
+     * Ferma la riproduzione audio del menu.
+     */
     public void showSettings() {
         // Implementa la logica per mostrare le impostazioni se necessario
         audioManager.stop();
@@ -158,12 +181,20 @@ public class MenuFrame extends JFrame implements MenuImpostazioni.SettingsListen
         updateFullscreen(settings);
     }
 
+    /**
+     * Aggiorna il volume audio in base alle impostazioni.
+     * @param settings le impostazioni del menu contenenti il volume desiderato
+     */
     private void updateAudioVolume(MenuImpostazioni settings) {
         // Convert 0-100 volume to 0.0-MAX_VOLUME_SCALE range (AudioManager's max safe volume)
         float volume = settings.getVolume() / 100.0f * AudioManager.MAX_VOLUME_SCALE;
         audioManager.setVolume(volume);
     }
 
+    /**
+     * Aggiorna la modalità fullscreen in base alle impostazioni.
+     * @param settings le impostazioni del menu contenenti lo stato fullscreen desiderato
+     */
     private void updateFullscreen(MenuImpostazioni settings) {
         SwingUtilities.invokeLater(() -> {
             GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();

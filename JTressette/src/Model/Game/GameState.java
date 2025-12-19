@@ -22,7 +22,7 @@ import Model.Audio.AudioManager;
  * </ul>
  *
  * <p>Implementa il pattern Observer per notificare i cambiamenti di stato
- * a viste e controller registrati. Le operazioni critiche sono thread-safe
+ * a view e controller registrati. Le operazioni critiche sono thread-safe
  * per supportare l'interazione tra thread di gioco e interfaccia grafica.</p>
  *
  * <p><b>Sistema di punteggio:</b> Le carte hanno valori in punti:

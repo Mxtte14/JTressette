@@ -15,7 +15,7 @@ import javax.imageio.ImageIO;
  * tiene traccia dell'opzione attualmente selezionata.
  *
  * <p>Il cursore si posiziona automaticamente in base all'opzione selezionata
- * e carica un'immagine personalizzata per la visualizzazione.</p>
+ * e carica una scritta personalizzata di essa per la visualizzazione.</p>
  */
 public class Cursor {
 
@@ -38,7 +38,7 @@ public class Cursor {
      * Costruttore del cursore.
      * Inizializza il cursore caricando l'immagine e posizionandolo sulla prima opzione.
      *
-     * @param mp il menu principale che contiene le opzioni selezionabili
+     * @param mp: il menu principale che contiene le opzioni selezionabili
      */
     public Cursor(HomeMenu mp) {
         this.mp = mp;
@@ -67,7 +67,7 @@ public class Cursor {
      * Imposta l'indice dell'opzione selezionata e aggiorna la posizione del cursore.
      * Il cursore viene posizionato automaticamente accanto all'opzione specificata.
      *
-     * @param index indice dell'opzione da selezionare (0-based, deve essere valido)
+     * @param index: indice dell'opzione da selezionare (0-based, ovvero no reference alle opzioni passate)
      */
     public void setSelectedIndex(int index) {
         if (index < 0 || index >= mp.options.length) return;

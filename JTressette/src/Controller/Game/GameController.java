@@ -24,15 +24,35 @@ import java.util.stream.Collectors;
  */
 public class GameController implements MenuImpostazioni.SettingsListener {
 
+    /** Stato del gioco */
     private final GameState gameState;
+
+    /** Riferimento al giocatore umano */
     private final GiocatoreUmano humanPlayer;
+
+    /** Vista del gioco */
     private final GameView view;
+
+    /** Callback da eseguire al termine della partita */
     private final Runnable onGameEnd;
+
+    /** Gestore audio */
     private final AudioManager audioManager;
 
+    /** Executor per il loop di gioco in background */
     private final ExecutorService gameExecutor;
+
+    /** Flag per indicare se la partita è in corso */
     private volatile boolean gameRunning = false;
 
+    /**
+     * Costruttore del controller del gioco.
+     * Inizializza lo stato del gioco, l'audio manager e la vista.
+     *
+     * @param players lista dei giocatori partecipanti alla partita
+     * @param onGameEnd callback da eseguire al termine della partita
+     * @throws IllegalArgumentException se la lista dei giocatori è null o vuota
+     */
     public GameController(List<Giocatore> players, Runnable onGameEnd) {
         this.onGameEnd = onGameEnd;
 
@@ -217,6 +237,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         }
     }
 
+    /**
+     * Calcola il risultato della partita e riproduce i suoni di vittoria/sconfitta se abilitati.
+     *
+     * @return la stringa del risultato della partita
+     */
     private String calculateResult() {
         var scores = gameState.getScores();
         var winner = scores.entrySet().stream()
@@ -240,7 +265,10 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Quando il giocatore umano gioca una carta (col click sulla UI).
+     * Gestisce la giocata di una carta da parte del giocatore umano.
+     * Invia la scelta della carta al giocatore umano per la processazione.
+     *
+     * @param cardIndex l'indice della carta selezionata nella mano del giocatore
      */
     public void onCardPlayed(int cardIndex) {
         if (humanPlayer != null) {
@@ -318,7 +346,10 @@ public class GameController implements MenuImpostazioni.SettingsListener {
     }
 
     /**
-     * Ottieni il game record per lo storico.
+     * Crea e restituisce il record della partita per lo storico.
+     * Include informazioni su data, avversari, vincitore, punteggi ed esperienza.
+     *
+     * @return il record della partita appena conclusa
      */
     public GamesRecord getGameRecord() {
         String date = Instant.now().toString();
@@ -346,6 +377,14 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         return new GamesRecord(date, opponentNames, winnerName, winnerScore, myScore, (Integer) experienceFromGame(humanPlayer, winner, myPoints, myCardsWon));
     }
 
+    /** Calcola l'esperienza guadagnata dalla partita.
+     *
+     * @param humanPlayer il giocatore umano
+     * @param winner il vincitore della partita
+     * @param myPoints i punti totalizzati dal giocatore umano
+     * @param myCardsWon le carte vinte dal giocatore umano
+     * @return l'esperienza guadagnata
+     */
     private Object experienceFromGame(GiocatoreUmano humanPlayer, Giocatore winner, int myPoints, int myCardsWon) {
         int experience = 0;
         experience += myPoints * 5; // XP per punto
@@ -358,6 +397,11 @@ public class GameController implements MenuImpostazioni.SettingsListener {
         return experience;
     }
 
+    /**
+     * Restituisce la vista del gioco.
+     *
+     * @return la vista del gioco associata a questo controller
+     */
     public GameView getView() {
         return view;
     }

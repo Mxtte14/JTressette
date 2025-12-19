@@ -19,30 +19,76 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Pannello per la gestione del profilo utente.
+ * Visualizza e permette la modifica delle informazioni del profilo,
+ * inclusi nome utente, avatar, statistiche e storico delle partite.
+ * Implementa ProfileListener per ricevere aggiornamenti sul profilo.
+ */
 public class ProfileMenu extends JPanel implements ProfileListener {
+    /** Pannello contenitore con CardLayout per la navigazione */
     private final JPanel cards;
+
+    /** Controller del profilo per gestire le operazioni */
     private final ProfileController controller;
+
+    /** Campo di testo per il nome utente */
     private JTextField nameField;
+
+    /** Etichetta per visualizzare l'avatar */
     private JLabel avatarLabel;
+
+    /** Tabella per lo storico delle partite */
     private JTable historyTable;
+
+    /** Modello della tabella per lo storico */
     private DefaultTableModel tableModel;
+
+    /** Etichetta per le statistiche del giocatore */
     private JLabel statsLabel;
+
+    /** Etichetta per il livello del giocatore */
     private JLabel levelLabel;
+
+    /** Barra di progresso per l'esperienza */
     private JProgressBar expBar;
+
+    /** Etichetta per visualizzare i punti esperienza */
     private JLabel expLabel;
 
-    // Modern colors - Updated to match HomeMenu style (green, gold, black)
-    private static final Color BACKGROUND_COLOR = new Color(10, 25, 15); // Dark green background
-    private static final Color PANEL_BG_COLOR = new Color(20, 50, 30, 200); // Semi-transparent dark green
-    private static final Color PRIMARY_COLOR = new Color(35, 130, 75); // Poker table green
-    private static final Color ACCENT_COLOR = new Color(46, 160, 90); // Lighter green for hover
-    private static final Color TEXT_COLOR = new Color(255, 248, 220); // Light gold text
-    private static final Color SECONDARY_TEXT_COLOR = new Color(200, 200, 180); // Dimmer gold
-    private static final Color SUCCESS_COLOR = new Color(46, 204, 113); // Bright green
-    private static final Color BORDER_COLOR = new Color(255, 215, 0, 100); // Gold border
-    private static final Color LEVEL_BADGE_BG = new Color(231, 76, 60); // Red badge
-    private static final Color EXP_BAR_COLOR = new Color(255, 215, 0); // Gold progress bar
+    /** Colore di sfondo principale */
+    private static final Color BACKGROUND_COLOR = new Color(10, 25, 15);
 
+    /** Colore primario per bottoni e header */
+    private static final Color PRIMARY_COLOR = new Color(35, 130, 75);
+
+    /** Colore per risaltare */
+    private static final Color ACCENT_COLOR = new Color(46, 160, 90);
+
+    /** Colore del testo principale */
+    private static final Color TEXT_COLOR = new Color(255, 248, 220);
+
+    /** Colore del testo secondario */
+    private static final Color SECONDARY_TEXT_COLOR = new Color(200, 200, 180);
+
+    /** Colore per indicare successo */
+    private static final Color SUCCESS_COLOR = new Color(46, 204, 113);
+
+    /** Colore per indicare errore */
+    private static final Color BORDER_COLOR = new Color(255, 215, 0, 100);
+
+    /** Colore del badge del livello */
+    private static final Color LEVEL_BADGE_BG = new Color(20, 61, 8);
+
+    /** Colore della barra di esperienza */
+    private static final Color EXP_BAR_COLOR = new Color(255, 215, 0);
+
+    /**
+     * Costruttore del menu profilo.
+     *
+     * @param cards il pannello contenitore con CardLayout per la navigazione
+     * @param controller il controller del profilo per gestire le operazioni sul profilo
+     */
     public ProfileMenu(JPanel cards, ProfileController controller) {
         this.cards = cards;
         this.controller = controller;
@@ -56,6 +102,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         }
     }
 
+    /**
+     * Inizializza i componenti del pannello.
+     */
     private void init() {
         setLayout(new BorderLayout());
         setOpaque(true);
@@ -112,6 +161,11 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         add(backgroundPanel, BorderLayout.CENTER);
     }
 
+    /**
+     * Crea la scheda del profilo utente.
+     *
+     * @return il pannello della scheda del profilo
+     */
     private JPanel createProfileCard() {
         JPanel card = new JPanel() {
             @Override
@@ -261,6 +315,11 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         return card;
     }
 
+    /**
+     * Crea il pannello per lo storico delle partite.
+     *
+     * @return il pannello dello storico delle partite
+     */
     private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 15)) {
             @Override
@@ -400,6 +459,11 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         return panel;
     }
 
+    /**
+     * Crea una barra di progresso personalizzata per l'esperienza.
+     *
+     * @return la barra di progresso dell'esperienza
+     */
     private JProgressBar createExperienceBar() {
         JProgressBar bar = new JProgressBar(0, 100);
         bar.setStringPainted(false);
@@ -441,6 +505,9 @@ public class ProfileMenu extends JPanel implements ProfileListener {
 
     /**
      * Aggiorna la view dal modello; viene chiamato dal controller tramite observer.
+     *
+     * @param profile il profilo utente aggiornato
+
      */
     @Override
     public void onProfileUpdated(UserProfile profile) {
@@ -487,6 +554,10 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         });
     }
 
+    /**
+     * Notifica che il salvataggio del profilo è fallito.
+     * @param ex l'eccezione che ha causato il fallimento del salvataggio
+     */
     @Override
     public void onProfileSaveFailed(Exception ex) {
         SwingUtilities.invokeLater(() -> {
@@ -494,6 +565,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         });
     }
 
+    /** Gestisce il salvataggio del nome utente. */
     private void onSaveName() {
         String newName = nameField.getText().trim();
         if (!newName.isEmpty()) {
@@ -503,6 +575,7 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         }
     }
 
+    /** Gestisce il cambio dell'avatar. */
     private void onChangeAvatar() {
         JFileChooser chooser = new JFileChooser();
         int res = chooser.showOpenDialog(this);
@@ -512,6 +585,11 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         }
     }
 
+     /**
+      * imposta l'avatar dall'immagine al percorso specificato.
+      *
+      * @param path il percorso dell'immagine dell'avatar
+      */
     private void setAvatarFromPath(String path) {
         try {
             BufferedImage img = ImageIO.read(new File(path));
@@ -533,12 +611,21 @@ public class ProfileMenu extends JPanel implements ProfileListener {
         }
     }
 
+    /**
+     * Aggiorna l'interfaccia con i dati dal modello.
+     * Ricarica il profilo dal controller e aggiorna tutti i componenti visivi.
+     */
     public void refreshFromModel() {
         UserProfile p = controller.getProfile();
         if (p != null) onProfileUpdated(p);
     }
 
-    // Helper per bottoni moderni
+    /**
+     * Crea un bottone con stile moderno.
+     *
+     * @param text il testo del bottone
+     * @return il bottone stilizzato
+     */
     private JButton modernButton(String text) {
         JButton btn = new JButton(text);
         btn.setFocusPainted(false);

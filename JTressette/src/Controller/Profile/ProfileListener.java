@@ -4,7 +4,7 @@ import Model.Profile.UserProfile;
 
 /**
  * Interfaccia listener per ricevere notifiche sui cambiamenti del profilo utente.
- * Implementa il pattern Observer permettendo alle viste di reagire agli aggiornamenti
+ * Implementa il pattern Observer permettendo alla view di reagire agli aggiornamenti
  * del profilo in tempo reale.
  *
  * <p>Le implementazioni devono gestire le notifiche sul thread EDT (Event Dispatch Thread)
@@ -22,7 +22,6 @@ public interface ProfileListener {
 
     /**
      * Chiamato quando il salvataggio del profilo fallisce.
-     * Implementazione opzionale (metodo default vuoto).
      * Permette di gestire errori di I/O o altre eccezioni durante il salvataggio.
      *
      * @param ex l'eccezione che ha causato il fallimento del salvataggio

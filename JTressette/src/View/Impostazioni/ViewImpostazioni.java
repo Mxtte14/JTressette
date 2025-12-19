@@ -6,11 +6,27 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * Pannello per la gestione delle impostazioni del gioco.
+ * Permette la configurazione di volume, effetti, visualizzazione punteggi,
+ * messaggi e modalità fullscreen.
+ */
 public class ViewImpostazioni extends JPanel {
+    /** Istanza delle impostazioni del menu */
     private final MenuImpostazioni settings;
+
+    /** Slider per il controllo del volume */
     private final JSlider volumeSlider;
+
+    /** Checkbox per abilitare/disabilitare effetti, punteggi, messaggi e fullscreen */
     private final JCheckBox effectsBox, showScoreBox, showMessagesBox, fullscreenBox;
 
+    /**
+     * Costruttore del pannello delle impostazioni.
+     *
+     * @param settings le impostazioni del menu da configurare
+     * @param onBack callback da eseguire quando si preme il pulsante Indietro
+     */
     public ViewImpostazioni(MenuImpostazioni settings, Runnable onBack) {
         this.settings = settings != null ? settings : MenuImpostazioni.getInstance();
 
@@ -84,6 +100,12 @@ public class ViewImpostazioni extends JPanel {
         add(card);
     }
 
+    /**
+     * Crea un pulsante con stile moderno.
+     *
+     * @param text il testo del pulsante
+     * @return il pulsante stilizzato
+     */
     private JButton modernButton(String text) {
         JButton btn = new JButton(text);
         btn.setFocusPainted(false); btn.setBackground(new Color(51,102,153));
@@ -94,8 +116,25 @@ public class ViewImpostazioni extends JPanel {
         return btn;
     }
 
-    // Card stile HomeMenu
+
+    /**
+     * Pannello con effetto vetro smerigliato per il background delle impostazioni.
+     */
     public static class GlassPanel extends JPanel {
+    	/**
+         * Costruttore predefinito di GlassPanel.
+         * Inizializza il pannello con impostazioni predefinite.
+         */
+        public GlassPanel() {
+            super();
+        }
+
+        /**
+         * Dipinge il componente del Glass Panel.
+         * Crea un rettangolo arrotondato con un gradiente di colore e un bordo dorato.
+         *
+         * @param g il contesto grafico
+         */
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);

@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * <ul>
  *   <li>Salvataggio asincrono su thread in background per non bloccare l'UI</li>
  *   <li>Notifiche ai listener sul thread EDT di Swing</li>
- *   <li>Lista thread-safe di listener (CopyOnWriteArrayList)</li>
+ *   <li>Lista thread-safe di listener</li>
  *   <li>Validazione input per prevenire stati inconsistenti</li>
  * </ul>
  */
@@ -70,7 +70,7 @@ public class ProfileControllerImpl implements ProfileController {
 
     /**
      * Imposta un nuovo file immagine come avatar del profilo.
-     * Il file viene validato (esistente) prima di essere applicato.
+     * Viene verificato che il file esista prima di essere applicato.
      * Le modifiche vengono salvate automaticamente in modo asincrono.
      *
      * @param imageFile file immagine da usare come avatar

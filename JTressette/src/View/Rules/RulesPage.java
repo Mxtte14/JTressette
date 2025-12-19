@@ -19,16 +19,33 @@ import java.net.URL;
  */
 public class RulesPage extends JPanel {
 
+    /** Pannello contenitore con CardLayout per la navigazione */
     private final JPanel cards;
+
+    /** Editor pane per visualizzare le regole in formato HTML */
     private final JEditorPane htmlPane;
 
     // colori ispirati al feltro da poker e agli accenti delle carte
-    private static final Color FELT_TOP = new Color(6, 94, 57);      // verde feltro (più scuro)
-    private static final Color FELT_BOTTOM = new Color(18, 121, 75); // verde feltro (più chiaro)
-    private static final Color PANEL_BG = new Color(0, 0, 0, 120);   // overlay scuro semitrasparente
-    private static final Color TEXT_CREME = new Color(245, 235, 221); // crema per il testo
-    private static final Color TITLE_GOLD = new Color(255, 215, 0);   // oro per il titolo
+    /** Colore verde feltro (più scuro) */
+    private static final Color FELT_TOP = new Color(6, 94, 57);
 
+    /** Colore verde feltro (più chiaro) */
+    private static final Color FELT_BOTTOM = new Color(18, 121, 75);
+
+    /** Colore per l'overlay scuro semitrasparente */
+    private static final Color PANEL_BG = new Color(0, 0, 0, 120);
+
+    /** Colore crema per il testo */
+    private static final Color TEXT_CREME = new Color(245, 235, 221);
+
+    /** Colore oro per il titolo */
+    private static final Color TITLE_GOLD = new Color(255, 215, 0);
+
+    /**
+     * Costruttore della pagina delle regole.
+     *
+     * @param cards il pannello contenitore con CardLayout per la navigazione
+     */
     public RulesPage(JPanel cards) {
         this.cards = cards;
         setOpaque(false); // lasciamo vedere lo sfondo sotto l'overlay
@@ -61,6 +78,10 @@ public class RulesPage extends JPanel {
         add(contentWrapper, gbc);
     }
 
+    /**
+     * Inizializza la parte superiore del pannello con il pulsante Indietro e il titolo.
+     * @param contentWrapper il pannello principale
+     */
     private void initTop(JPanel contentWrapper) {
         JPanel top = new JPanel(new BorderLayout(8, 8)) {
             @Override public boolean isOpaque() { return false; }
@@ -87,6 +108,11 @@ public class RulesPage extends JPanel {
         contentWrapper.add(top, BorderLayout.NORTH);
     }
 
+    /**
+     * Applica uno stile coerente al pulsante.
+     *
+     * @param b il pulsante da stilizzare
+     */
     private void styleButton(AbstractButton b) {
         b.setFocusPainted(false);
         b.setBackground(new Color(255, 255, 255, 200));
@@ -95,11 +121,21 @@ public class RulesPage extends JPanel {
         b.setFont(new Font("SansSerif", Font.PLAIN, 12));
     }
 
+    /**
+     * Gestisce il click sul pulsante Indietro per tornare al menu principale.
+     *
+     * @param ev l'evento di azione
+     */
     private void onBack(ActionEvent ev) {
         CardLayout cl = (CardLayout) cards.getLayout();
         cl.show(cards, "MENU");
     }
 
+    /**
+     * Crea e configura il JEditorPane per visualizzare il contenuto HTML delle regole.
+     *
+     * @return JEditorPane configurato con il contenuto HTML
+     */
     private JEditorPane createHtmlPane() {
         JEditorPane pane = new JEditorPane();
         pane.setContentType("text/html");
@@ -126,6 +162,11 @@ public class RulesPage extends JPanel {
         return pane;
     }
 
+    /**
+     * Costruisce la stringa HTML completa con stile CSS inline per il contenuto delle regole.
+     *
+     * @return String contenente l'HTML completo con stile
+     */
     private String getString() {
         String html = buildHtmlContent();
 
@@ -156,6 +197,11 @@ public class RulesPage extends JPanel {
                 + "</body></html>";
     }
 
+    /**
+     * Costruisce il contenuto HTML delle regole del Tressette.
+     *
+     * @return String contenente il markup HTML delle regole
+     */
     private String buildHtmlContent() {
         String rulesHtml =
                 "<h2>📜 Regole base del Tressette</h2>" +

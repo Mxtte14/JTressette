@@ -36,14 +36,28 @@ public class StorageProfile {
     /** Nome del file del profilo */
     private static final String FILE_NAME = "profile.properties";
 
-    // Chiavi per le proprietà nel file
+    /** Chiave per il nome utente nel file properties */
     private static final String KEY_USERNAME = "username";
+
+    /** Chiave per i punti esperienza nel file properties */
     private static final String KEY_EXPERIENCE = "experience";
+
+    /** Chiave per il percorso dell'avatar nel file properties */
     private static final String KEY_AVATAR_PATH = "avatarPath";
+
+    /** Chiave per la data di creazione del profilo nel file properties */
     private static final String KEY_CREATED_AT = "createdAt";
+
+    /** Chiave per il numero totale di partite nel file properties */
     private static final String KEY_TOTAL_GAMES = "totalGames";
+
+    /** Chiave per il numero totale di vittorie nel file properties */
     private static final String KEY_TOTAL_WINS = "totalWins";
+
+    /** Chiave per il conteggio dei record di partite salvati nel file properties */
     private static final String KEY_GAMES_COUNT = "gamesCount";
+
+    /** Prefisso per le chiavi dei record di singole partite nel file properties */
     private static final String KEY_GAME_PREFIX = "game.";
 
     /** Percorso alla directory del profilo */

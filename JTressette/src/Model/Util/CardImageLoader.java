@@ -13,24 +13,34 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
 /**
- * Classe di utilità per il caricamento e la gestione delle immagini delle carte.
- * Implementa un sistema di caching per migliorare le prestazioni evitando
- * di ricaricare le stesse immagini più volte.
- *
- * <p>Funzionalità principali:</p>
+ * La classe CardImageLoader gestisce il caricamento, la cache e la scalatura delle immagini delle carte.
+ * <p>
+ * Oltre al caricamento delle immagini da risorse, la classe fornisce placeholder
+ * quando le immagini non sono disponibili e consente il pre-caricamento per ottimizzare le prestazioni.
+ * </p>
+ * <p><b>Funzionalità principali:</b></p>
  * <ul>
- *   <li>Caricamento lazy delle immagini dalle risorse</li>
- *   <li>Cache in memoria per accesso rapido</li>
- *   <li>Supporto per immagini ridimensionate</li>
- *   <li>Generazione di immagini placeholder in caso di errore di caricamento</li>
- *   <li>Gestione del retro delle carte (Dorso)</li>
- *   <li>Compatibilità con diversi path di risorse (IntelliJ, Eclipse)</li>
+ *   <li>Caricamento delle immagini delle carte e del retro carta.</li>
+ *   <li>Gestione della cache per evitare ricaricamenti inutili.</li>
+ *   <li>Generazione di immagini placeholder dove necessario.</li>
+ *   <li>Pre-caricamento opzionale delle risorse per performance ottimizzate.</li>
  * </ul>
- */
+ * <p><b>Nota:</b> La classe utilizza solo metodi statici e non richiede un costruttore.</p>
+ */ 
 public class CardImageLoader {
+	
+
+    /** 
+     * Costruttore privato per impedire l'instanziazione della classe.
+     * <p>
+     * Questa classe è una utility con soli metodi statici e non dovrebbe essere mai istanziata.
+     * </p>
+     */
+    private CardImageLoader() {
+        throw new UnsupportedOperationException("CardImageLoader è una classe utility e non può essere istanziata.");
+    }
+    
 
     /** Logger per la registrazione di eventi ed errori */
     private static final Logger LOGGER = Logger.getLogger(CardImageLoader.class.getName());

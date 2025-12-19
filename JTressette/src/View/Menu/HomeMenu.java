@@ -24,42 +24,95 @@ import javax.swing.*;
  */
 public class HomeMenu extends JPanel implements ProfileListener {
 
+    /** Logger per la classe HomeMenu */
     private static final Logger LOGGER = Logger.getLogger(HomeMenu.class.getName());
 
+    /** Dimensioni di design per il calcolo della finestra in altezza */
     private static final int DESIGN_WIDTH = 1100;
+
+    /** Dimensioni di design per il calcolo della finestra in larghezza */
     private static final int DESIGN_HEIGHT = 720;
 
+    /** Immagine di sfondo del menu */
     BufferedImage background;
+
+    /** Array di opzioni del menu */
     public MenuOption[] options;
+
+    /** Cursore per la navigazione del menu */
     public Controller.Game.Cursor cursor;
+
+    /** Indice dell'opzione attualmente selezionata */
     private int selectedOption = 0;
 
+    /** Colore usato per l'overlay scuro sullo sfondo */
     private static final Color OVERLAY_COLOR = new Color(0, 0, 0, 100);
+
+    /** Colore dorato per il titolo */
     private static final Color TITLE_GOLD = new Color(255, 215, 0);
+
+    /** Colore dorato chiaro per i bordi del titolo */
     private static final Color TITLE_GOLD_LIGHT = new Color(255, 235, 130);
+
+    /** Colore del bordo del pannello delle opzioni */
     private static final Color PANEL_BORDER = new Color(255, 215, 0, 100);
+
+    /** Colore dell'ombra del pannello delle opzioni */
     private static final Color PANEL_SHADOW = new Color(0, 0, 0, 80);
+
+    /** Colore superiore del gradiente del pannello delle opzioni */
     private static final Color PANEL_GRADIENT_TOP = new Color(10, 60, 35, 200);
+
+    /** Colore inferiore del gradiente del pannello delle opzioni */
     private static final Color PANEL_GRADIENT_BOTTOM = new Color(5, 40, 25, 220);
+
+    /** Colore del bordo interno del pannello delle opzioni */
     private static final Color PANEL_INNER_BORDER = new Color(255, 215, 0, 30);
+
+    /** Colore luminoso per il titolo */
     private static final Color TITLE_GLOW = new Color(255, 215, 0, 40);
+
+    /** Colore dell'ombra del sottotitolo */
     private static final Color SUBTITLE_SHADOW = new Color(0, 0, 0, 100);
+
+    /** Colore del sottotitolo */
     private static final Color SUBTITLE_COLOR = new Color(220, 210, 190);
+
+    /** Colori per le ombre del titolo */
     private static final Color[] SHADOW_COLORS = {
             new Color(0, 0, 0, 130), new Color(0, 0, 0, 110),
             new Color(0, 0, 0, 90), new Color(0, 0, 0, 70)
     };
+
+    /** Fattore di raggio per l'effetto vignetta */
     private static final float VIGNETTE_RADIUS_FACTOR = 0.8f;
 
+    /** Font del titolo principale */
     private static final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 56);
+
+    /** Font del sottotitolo */
     private static final Font SUBTITLE_FONT = new Font("Georgia", Font.ITALIC, 18);
 
+    /** Etichetta per l'avatar piccolo nell'angolo */
     private JLabel avatarSmallLabel;
+
+    /** Etichetta per il nome utente nell'angolo */
     private JLabel nameSmallLabel;
+
+    /** Etichetta per il badge del livello */
     private JLabel levelBadgeLabel;
+
+    /** Callback da eseguire quando si clicca sul profilo */
     private Runnable onProfileClick;
+
+    /** Dimensione dell'avatar in pixel */
     private int avatarSize = 46;
 
+    /**
+     * Costruttore del menu principale.
+     *
+     * @param controller il controller del profilo per gestire i dati utente
+     */
     public HomeMenu(ProfileController controller) {
         loadBackground();
 
@@ -101,6 +154,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         SwingUtilities.invokeLater(this::adjustResponsiveLayout);
     }
 
+    /**
+     * Crea il pannello superiore moderno con avatar e nome utente.
+     *
+     * @return il pannello superiore
+     */
     private JPanel createModernTopPanel() {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         topPanel.setOpaque(false);
@@ -164,6 +222,10 @@ public class HomeMenu extends JPanel implements ProfileListener {
         return topPanel;
     }
 
+    /**
+     * Regola il layout in modo responsivo in base alle dimensioni attuali del pannello.
+     *
+     */
     private void adjustResponsiveLayout() {
         int w = Math.max(1, getWidth());
         double scale = getClampedScale();
@@ -184,6 +246,9 @@ public class HomeMenu extends JPanel implements ProfileListener {
         repaint();
     }
 
+    /**
+     * Imposta i listener del mouse per l'interazione con le opzioni del menu.
+     */
     private void setupMouseListeners() {
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override public void mouseMoved(MouseEvent e) {
@@ -221,7 +286,10 @@ public class HomeMenu extends JPanel implements ProfileListener {
     }
 
     /**
-     * Compute raw scale and clamp it to a safe range [0.6, 1.6].
+     * Calcola lo scale basato sulle dimensioni attuali del pannello,
+     * limitandolo nell'intervallo [0.6, 1.6]
+     *
+     * @return il valore scalato
      */
     private double getClampedScale() {
         int w = Math.max(1, getWidth());
@@ -232,7 +300,11 @@ public class HomeMenu extends JPanel implements ProfileListener {
         return Math.max(0.6, Math.min(1.6, raw));
     }
 
-    public int getSelectedOption() { return selectedOption; }
+    /**
+     * Imposta il callback da eseguire quando si clicca sul profilo.
+     *
+     * @param r il callback da eseguire
+     */
     public void setOnProfileClick(Runnable r) { this.onProfileClick = r; }
 
     @Override
@@ -264,6 +336,9 @@ public class HomeMenu extends JPanel implements ProfileListener {
         });
     }
 
+    /**
+     * Carica l'immagine di sfondo dal percorso specificato.
+     */
     private void loadBackground() {
         try (java.io.InputStream is = getClass().getResourceAsStream("/res/default_images/sfondo_1.jpg")) {
             if (is == null) { LOGGER.severe("Immagine di sfondo non trovata"); return; }
@@ -315,6 +390,13 @@ public class HomeMenu extends JPanel implements ProfileListener {
         drawFooter(g2d, w, h, clamped);
     }
 
+    /**
+     * Disegna l'effetto vignetta sul bordo del pannello.
+     * @param g2d la grafica 2D su cui disegnare
+     * @param w la larghezza del pannello
+     * @param h l'altezza del pannello
+
+     */
     private void drawVignette(Graphics2D g2d, int w, int h) {
         int centerX = w/2;
         int centerY = h/2;
@@ -326,6 +408,13 @@ public class HomeMenu extends JPanel implements ProfileListener {
         g2d.setPaint(prev);
     }
 
+    /**
+     * Disegna il pannello del menu con dimensioni basate sulle opzioni.
+     * @param g2d la grafica 2D su cui disegnare
+     * @param w la larghezza del pannello
+     * @param h l'altezza del pannello
+     * @param scale il fattore di scala basato sulle dimensioni del pannello
+     */
     private void drawMenuPanel(Graphics2D g2d, int w, int h, double scale) {
         // Font più grande per le opzioni
         int optionBase = 32;
@@ -414,6 +503,13 @@ public class HomeMenu extends JPanel implements ProfileListener {
         }
     }
 
+    /**
+     * Disegna il titolo utilizzando la dimensione delle opzioni per calcolare la scala.
+     * @param g2d la grafica 2D su cui disegnare
+     * @param w la larghezza del pannello
+     * @param h l'altezza del pannello
+     * @param optionScale il fattore di scala basato sulle dimensioni delle opzioni
+     */
     private void drawTitleUsingOptionSize(Graphics2D g2d, int w, int h, double optionScale) {
         int optionBase = 32;
         // Aumentato il moltiplicatore da 1.0 a 1.8 per un titolo molto più grande
@@ -468,6 +564,13 @@ public class HomeMenu extends JPanel implements ProfileListener {
         g2d.drawString(subtitle, subX, subY);
     }
 
+    /**
+     * Disegna il footer con una linea decorativa.
+     * @param g2d la grafica 2D su cui disegnare
+     * @param w la larghezza del pannello
+     * @param h l'altezza del pannello
+     * @param scale il fattore di scala basato sulle dimensioni del pannello
+     */
     private void drawFooter(Graphics2D g2d, int w, int h, double scale) {
         int footerY = h - (int)Math.round(40*scale);
         GradientPaint lg = new GradientPaint(Math.max(80, w/12), footerY, new Color(255,215,0,0), w/2, footerY, new Color(255,215,0,100));

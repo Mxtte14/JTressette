@@ -14,7 +14,7 @@ import javax.swing.Timer;
  *   <li>Transizioni audio (fade-in e fade-out)</li>
  *   <li>Controllo del volume dinamico</li>
  *   <li>Riproduzione in loop per musica di sottofondo</li>
- *   <li>Effetti sonori one-shot senza interrompere l'audio principale</li>
+ *   <li>Effetti sonori senza interrompere l'audio principale</li>
  * </ul>
  *
  * <p><b>Indici audio disponibili:</b></p>
@@ -58,7 +58,7 @@ public class AudioManager {
     /** Indice audio: suono sconfitta */
     public static final int DEFEAT = 7;
 
-    /** Costante di scalatura del volume massimo sicuro (0.4 = 40% del massimo) */
+    /** Costante di audio del volume massimo sicuro (0.4 = 40% del massimo) */
     public static final float MAX_VOLUME_SCALE = 0.4f;
 
     /** Clip audio principale attualmente in riproduzione */
@@ -97,7 +97,7 @@ public class AudioManager {
      * Chiude l'eventuale clip precedente e apre quello nuovo.
      * Il volume viene applicato automaticamente al nuovo clip.
      *
-     * @param i indice del file audio da caricare (usare le costanti pubbliche)
+     * @param i indice del file audio da caricare
      */
     public void setFile(int i) {
         try {
@@ -119,7 +119,7 @@ public class AudioManager {
 
     /**
      * Avvia la riproduzione dell'audio dal inizio.
-     * Riporta il clip alla posizione iniziale e inizia la riproduzione.
+     * Riporta clip alla posizione iniziale prima di partire.
      */
     public void start() {
         if (clip != null) {
@@ -139,7 +139,6 @@ public class AudioManager {
 
     /**
      * Attiva la riproduzione in loop continuo dell'audio.
-     * Ideale per musica di sottofondo.
      */
     public void loop() {
         if (clip != null) {
@@ -150,7 +149,7 @@ public class AudioManager {
     /**
      * Imposta il volume del clip audio corrente.
      * Il volume viene limitato automaticamente tra 0.0 e MAX_VOLUME_SCALE (0.4)
-     * per evitare distorsioni o livelli pericolosi.
+     * per evitare distorsioni o audio troppo elevato.
      *
      * @param volume livello del volume da 0.0 (silenzio) a 1.0 (volume massimo)
      */
@@ -359,7 +358,7 @@ public class AudioManager {
     /**
      * Chiude e rilascia tutte le risorse audio.
      * Ferma eventuali timer di fade, l'audio e chiude il file audio.
-     * Questo metodo dovrebbe essere chiamato quando l'AudioManager non è più necessario.
+     * Questo metodo viene chiamato quando l'AudioManager non è più necessario.
      */
     public void close() {
         stopFadeTimer();

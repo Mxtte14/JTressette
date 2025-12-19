@@ -79,7 +79,7 @@ public class Bot implements Giocatore {
                 if (lead != null) {
                     // Cache hand reference per evitare chiamate multiple
                     List<Cards> hand = state.getHand(this);
-                    // Usa Streams per trovare la minima carta che vince
+                    // Usa Stream per trovare la minima carta che vince
                     int bestWinIdx = Arrays.stream(legal)
                             .boxed()
                             .filter(idx -> {
@@ -186,7 +186,7 @@ public class Bot implements Giocatore {
             // - se la mossa non vince => preferisco scartare carte di bassa priorità
             double score;
             if (wouldWin) {
-                score = 2000 - candidate.getPriority(); // preferisco vincere con carta più bassa possibile
+                score = 2000 - candidate.getPriority();
                 // se ci sono punti nella presa li valorizzo ulteriormente
                 score += trickPoints * 100;
                 // valorizzo anche il fatto che ci siano ancora punti in quel seme

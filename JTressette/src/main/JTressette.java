@@ -72,13 +72,11 @@ public class JTressette {
      * - 4: Uscita dall'applicazione
      */
     // Gestione click mouse menu principale
-    // Sostituisci il metodo setupMouseListener() nel tuo JTressette.java con questa versione
     private void setupMouseListener() {
         frame.panel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 // Prendi l'indice selezionato dal Cursor (0-based).
-                // Se vuoi mantenere la vecchia logica 1-based, usa (sel + 1).
                 int sel = -1;
                 if (frame.panel.cursor != null) {
                     sel = frame.panel.cursor.getSelectedIndex();
@@ -92,28 +90,27 @@ public class JTressette {
                 switch (sel) {
                     case 0 -> {
                         frame.playMenuClick();
-                        onStartGame(); // AVVIO PARTITA (prima case 1)
+                        onStartGame(); 
                     }
                     case 1 -> {
                         LOG.info("Mostra regole...");
-                        frame.showRules(); // (prima case 2)
+                        frame.showRules(); 
                     }
                     case 2 -> {
                         LOG.info("Accesso al profilo...");
-                        frame.showProfile(); // (prima case 3)
+                        frame.showProfile(); 
                     }
                     case 3 -> {
                         frame.playMenuClick();
                         LOG.info("Impostazioni...");
-                        showSettings(); // (prima case 4)
+                        showSettings(); 
                     }
                     case 4 -> {
                         frame.playMenuClick();
                         LOG.info("Uscita...");
-                        System.exit(0); // (prima case 5)
+                        System.exit(0);
                     }
                     default -> {
-                        // eventualmente loggare index fuori range
                         LOG.fine("Menu click con indice non gestito: " + sel);
                     }
                 }
@@ -126,7 +123,7 @@ public class JTressette {
      * Permette la navigazione verso la schermata di configurazione del gioco.
      */
     private void addSettingsPanelCard() {
-        JPanel cards = frame.getCardsPanel(); // Usa il vero pannello card
+        JPanel cards = frame.getCardsPanel();
         ViewImpostazioni panelImpostazioni = new ViewImpostazioni(impostazioni, frame::showMenu);
         cards.add(panelImpostazioni, "IMPOSTAZIONI");
     }
@@ -157,12 +154,10 @@ public class JTressette {
         frame.transitionToGameMusic(() -> SwingUtilities.invokeLater(() -> {
             frame.setVisible(false);
 
-            // user final holder to allow reference inside lambda
             final GameController[] controllerHolder = new GameController[1];
 
             // onGameEnd: verrà chiamato da GameController.onReturnToMenu()
             Runnable onGameEnd = () -> {
-                // Esegui su EDT per essere sicuri di aggiornare UI
                 SwingUtilities.invokeLater(() -> {
                     // registra partita se possibile (se controller esiste)
                     if (controllerHolder[0] != null) {
@@ -171,7 +166,6 @@ public class JTressette {
                             profileController.recordMatch(record);
 
                         } catch (Exception ex) {
-                            // logga ma non bloccare la UI
                             LOG.warning("Impossibile ottenere o registrare game record: " + ex.getMessage());
                         }
                     }
@@ -203,7 +197,7 @@ public class JTressette {
      * Crea l'istanza dell'applicazione sul thread di dispatching degli eventi Swing (EDT)
      * per garantire la thread-safety delle operazioni sulla GUI.
      *
-     * @param args argomenti della linea di comando (non utilizzati)
+     * @param args argomenti della linea di comando
      */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(JTressette::new);

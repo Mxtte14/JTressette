@@ -38,7 +38,6 @@ public class Mazzo {
 
     /**
      * Mescola casualmente le carte nel mazzo.
-     * Utilizza l'algoritmo di Fisher-Yates tramite Collections.shuffle.
      */
     public void shuffle() {
         Collections.shuffle(cards, rand);

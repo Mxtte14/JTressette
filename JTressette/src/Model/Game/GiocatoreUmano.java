@@ -52,8 +52,7 @@ public class GiocatoreUmano implements Giocatore {
      * fino a quando l'UI non fornisce la scelta tramite submitCardChoice().
      * Utilizza un timeout di 5 minuti per evitare blocchi infiniti.
      *
-     * @param state lo stato corrente della partita (non utilizzato direttamente,
-     *              ma disponibile per estensioni future)
+     * @param state lo stato corrente della partita
      * @return l'indice della carta scelta nella mano (0-based), o -1 se timeout scaduto
      * @throws InterruptedException se il thread viene interrotto durante l'attesa
      */
