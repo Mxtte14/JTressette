@@ -21,7 +21,11 @@ Infine è stato utilizzato il modello Observer-Observable per aggiornare l'inter
 - Java Development Kit (JDK) 17 o superiore
 - Sistema operativo: Windows, Linux, o macOS
 
-## Come compilare ed eseguire
+## Usare con Eclipse IDE
+
+Se usi Eclipse, consulta la **[GUIDA_ECLIPSE.md](GUIDA_ECLIPSE.md)** per istruzioni dettagliate su come importare ed eseguire il progetto in Eclipse.
+
+## Come compilare ed eseguire (da Linea di Comando)
 
 ### Su Linux/macOS
 
