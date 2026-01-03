@@ -1,5 +1,7 @@
 # Build artifacts
 out/
+bin/
+*.class
 
 # IDE files
 .idea/

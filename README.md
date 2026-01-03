@@ -17,6 +17,56 @@ Il progetto è stato sviluppato utilizzando il modello MVC (Model-View-Controlle
 Inoltre è stato implementato il pattern Singleton per la gestione delle risorse condivise, come l'audio e le impostazioni di gioco.
 Infine è stato utilizzato il modello Observer-Observable per aggiornare l'interfaccia utente in risposta ai cambiamenti dello stato del gioco.
 
+## Requisiti
+- Java Development Kit (JDK) 17 o superiore
+- Sistema operativo: Windows, Linux, o macOS
+
+## Come compilare ed eseguire
+
+### Su Linux/macOS
+
+1. **Compilare il progetto:**
+   ```bash
+   ./build.sh
+   ```
+
+2. **Eseguire l'applicazione:**
+   ```bash
+   ./run.sh
+   ```
+
+### Su Windows
+
+1. **Compilare il progetto:**
+   ```cmd
+   build.bat
+   ```
+
+2. **Eseguire l'applicazione:**
+   ```cmd
+   run.bat
+   ```
+
+### Compilazione manuale
+
+Se preferisci compilare manualmente, assicurati di essere nella directory principale del repository e usa i seguenti comandi:
+
+**Linux/macOS:**
+```bash
+cd JTressette
+javac -d bin -sourcepath src src/main/JTressette.java
+java -cp bin:src main.JTressette
+```
+
+**Windows:**
+```cmd
+cd JTressette
+javac -d bin -sourcepath src src\main\JTressette.java
+java -cp bin;src main.JTressette
+```
+
+**Nota importante:** Assicurati di eseguire i comandi dalla directory corretta. Il codice sorgente si trova nella sottodirectory `JTressette/src/`.
+
 ## Architettura del progetto
 Il progetto è strutturato in diverse classi principali:
 - `Audio`: Gestione dell'audio di gioco.
