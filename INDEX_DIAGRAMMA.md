@@ -6,17 +6,15 @@
 
 ---
 
-## 📁 File Generati (7 files totali)
+## 📁 File Generati (3 files totali)
 
-### 1. Diagrammi Visuali (3 files)
+### 1. Diagramma (1 file)
 
-| File | Dimensione | Formato | Uso Consigliato |
-|------|------------|---------|------------------|
-| **JTressette Class Diagram.png** | 498 KB | PNG 6221×2183 | Presentazioni, documentazione |
-| **JTressette Class Diagram.svg** | 140 KB | SVG vettoriale | Stampa, web, zoom infinito |
-| **class-diagram.puml** | 14 KB | PlantUML | Modifiche, versionamento |
+| File | Formato | Uso Consigliato |
+|------|---------|------------------|
+| **JTressette-ClassDiagram.drawio** | Draw.io XML | Visualizzazione e modifica in Draw.io |
 
-### 2. Documentazione (4 files)
+### 2. Documentazione (3 files)
 
 | File | Righe | Contenuto | Quando Usarlo |
 |------|-------|-----------|---------------|
@@ -33,7 +31,8 @@
 
 ```
 1. 👀 Visualizza il diagramma
-   └─→ Apri "JTressette Class Diagram.svg" (migliore qualità)
+   └─→ Apri "JTressette-ClassDiagram.drawio" in Draw.io
+       (https://app.diagrams.net/)
 
 2. 📖 Leggi la guida rapida  
    └─→ Apri "GUIDA_RAPIDA_DIAGRAMMA.md"
@@ -146,21 +145,22 @@ Nel diagramma troverai questi simboli per le relazioni:
 
 ### Per Visualizzare Subito
 ```bash
-# Apri il diagramma SVG (migliore qualità)
-open "JTressette Class Diagram.svg"
+# Opzione 1: Draw.io Online
+# 1. Vai su https://app.diagrams.net/
+# 2. File → Open from → Device
+# 3. Seleziona JTressette-ClassDiagram.drawio
 
-# Oppure il PNG
-open "JTressette Class Diagram.png"
+# Opzione 2: Draw.io Desktop
+# Scarica da https://get.diagrams.net/
+# Apri il file .drawio direttamente
 ```
 
-### Per Modificare
-```bash
-# 1. Modifica il file PlantUML
-nano class-diagram.puml
-
-# 2. Rigenera i diagrammi
-plantuml -tpng class-diagram.puml
-plantuml -tsvg class-diagram.puml
+### Per Esportare in Immagine
+```
+Da Draw.io:
+File → Export as → PNG (per presentazioni)
+File → Export as → SVG (vettoriale)
+File → Export as → PDF (per stampa)
 ```
 
 ---
@@ -234,19 +234,17 @@ plantuml -tsvg class-diagram.puml
 ## 📝 Note Tecniche
 
 ### Strumenti Utilizzati
-- **PlantUML 1.2020.2**: Generazione diagrammi
+- **Draw.io (diagrams.net)**: Editor di diagrammi
 - **Java**: Linguaggio del progetto
 - **Swing**: Framework GUI
 
-### Formati Generati
-- PNG: Raster, 6221×2183 pixel
-- SVG: Vettoriale, scalabile infinito
-- PlantUML: Codice sorgente
+### Formato Generato
+- **Draw.io XML**: Formato modificabile e versionabile
 
 ### Compatibilità
-- Visualizzabile in qualsiasi browser
-- Modificabile con PlantUML
-- Integrabile in IDE (IntelliJ, Eclipse, VS Code)
+- Visualizzabile e modificabile in Draw.io online o desktop
+- Esportabile in PNG, SVG, PDF, JPEG, HTML
+- Integrabile in VS Code, IntelliJ IDEA, Eclipse con plugin
 
 ---
 
@@ -280,11 +278,12 @@ Consulta in ordine:
 ## 📅 Informazioni
 
 **Data di Creazione**: 3 Gennaio 2026  
-**Versione**: 1.0  
-**Formato**: PlantUML → PNG + SVG  
+**Versione**: 2.0 (Draw.io semplificato)  
+**Formato**: Draw.io XML  
 **Classi Documentate**: 35  
 **Pattern Identificati**: 4 (MVC, Observer, Singleton, Strategy)  
-**File Totali**: 7 (3 diagrammi + 4 documenti)
+**File Totali**: 4 (1 diagramma + 3 documenti)  
+**Approccio**: Architettura semplificata, omettendo listener e classi Java standard
 
 ---
 

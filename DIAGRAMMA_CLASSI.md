@@ -12,28 +12,27 @@
 
 ## 📁 File Creati
 
-### 1. Diagrammi Visuali
-- **`JTressette Class Diagram.png`** (510 KB)
-  - Immagine PNG ad alta risoluzione
-  - Dimensioni: 6221x2183 pixel
-  - Ideale per presentazioni e documentazione
+### 1. Diagramma
+- **`JTressette-ClassDiagram.drawio`**
+  - Formato Draw.io XML modificabile
+  - Visualizza su https://app.diagrams.net/
+  - Ideale per modifiche e esportazioni
 
-- **`JTressette Class Diagram.svg`** (140 KB)
-  - Formato vettoriale scalabile
-  - Qualità perfetta a qualsiasi zoom
-  - Ideale per stampa e web
-
-### 2. Codice Sorgente
-- **`class-diagram.puml`**
-  - Codice sorgente PlantUML del diagramma
-  - Modificabile e versionabile
-  - Può essere rigenerato in qualsiasi formato
-
-### 3. Documentazione
+### 2. Documentazione
 - **`CLASS_DIAGRAM_README.md`**
   - Guida completa al diagramma
   - Spiegazione dettagliata di ogni componente
   - Istruzioni per visualizzazione e modifica
+
+- **`DIAGRAMMA_CLASSI.md`** (questo file)
+  - Lista completa delle classi
+  - Organizzazione per package
+  - Pattern e relazioni
+
+- **`GUIDA_RAPIDA_DIAGRAMMA.md`**
+  - Quick reference con simboli
+  - Guida rapida all'uso
+  - Tips e suggerimenti
 
 ## 🎨 Struttura del Diagramma
 
@@ -112,26 +111,23 @@
 ## 📖 Come Visualizzare
 
 ### Metodo Rapido
-Apri uno di questi file con un visualizzatore di immagini:
+Apri il diagramma in Draw.io:
 ```bash
-# Visualizza PNG
-open "JTressette Class Diagram.png"
+# Online
+1. Vai su https://app.diagrams.net/
+2. File → Open from → Device
+3. Seleziona JTressette-ClassDiagram.drawio
 
-# Visualizza SVG (migliore qualità)
-open "JTressette Class Diagram.svg"
+# Desktop (se installato)
+drawio JTressette-ClassDiagram.drawio
 ```
 
-### Nel Browser
-```bash
-# Apri SVG nel browser
-firefox "JTressette Class Diagram.svg"
-google-chrome "JTressette Class Diagram.svg"
-```
-
-### Modifica il Diagramma
-1. Apri `class-diagram.puml` in un editor
-2. Modifica il codice PlantUML
-3. Rigenera con: `plantuml -tpng class-diagram.puml`
+### Esportazione
+Da Draw.io puoi esportare in:
+- **PNG** - per presentazioni
+- **SVG** - vettoriale scalabile
+- **PDF** - per stampa
+- **JPEG**, **HTML**, **XML**
 
 ## 📚 Lettura della Legenda
 
@@ -175,6 +171,7 @@ Consulta il file **`CLASS_DIAGRAM_README.md`** per:
 
 ---
 
-**Generato il:** 3 Gennaio 2026
-**Strumento:** PlantUML 1.2020.2
-**Formato:** PNG (6221x2183 px) + SVG vettoriale
+**Generato il:** 3 Gennaio 2026  
+**Strumento:** Draw.io (diagrams.net)  
+**Formato:** Draw.io XML modificabile  
+**Approccio:** Diagramma architetturale semplificato

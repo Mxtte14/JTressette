@@ -1,0 +1,332 @@
+<mxfile host="app.diagrams.net" modified="2026-01-03T15:39:00.000Z" agent="5.0" version="22.1.11">
+  <diagram name="JTressette Class Diagram" id="c4acf3e9-155e-7222-9cf6-157b1a14988f">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2339" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="JTressette - Diagramma delle Classi (Architettura MVC)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="850" y="40" width="600" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Legend -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="2800" y="120" width="400" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="Legenda" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="2900" y="130" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-model" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;" vertex="1" parent="1">
+          <mxGeometry x="2820" y="170" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-model-text" value="Model" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2950" y="170" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-view" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;" vertex="1" parent="1">
+          <mxGeometry x="2820" y="210" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-view-text" value="View" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2950" y="210" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-controller" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;" vertex="1" parent="1">
+          <mxGeometry x="2820" y="250" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-controller-text" value="Controller" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2950" y="250" width="200" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- MODEL CLASSES -->
+        
+        <!-- Giocatore Interface -->
+        <mxCell id="giocatore" value="&lt;&lt;interface&gt;&gt;&#xa;Giocatore&#xa;---&#xa;+ getName(): String&#xa;+ isBot(): boolean&#xa;+ chooseCard(state): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="400" y="400" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- GiocatoreUmano -->
+        <mxCell id="giocatore-umano" value="GiocatoreUmano&#xa;---&#xa;- name: String&#xa;- queue: BlockingQueue&#xa;---&#xa;+ submitCardChoice(int)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="200" y="600" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Bot -->
+        <mxCell id="bot" value="Bot&#xa;---&#xa;- name: String&#xa;- difficulty: Difficoltà&#xa;---&#xa;+ chooseCard(state): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="600" y="600" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Difficoltà -->
+        <mxCell id="difficolta" value="&lt;&lt;enum&gt;&gt;&#xa;Difficoltà&#xa;---&#xa;EASY&#xa;MEDIUM&#xa;HARD" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="900" y="600" width="150" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Cards -->
+        <mxCell id="cards" value="Cards&#xa;---&#xa;- segno: Segno&#xa;- rank: Rank&#xa;---&#xa;+ getSegno(): Segno&#xa;+ getRank(): Rank&#xa;+ getPriority(): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="400" width="200" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Mazzo -->
+        <mxCell id="mazzo" value="Mazzo&#xa;---&#xa;- cards: List&lt;Cards&gt;&#xa;---&#xa;+ shuffle(): void&#xa;+ draw(): Cards&#xa;+ isEmpty(): boolean&#xa;+ remaining(): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="600" width="200" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- GameState -->
+        <mxCell id="gamestate" value="GameState&#xa;---&#xa;- players: List&lt;Giocatore&gt;&#xa;- hands: Map&lt;Giocatore, List&lt;Cards&gt;&gt;&#xa;- scores: Map&lt;Giocatore, Integer&gt;&#xa;- deck: Mazzo&#xa;- currentPlayerIndex: int&#xa;---&#xa;+ deal(cardsPerPlayer): void&#xa;+ playCard(player, index): Cards&#xa;+ getCurrentPlayer(): Giocatore&#xa;+ getHand(player): List&lt;Cards&gt;&#xa;+ getLegalMoves(player): int[]&#xa;+ isFinished(): boolean" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="900" width="300" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- UserProfile -->
+        <mxCell id="userprofile" value="UserProfile&#xa;---&#xa;- username: String&#xa;- avatarPath: String&#xa;- level: int&#xa;- experience: int&#xa;- gamesPlayed: int&#xa;- gamesWon: int&#xa;---&#xa;+ setUsername(name): void&#xa;+ addExperience(xp): void&#xa;+ addGameRecord(record): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="900" width="250" height="240" as="geometry" />
+        </mxCell>
+        
+        <!-- GamesRecord -->
+        <mxCell id="gamesrecord" value="GamesRecord&#xa;---&#xa;- date: String&#xa;- opponents: String&#xa;- winner: String&#xa;- winnerScore: String&#xa;- myScore: String&#xa;- experience: int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="900" width="200" height="160" as="geometry" />
+        </mxCell>
+        
+        <!-- StorageProfile -->
+        <mxCell id="storageprofile" value="StorageProfile&#xa;---&#xa;- profileFile: File&#xa;---&#xa;+ save(profile): void&#xa;+ load(): UserProfile" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="1200" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- AudioManager -->
+        <mxCell id="audiomanager" value="AudioManager&#xa;---&#xa;- clip: Clip&#xa;- volume: float&#xa;---&#xa;+ play(): void&#xa;+ loop(): void&#xa;+ stop(): void&#xa;+ setVolume(volume): void&#xa;+ fadeIn(duration, volume): void&#xa;+ fadeOut(duration): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="200" y="1300" width="250" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- MenuImpostazioni -->
+        <mxCell id="menuimpostazioni" value="&lt;&lt;singleton&gt;&gt;&#xa;MenuImpostazioni&#xa;---&#xa;- volume: int&#xa;- fullscreen: boolean&#xa;- effects: boolean&#xa;- showScore: boolean&#xa;- showMessages: boolean&#xa;---&#xa;+ getInstance(): MenuImpostazioni" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="900" width="250" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- CardImageLoader -->
+        <mxCell id="cardimageloader" value="CardImageLoader&#xa;---&#xa;- imageCache: Map&#xa;---&#xa;+ preloadImages(): void&#xa;+ getScaledCardImage(): Image&#xa;+ getScaledCardBackImage(): Image" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="400" width="250" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- VIEW CLASSES -->
+        
+        <!-- GameView -->
+        <mxCell id="gameview" value="GameView&#xa;---&#xa;- gameState: GameState&#xa;- humanPlayer: GiocatoreUmano&#xa;- controller: GameController&#xa;- audioManager: AudioManager&#xa;---&#xa;+ refresh(): void&#xa;+ log(message): void&#xa;+ showCardPlayed(): void&#xa;+ showTrickWon(): void&#xa;+ showGameOver(result): void&#xa;+ fadeIn(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="1500" width="280" height="280" as="geometry" />
+        </mxCell>
+        
+        <!-- GameSetup -->
+        <mxCell id="gamesetup" value="GameSetup&#xa;---&#xa;- controller: ProfileController&#xa;---&#xa;+ getSelectedPlayers(): List&#xa;+ getSelectedDifficulty(): Difficoltà" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="1500" width="250" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- MenuFrame -->
+        <mxCell id="menuframe" value="MenuFrame&#xa;---&#xa;- panel: HomeMenu&#xa;- profilePanel: ProfileMenu&#xa;- rulesPanel: RulesPage&#xa;- audioManager: AudioManager&#xa;---&#xa;+ showProfile(): void&#xa;+ showRules(): void&#xa;+ showMenu(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1100" y="1700" width="250" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- HomeMenu -->
+        <mxCell id="homemenu" value="HomeMenu&#xa;---&#xa;- options: MenuOption[]&#xa;- cursor: Cursor&#xa;- avatarLabel: JLabel&#xa;- nameLabel: JLabel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1450" y="1700" width="200" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- ProfileMenu -->
+        <mxCell id="profilemenu" value="ProfileMenu&#xa;---&#xa;- controller: ProfileController&#xa;- avatarLabel: JLabel&#xa;- nameField: JTextField&#xa;---&#xa;+ refreshFromModel(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1450" y="1860" width="220" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- RulesPage -->
+        <mxCell id="rulespage" value="RulesPage" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="1700" width="150" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- ViewImpostazioni -->
+        <mxCell id="viewimpostazioni" value="ViewImpostazioni&#xa;---&#xa;- settings: MenuImpostazioni&#xa;- volumeSlider: JSlider&#xa;- fullscreenCheckbox: JCheckBox" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="1800" width="220" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- CONTROLLER CLASSES -->
+        
+        <!-- GameController -->
+        <mxCell id="gamecontroller" value="GameController&#xa;---&#xa;- gameState: GameState&#xa;- humanPlayer: GiocatoreUmano&#xa;- view: GameView&#xa;- audioManager: AudioManager&#xa;- gameRunning: boolean&#xa;---&#xa;+ startGame(): void&#xa;+ onCardPlayed(index): void&#xa;+ onReturnToMenu(): void&#xa;+ onExitGame(): void&#xa;+ getGameRecord(): GamesRecord" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="200" y="1600" width="280" height="260" as="geometry" />
+        </mxCell>
+        
+        <!-- Cursor -->
+        <mxCell id="cursor" value="Cursor&#xa;---&#xa;- parentPanel: JPanel&#xa;- selectedIndex: int&#xa;---&#xa;+ setSelectedIndex(index): void&#xa;+ getSelectedIndex(): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="1500" width="220" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- ProfileController Interface -->
+        <mxCell id="profilecontroller" value="&lt;&lt;interface&gt;&gt;&#xa;ProfileController&#xa;---&#xa;+ getProfile(): UserProfile&#xa;+ setName(name): void&#xa;+ setAvatar(file): void&#xa;+ recordMatch(game): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="2200" y="900" width="240" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- ProfileControllerImpl -->
+        <mxCell id="profilecontrollerimpl" value="ProfileControllerImpl&#xa;---&#xa;- storage: StorageProfile&#xa;- profile: UserProfile&#xa;---&#xa;+ getProfile(): UserProfile&#xa;+ setName(name): void&#xa;+ setAvatar(file): void&#xa;+ recordMatch(game): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="2200" y="1100" width="240" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Main -->
+        <mxCell id="jtressette" value="JTressette&#xa;---&#xa;+ main(args): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="2200" y="1500" width="160" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- RELATIONSHIPS -->
+        
+        <!-- Giocatore implementations -->
+        <mxCell id="edge-giocatore-umano" value="" style="endArrow=block;endFill=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="giocatore-umano" target="giocatore">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-giocatore-umano-label" value="Implements" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" vertex="1" connectable="0" parent="edge-giocatore-umano">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint x="-20" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="edge-bot" value="" style="endArrow=block;endFill=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="bot" target="giocatore">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-bot-label" value="Implements" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" vertex="1" connectable="0" parent="edge-bot">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint x="20" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Bot uses Difficoltà -->
+        <mxCell id="edge-bot-difficolta" value="" style="endArrow=open;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="bot" target="difficolta">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Mazzo contains Cards -->
+        <mxCell id="edge-mazzo-cards" value="" style="endArrow=diamond;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endFill=1;" edge="1" parent="1" source="mazzo" target="cards">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameState manages Giocatore -->
+        <mxCell id="edge-gamestate-giocatore" value="" style="endArrow=open;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="gamestate" target="giocatore">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameState contains Mazzo -->
+        <mxCell id="edge-gamestate-mazzo" value="" style="endArrow=diamond;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;endFill=1;" edge="1" parent="1" source="gamestate" target="mazzo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- UserProfile contains GamesRecord -->
+        <mxCell id="edge-userprofile-gamesrecord" value="" style="endArrow=diamond;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;" edge="1" parent="1" source="userprofile" target="gamesrecord">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- StorageProfile saves UserProfile -->
+        <mxCell id="edge-storage-userprofile" value="" style="endArrow=open;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="storageprofile" target="userprofile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- ProfileControllerImpl implements ProfileController -->
+        <mxCell id="edge-profileimpl-interface" value="" style="endArrow=block;endFill=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="profilecontrollerimpl" target="profilecontroller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-profileimpl-interface-label" value="Implements" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" vertex="1" connectable="0" parent="edge-profileimpl-interface">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- ProfileControllerImpl uses StorageProfile -->
+        <mxCell id="edge-profileimpl-storage" value="" style="endArrow=open;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="profilecontrollerimpl" target="storageprofile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- ProfileControllerImpl manages UserProfile -->
+        <mxCell id="edge-profileimpl-userprofile" value="" style="endArrow=open;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="profilecontrollerimpl" target="userprofile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameController manages GameState -->
+        <mxCell id="edge-gamecontroller-gamestate" value="" style="endArrow=open;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="gamecontroller" target="gamestate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameController controls GameView -->
+        <mxCell id="edge-gamecontroller-gameview" value="" style="endArrow=open;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="gamecontroller" target="gameview">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameController uses AudioManager -->
+        <mxCell id="edge-gamecontroller-audio" value="" style="endArrow=open;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="gamecontroller" target="audiomanager">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameView observes GameState -->
+        <mxCell id="edge-gameview-gamestate" value="" style="endArrow=open;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="gameview" target="gamestate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameView uses GiocatoreUmano -->
+        <mxCell id="edge-gameview-giocatoreumano" value="" style="endArrow=open;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="gameview" target="giocatore-umano">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameView uses AudioManager -->
+        <mxCell id="edge-gameview-audio" value="" style="endArrow=open;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="gameview" target="audiomanager">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameView uses CardImageLoader -->
+        <mxCell id="edge-gameview-cardloader" value="" style="endArrow=open;html=1;exitX=1;exitY=0.1;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="gameview" target="cardimageloader">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- MenuFrame contains panels -->
+        <mxCell id="edge-menuframe-homemenu" value="" style="endArrow=diamond;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;" edge="1" parent="1" source="menuframe" target="homemenu">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge-menuframe-profilemenu" value="" style="endArrow=diamond;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endFill=1;" edge="1" parent="1" source="menuframe" target="profilemenu">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="edge-menuframe-rules" value="" style="endArrow=diamond;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;" edge="1" parent="1" source="menuframe" target="rulespage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- MenuFrame uses AudioManager -->
+        <mxCell id="edge-menuframe-audio" value="" style="endArrow=open;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="menuframe" target="audiomanager">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- HomeMenu uses Cursor -->
+        <mxCell id="edge-homemenu-cursor" value="" style="endArrow=open;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="homemenu" target="cursor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- ProfileMenu uses ProfileController -->
+        <mxCell id="edge-profilemenu-controller" value="" style="endArrow=open;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="profilemenu" target="profilecontrollerimpl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- ViewImpostazioni uses MenuImpostazioni -->
+        <mxCell id="edge-viewimpost-menuimpost" value="" style="endArrow=open;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="viewimpostazioni" target="menuimpostazioni">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameSetup creates Giocatore -->
+        <mxCell id="edge-gamesetup-giocatore" value="" style="endArrow=open;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="gamesetup" target="giocatore">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- GameSetup uses Difficoltà -->
+        <mxCell id="edge-gamesetup-difficolta" value="" style="endArrow=open;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="gamesetup" target="difficolta">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- JTressette creates MenuFrame -->
+        <mxCell id="edge-main-menuframe" value="" style="endArrow=open;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="jtressette" target="menuframe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- JTressette creates ProfileControllerImpl -->
+        <mxCell id="edge-main-profilecontroller" value="" style="endArrow=open;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="jtressette" target="profilecontrollerimpl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

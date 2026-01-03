@@ -2,30 +2,32 @@
 
 ## 🎯 Cosa è stato creato?
 
-Un diagramma delle classi completo del progetto JTressette che mostra:
-- **35 classi** organizzate secondo il pattern MVC
+Un diagramma delle classi semplificato del progetto JTressette in formato **Draw.io** che mostra:
+- **35 classi principali** organizzate secondo il pattern MVC
 - **Colori diversi** per Model (🟢 verde), View (🔵 azzurro) e Controller (🟠 arancione)
-- **Tutte le relazioni** tra le classi (extends, implements, associazioni)
+- **Relazioni essenziali** tra le classi (extends, implements, associazioni)
+- **Focus sull'architettura**, omettendo dettagli implementativi Java (listener, Runnable, ExecutorService)
 
 ## 📁 File Disponibili
 
-| File | Dimensione | Descrizione |
-|------|------------|-------------|
-| `JTressette Class Diagram.png` | 498 KB | Immagine PNG ad alta risoluzione (6221×2183 px) |
-| `JTressette Class Diagram.svg` | 140 KB | Immagine vettoriale (migliore qualità) |
-| `class-diagram.puml` | 14 KB | Codice sorgente PlantUML (modificabile) |
-| `CLASS_DIAGRAM_README.md` | 7.3 KB | Documentazione completa in italiano |
-| `DIAGRAMMA_CLASSI.md` | 5.1 KB | Riepilogo dettagliato delle classi |
+| File | Formato | Descrizione |
+|------|---------|-------------|
+| `JTressette-ClassDiagram.drawio` | Draw.io XML | Diagramma modificabile in Draw.io |
+| `CLASS_DIAGRAM_README.md` | Markdown | Documentazione completa in italiano |
+| `DIAGRAMMA_CLASSI.md` | Markdown | Riepilogo dettagliato delle classi |
 
-## 👀 Come Visualizzare
+## 👀 Come Visualizzare e Modificare
 
-### Metodo più semplice:
-1. Apri il file `JTressette Class Diagram.svg` con un browser web o visualizzatore di immagini
-2. Usa lo zoom per vedere i dettagli
+### Metodo Consigliato (Draw.io):
+1. Vai su [https://app.diagrams.net/](https://app.diagrams.net/) (Draw.io online)
+2. File → Open from → Device
+3. Seleziona `JTressette-ClassDiagram.drawio`
+4. Visualizza, modifica e esporta (PNG, SVG, PDF)
 
 ### Alternative:
-- Apri il PNG per una visualizzazione rapida
-- Usa un IDE con supporto PlantUML per modificare il file `.puml`
+- **Draw.io Desktop**: Scarica da [https://get.diagrams.net/](https://get.diagrams.net/)
+- **VS Code**: Installa l'estensione "Draw.io Integration"
+- **IntelliJ IDEA**: Installa il plugin "Diagrams.net Integration"
 
 ## 🎨 Legenda dei Colori
 
@@ -128,5 +130,6 @@ Per una comprensione approfondita, leggi:
 
 **Creato:** 3 Gennaio 2026  
 **Autore:** GitHub Copilot  
-**Formato:** PlantUML → PNG + SVG  
-**Classi:** 35 totali (21 Model + 9 View + 5 Controller)
+**Formato:** Draw.io XML  
+**Classi:** 35 totali (21 Model + 9 View + 5 Controller)  
+**Approccio:** Diagramma semplificato per architettura, non implementazione Java completa

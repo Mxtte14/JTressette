@@ -6,30 +6,35 @@ Questo documento descrive il diagramma delle classi del progetto JTressette, un'
 
 ## Visualizzazione del Diagramma
 
-Il diagramma è stato creato utilizzando PlantUML ed è disponibile in diversi formati:
-- **PNG**: `JTressette Class Diagram.png` (immagine raster, buona per visualizzazione rapida)
-- **SVG**: `JTressette Class Diagram.svg` (immagine vettoriale, migliore qualità)
-- **PUML**: `class-diagram.puml` (codice sorgente PlantUML)
+Il diagramma è stato creato utilizzando **Draw.io** (diagrams.net) in formato XML modificabile.
 
-### Visualizzazione Diretta
-Apri i file PNG o SVG con qualsiasi visualizzatore di immagini o browser web.
+### File Disponibile
+- **`JTressette-ClassDiagram.drawio`**: Diagramma completo modificabile
 
-### Modifica del Diagramma
+### Come Visualizzare e Modificare
 
-#### Opzione 1: Online
-1. Apri [PlantUML Online Editor](http://www.plantuml.com/plantuml/uml/)
-2. Copia e incolla il contenuto del file `class-diagram.puml`
-3. Il diagramma verrà generato automaticamente
+#### Opzione 1: Draw.io Online (Consigliato)
+1. Vai su [https://app.diagrams.net/](https://app.diagrams.net/)
+2. File → Open from → Device
+3. Seleziona `JTressette-ClassDiagram.drawio`
+4. Visualizza, modifica e esporta in vari formati (PNG, SVG, PDF, ecc.)
 
-#### Opzione 2: Locale
-1. Installa PlantUML: [Download](https://plantuml.com/download)
-2. Esegui: `plantuml class-diagram.puml`
-3. Verrà generata un'immagine PNG con il diagramma
+#### Opzione 2: Draw.io Desktop
+1. Scarica Draw.io da [https://get.diagrams.net/](https://get.diagrams.net/)
+2. Installa l'applicazione desktop
+3. Apri il file `.drawio` direttamente
 
 #### Opzione 3: IDE Integration
-- **IntelliJ IDEA**: Installa il plugin "PlantUML Integration"
-- **Eclipse**: Installa il plugin "PlantUML Eclipse Plugin"
-- **VS Code**: Installa l'estensione "PlantUML"
+- **VS Code**: Installa l'estensione "Draw.io Integration"
+- **IntelliJ IDEA**: Installa il plugin "Diagrams.net Integration"
+- **Eclipse**: Usa il plugin Draw.io disponibile nel marketplace
+
+### Esportazione
+Dal menu File di Draw.io puoi esportare in:
+- PNG (per documentazione)
+- SVG (vettoriale, scalabile)
+- PDF (per stampa)
+- JPEG, XML, HTML
 
 ## Struttura del Progetto (Pattern MVC)
 
