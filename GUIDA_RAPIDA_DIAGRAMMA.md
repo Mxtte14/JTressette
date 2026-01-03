@@ -2,11 +2,11 @@
 
 ## 🎯 Cosa è stato creato?
 
-Un diagramma delle classi semplificato del progetto JTressette in formato **Draw.io** che mostra:
+Un diagramma delle classi **completo** del progetto JTressette in formato **Draw.io** che mostra:
 - **35 classi principali** organizzate secondo il pattern MVC
 - **Colori diversi** per Model (🟢 verde), View (🔵 azzurro) e Controller (🟠 arancione)
-- **Relazioni essenziali** tra le classi (extends, implements, associazioni)
-- **Focus sull'architettura**, omettendo dettagli implementativi Java (listener, Runnable, ExecutorService)
+- **Attributi e metodi completi** per ogni classe con tipi e parametri
+- **Relazioni semplificate** (extends, implements, associazioni) senza dettagli Java non architetturali
 
 ## 📁 File Disponibili
 
@@ -132,4 +132,5 @@ Per una comprensione approfondita, leggi:
 **Autore:** GitHub Copilot  
 **Formato:** Draw.io XML  
 **Classi:** 35 totali (21 Model + 9 View + 5 Controller)  
-**Approccio:** Diagramma semplificato per architettura, non implementazione Java completa
+**Dettaglio:** Attributi e metodi completi con tipi e parametri  
+**Relazioni:** Semplificate (senza listener e classi Java standard)

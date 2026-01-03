@@ -44,13 +44,13 @@
         </mxCell>
         
         <!-- GiocatoreUmano -->
-        <mxCell id="giocatore-umano" value="GiocatoreUmano&#xa;---&#xa;- name: String&#xa;- queue: BlockingQueue&#xa;---&#xa;+ submitCardChoice(int)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="200" y="600" width="200" height="120" as="geometry" />
+        <mxCell id="giocatore-umano" value="GiocatoreUmano&#xa;---&#xa;- name: String&#xa;- queue: BlockingQueue&lt;Integer&gt;&#xa;---&#xa;+ GiocatoreUmano(name: String)&#xa;+ getName(): String&#xa;+ isBot(): boolean&#xa;+ chooseCard(state: GameState): int&#xa;+ submitCardChoice(handIndex: int): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="200" y="600" width="250" height="180" as="geometry" />
         </mxCell>
         
         <!-- Bot -->
-        <mxCell id="bot" value="Bot&#xa;---&#xa;- name: String&#xa;- difficulty: Difficoltà&#xa;---&#xa;+ chooseCard(state): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="600" y="600" width="200" height="120" as="geometry" />
+        <mxCell id="bot" value="Bot&#xa;---&#xa;- name: String&#xa;- difficulty: Difficoltà&#xa;- rnd: Random&#xa;---&#xa;+ Bot(name: String, difficulty: Difficoltà)&#xa;+ getName(): String&#xa;+ isBot(): boolean&#xa;+ chooseCard(state: GameState): int&#xa;- chooseCardHard(state: GameState, legal: int[]): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="550" y="600" width="300" height="180" as="geometry" />
         </mxCell>
         
         <!-- Difficoltà -->
@@ -59,112 +59,112 @@
         </mxCell>
         
         <!-- Cards -->
-        <mxCell id="cards" value="Cards&#xa;---&#xa;- segno: Segno&#xa;- rank: Rank&#xa;---&#xa;+ getSegno(): Segno&#xa;+ getRank(): Rank&#xa;+ getPriority(): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1200" y="400" width="200" height="140" as="geometry" />
+        <mxCell id="cards" value="Cards&#xa;---&#xa;- segno: Segno&#xa;- rank: Rank&#xa;---&#xa;+ Cards(segno: Segno, rank: Rank)&#xa;+ getSegno(): Segno&#xa;+ getRank(): Rank&#xa;+ getPriority(): int&#xa;+ toString(): String&#xa;+ equals(obj: Object): boolean&#xa;+ hashCode(): int&#xa;---&#xa;&lt;&lt;enum&gt;&gt; Segno: DENARA, SPADE, BASTONI, COPPE&#xa;&lt;&lt;enum&gt;&gt; Rank: TRE(10), DUE(9), ASSO(8), RE(7), CAVALLO(6), ALFIERE(5), SETTE(4), SEI(3), CINQUE(2), QUATTRO(1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="350" width="320" height="280" as="geometry" />
         </mxCell>
         
         <!-- Mazzo -->
-        <mxCell id="mazzo" value="Mazzo&#xa;---&#xa;- cards: List&lt;Cards&gt;&#xa;---&#xa;+ shuffle(): void&#xa;+ draw(): Cards&#xa;+ isEmpty(): boolean&#xa;+ remaining(): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1200" y="600" width="200" height="140" as="geometry" />
+        <mxCell id="mazzo" value="Mazzo&#xa;---&#xa;- cards: List&lt;Cards&gt;&#xa;- rand: Random&#xa;- audioManager: AudioManager&#xa;---&#xa;+ Mazzo()&#xa;+ shuffle(): void&#xa;+ draw(): Cards&#xa;+ isEmpty(): boolean&#xa;+ remaining(): int&#xa;+ getCards(): List&lt;Cards&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="680" width="250" height="200" as="geometry" />
         </mxCell>
         
         <!-- GameState -->
-        <mxCell id="gamestate" value="GameState&#xa;---&#xa;- players: List&lt;Giocatore&gt;&#xa;- hands: Map&lt;Giocatore, List&lt;Cards&gt;&gt;&#xa;- scores: Map&lt;Giocatore, Integer&gt;&#xa;- deck: Mazzo&#xa;- currentPlayerIndex: int&#xa;---&#xa;+ deal(cardsPerPlayer): void&#xa;+ playCard(player, index): Cards&#xa;+ getCurrentPlayer(): Giocatore&#xa;+ getHand(player): List&lt;Cards&gt;&#xa;+ getLegalMoves(player): int[]&#xa;+ isFinished(): boolean" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="700" y="900" width="300" height="280" as="geometry" />
+        <mxCell id="gamestate" value="GameState&#xa;---&#xa;- players: List&lt;Giocatore&gt;&#xa;- hands: Map&lt;Giocatore, List&lt;Cards&gt;&gt;&#xa;- scores: Map&lt;Giocatore, Integer&gt;&#xa;- wonCardsCount: Map&lt;Giocatore, Integer&gt;&#xa;- deck: Mazzo&#xa;- currentPlayerIndex: int&#xa;- trickPlayers: List&lt;Giocatore&gt;&#xa;- trickCards: List&lt;Cards&gt;&#xa;- playedCards: List&lt;Cards&gt;&#xa;- lastTrickWinner: Giocatore&#xa;- lastTrickCardsWon: int&#xa;- audioManager: AudioManager&#xa;---&#xa;+ GameState(players: List&lt;Giocatore&gt;)&#xa;+ deal(cardsPerPlayer: int): void&#xa;+ playCard(player: Giocatore, cardIndex: int): Cards&#xa;+ getCurrentPlayer(): Giocatore&#xa;+ getHand(player: Giocatore): List&lt;Cards&gt;&#xa;+ getHandMutable(player: Giocatore): List&lt;Cards&gt;&#xa;+ getLegalMoves(player: Giocatore): int[]&#xa;+ isFinished(): boolean&#xa;+ getPlayers(): List&lt;Giocatore&gt;&#xa;+ getDeck(): Mazzo&#xa;+ getScores(): Map&lt;Giocatore, Integer&gt;&#xa;+ getScore(player: Giocatore): int&#xa;+ getScaledScoreString(player: Giocatore): String&#xa;+ getWonCardsCount(player: Giocatore): int&#xa;+ getTrickPlayers(): List&lt;Giocatore&gt;&#xa;+ getTrickCards(): List&lt;Cards&gt;&#xa;+ getLastTrickWinner(): Giocatore&#xa;+ getLastTrickCardsWon(): int&#xa;+ clearTrick(): void&#xa;+ advanceTurn(): void&#xa;+ {static} getCardPoints(card: Cards): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="650" y="950" width="380" height="550" as="geometry" />
         </mxCell>
         
         <!-- UserProfile -->
-        <mxCell id="userprofile" value="UserProfile&#xa;---&#xa;- username: String&#xa;- avatarPath: String&#xa;- level: int&#xa;- experience: int&#xa;- gamesPlayed: int&#xa;- gamesWon: int&#xa;---&#xa;+ setUsername(name): void&#xa;+ addExperience(xp): void&#xa;+ addGameRecord(record): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1500" y="900" width="250" height="240" as="geometry" />
+        <mxCell id="userprofile" value="UserProfile&#xa;---&#xa;- username: String&#xa;- avatarPath: String&#xa;- level: int&#xa;- experience: int&#xa;- gamesPlayed: int&#xa;- gamesWon: int&#xa;- gameRecords: List&lt;GamesRecord&gt;&#xa;---&#xa;+ UserProfile()&#xa;+ getUsername(): String&#xa;+ setUsername(username: String): void&#xa;+ getAvatarPath(): String&#xa;+ setAvatarPath(path: String): void&#xa;+ getLevel(): int&#xa;+ setLevel(level: int): void&#xa;+ getExperience(): int&#xa;+ setExperience(experience: int): void&#xa;+ addExperience(xp: int): void&#xa;+ getGamesPlayed(): int&#xa;+ setGamesPlayed(games: int): void&#xa;+ getGamesWon(): int&#xa;+ setGamesWon(wins: int): void&#xa;+ getGameRecords(): List&lt;GamesRecord&gt;&#xa;+ addGameRecord(record: GamesRecord): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="950" width="320" height="450" as="geometry" />
         </mxCell>
         
         <!-- GamesRecord -->
-        <mxCell id="gamesrecord" value="GamesRecord&#xa;---&#xa;- date: String&#xa;- opponents: String&#xa;- winner: String&#xa;- winnerScore: String&#xa;- myScore: String&#xa;- experience: int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1900" y="900" width="200" height="160" as="geometry" />
+        <mxCell id="gamesrecord" value="GamesRecord&#xa;---&#xa;- date: String&#xa;- opponents: String&#xa;- winner: String&#xa;- winnerScore: String&#xa;- myScore: String&#xa;- experience: int&#xa;---&#xa;+ GamesRecord(date, opponents, winner, winnerScore, myScore, experience)&#xa;+ getDate(): String&#xa;+ getOpponents(): String&#xa;+ getWinner(): String&#xa;+ getWinnerScore(): String&#xa;+ getMyScore(): String&#xa;+ getExperience(): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="950" width="280" height="300" as="geometry" />
         </mxCell>
         
         <!-- StorageProfile -->
-        <mxCell id="storageprofile" value="StorageProfile&#xa;---&#xa;- profileFile: File&#xa;---&#xa;+ save(profile): void&#xa;+ load(): UserProfile" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1500" y="1200" width="200" height="120" as="geometry" />
+        <mxCell id="storageprofile" value="StorageProfile&#xa;---&#xa;- profileFile: File&#xa;- gson: Gson&#xa;---&#xa;+ StorageProfile(profilePath: String)&#xa;+ save(profile: UserProfile): void&#xa;+ load(): UserProfile&#xa;- ensureFileExists(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="1450" width="280" height="180" as="geometry" />
         </mxCell>
         
         <!-- AudioManager -->
-        <mxCell id="audiomanager" value="AudioManager&#xa;---&#xa;- clip: Clip&#xa;- volume: float&#xa;---&#xa;+ play(): void&#xa;+ loop(): void&#xa;+ stop(): void&#xa;+ setVolume(volume): void&#xa;+ fadeIn(duration, volume): void&#xa;+ fadeOut(duration): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="200" y="1300" width="250" height="200" as="geometry" />
+        <mxCell id="audiomanager" value="AudioManager&#xa;---&#xa;- clip: Clip&#xa;- volume: float&#xa;+ {static} BACKGROUND_MENU: int&#xa;+ {static} BACKGROUND_GAME: int&#xa;+ {static} MAX_VOLUME_SCALE: float&#xa;---&#xa;+ AudioManager()&#xa;+ setFile(soundType: int): void&#xa;+ play(): void&#xa;+ loop(): void&#xa;+ stop(): void&#xa;+ close(): void&#xa;+ setVolume(volume: float): void&#xa;+ fadeIn(duration: int, targetVolume: float): void&#xa;+ fadeOut(duration: int, onComplete: Runnable): void&#xa;+ playCardSound(): void&#xa;+ playDrawSound(): void&#xa;+ playVictorySound(): void&#xa;+ playDefeatSound(): void&#xa;+ playMenuClick(): void&#xa;+ isPlaying(): boolean" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="150" y="1550" width="350" height="380" as="geometry" />
         </mxCell>
         
         <!-- MenuImpostazioni -->
-        <mxCell id="menuimpostazioni" value="&lt;&lt;singleton&gt;&gt;&#xa;MenuImpostazioni&#xa;---&#xa;- volume: int&#xa;- fullscreen: boolean&#xa;- effects: boolean&#xa;- showScore: boolean&#xa;- showMessages: boolean&#xa;---&#xa;+ getInstance(): MenuImpostazioni" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="200" y="900" width="250" height="200" as="geometry" />
+        <mxCell id="menuimpostazioni" value="&lt;&lt;singleton&gt;&gt;&#xa;MenuImpostazioni&#xa;---&#xa;- {static} instance: MenuImpostazioni&#xa;- volume: int&#xa;- fullscreen: boolean&#xa;- effects: boolean&#xa;- showScore: boolean&#xa;- showMessages: boolean&#xa;---&#xa;- MenuImpostazioni()&#xa;+ {static} getInstance(): MenuImpostazioni&#xa;+ getVolume(): int&#xa;+ setVolume(volume: int): void&#xa;+ isFullscreen(): boolean&#xa;+ setFullscreen(fullscreen: boolean): void&#xa;+ isEffects(): boolean&#xa;+ setEffects(effects: boolean): void&#xa;+ isShowScore(): boolean&#xa;+ setShowScore(show: boolean): void&#xa;+ isShowMessages(): boolean&#xa;+ setShowMessages(show: boolean): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="150" y="950" width="350" height="400" as="geometry" />
         </mxCell>
         
         <!-- CardImageLoader -->
-        <mxCell id="cardimageloader" value="CardImageLoader&#xa;---&#xa;- imageCache: Map&#xa;---&#xa;+ preloadImages(): void&#xa;+ getScaledCardImage(): Image&#xa;+ getScaledCardBackImage(): Image" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1500" y="400" width="250" height="140" as="geometry" />
+        <mxCell id="cardimageloader" value="CardImageLoader&#xa;---&#xa;- {static} imageCache: Map&lt;String, Image&gt;&#xa;- {static} CARD_BACK_PATH: String&#xa;---&#xa;+ {static} preloadImages(): void&#xa;+ {static} getScaledCardImage(card: Cards, width: int, height: int): Image&#xa;+ {static} getScaledCardBackImage(width: int, height: int): Image&#xa;- {static} loadCardImage(card: Cards): BufferedImage&#xa;- {static} scaleImage(img: Image, width: int, height: int): Image" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#90EE90;strokeColor=#228B22;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1580" y="350" width="380" height="220" as="geometry" />
         </mxCell>
         
         <!-- VIEW CLASSES -->
         
         <!-- GameView -->
-        <mxCell id="gameview" value="GameView&#xa;---&#xa;- gameState: GameState&#xa;- humanPlayer: GiocatoreUmano&#xa;- controller: GameController&#xa;- audioManager: AudioManager&#xa;---&#xa;+ refresh(): void&#xa;+ log(message): void&#xa;+ showCardPlayed(): void&#xa;+ showTrickWon(): void&#xa;+ showGameOver(result): void&#xa;+ fadeIn(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="700" y="1500" width="280" height="280" as="geometry" />
+        <mxCell id="gameview" value="GameView&#xa;---&#xa;- gameState: GameState&#xa;- humanPlayer: GiocatoreUmano&#xa;- controller: GameController&#xa;- audioManager: AudioManager&#xa;- playerHandPanel: JPanel&#xa;- opponentArea: JPanel&#xa;- statusLabel: JLabel&#xa;- scoreLabel: JLabel&#xa;- logArea: JPanel&#xa;- tableOval: JPanel&#xa;- cardPanels: List&lt;CardPanel&gt;&#xa;---&#xa;+ GameView(gameState, humanPlayer, controller, audioManager)&#xa;+ refresh(): void&#xa;+ log(message: String): void&#xa;+ showCardPlayed(player: Giocatore, card: Cards, onComplete: Runnable): void&#xa;+ showTrickWon(winner: Giocatore): void&#xa;+ showGameOver(result: String): void&#xa;+ showDealingAnimation(players: List&lt;Giocatore&gt;, onComplete: Runnable): void&#xa;+ showDrawAnimationToPlayerHand(player: Giocatore, onComplete: Runnable): void&#xa;+ clearTable(): void&#xa;+ fadeIn(): void&#xa;- initUI(): void&#xa;- updatePlayerHand(): void&#xa;- updateTableCards(): void&#xa;- updateOpponentArea(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="650" y="1800" width="400" height="530" as="geometry" />
         </mxCell>
         
         <!-- GameSetup -->
-        <mxCell id="gamesetup" value="GameSetup&#xa;---&#xa;- controller: ProfileController&#xa;---&#xa;+ getSelectedPlayers(): List&#xa;+ getSelectedDifficulty(): Difficoltà" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1100" y="1500" width="250" height="120" as="geometry" />
+        <mxCell id="gamesetup" value="GameSetup&#xa;---&#xa;- controller: ProfileController&#xa;- selectedPlayers: List&lt;Giocatore&gt;&#xa;- selectedDifficulty: Difficoltà&#xa;---&#xa;+ GameSetup(controller: ProfileController)&#xa;+ getSelectedPlayers(): List&lt;Giocatore&gt;&#xa;+ getSelectedDifficulty(): Difficoltà&#xa;- initUI(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="1800" width="300" height="180" as="geometry" />
         </mxCell>
         
         <!-- MenuFrame -->
-        <mxCell id="menuframe" value="MenuFrame&#xa;---&#xa;- panel: HomeMenu&#xa;- profilePanel: ProfileMenu&#xa;- rulesPanel: RulesPage&#xa;- audioManager: AudioManager&#xa;---&#xa;+ showProfile(): void&#xa;+ showRules(): void&#xa;+ showMenu(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="1100" y="1700" width="250" height="200" as="geometry" />
+        <mxCell id="menuframe" value="MenuFrame&#xa;---&#xa;- panel: HomeMenu&#xa;- cards: JPanel&#xa;- profilePanel: ProfileMenu&#xa;- rulesPanel: RulesPage&#xa;- audioManager: AudioManager&#xa;- profileController: ProfileController&#xa;---&#xa;+ MenuFrame(profileController: ProfileController)&#xa;+ getAudioManager(): AudioManager&#xa;+ playMenuClick(): void&#xa;+ showProfile(): void&#xa;+ showRules(): void&#xa;+ showMenu(): void&#xa;+ transitionToGameMusic(onComplete: Runnable): void&#xa;+ getProfileController(): ProfileController&#xa;- initUI(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1150" y="2050" width="350" height="320" as="geometry" />
         </mxCell>
         
         <!-- HomeMenu -->
-        <mxCell id="homemenu" value="HomeMenu&#xa;---&#xa;- options: MenuOption[]&#xa;- cursor: Cursor&#xa;- avatarLabel: JLabel&#xa;- nameLabel: JLabel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1450" y="1700" width="200" height="120" as="geometry" />
+        <mxCell id="homemenu" value="HomeMenu&#xa;---&#xa;- background: BufferedImage&#xa;- options: MenuOption[]&#xa;- cursor: Cursor&#xa;- avatarSmallLabel: JLabel&#xa;- nameSmallLabel: JLabel&#xa;- levelBadgeLabel: JLabel&#xa;- onProfileClick: Runnable&#xa;---&#xa;+ HomeMenu()&#xa;+ setOnProfileClick(r: Runnable): void&#xa;+ onProfileUpdated(profile: UserProfile): void&#xa;+ onProfileSaveFailed(error: Exception): void&#xa;- initUI(): void&#xa;- updateProfileDisplay(profile: UserProfile): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1580" y="2050" width="320" height="300" as="geometry" />
         </mxCell>
         
         <!-- ProfileMenu -->
-        <mxCell id="profilemenu" value="ProfileMenu&#xa;---&#xa;- controller: ProfileController&#xa;- avatarLabel: JLabel&#xa;- nameField: JTextField&#xa;---&#xa;+ refreshFromModel(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1450" y="1860" width="220" height="140" as="geometry" />
+        <mxCell id="profilemenu" value="ProfileMenu&#xa;---&#xa;- cards: JPanel&#xa;- controller: ProfileController&#xa;- avatarLabel: JLabel&#xa;- nameField: JTextField&#xa;- levelLabel: JLabel&#xa;- experienceLabel: JLabel&#xa;- statsPanel: JPanel&#xa;---&#xa;+ ProfileMenu(cards: JPanel, controller: ProfileController)&#xa;+ refreshFromModel(): void&#xa;+ onProfileUpdated(profile: UserProfile): void&#xa;+ onProfileSaveFailed(error: Exception): void&#xa;- initUI(): void&#xa;- createStatsPanel(): JPanel&#xa;- createHistoryPanel(): JPanel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1580" y="2400" width="340" height="300" as="geometry" />
         </mxCell>
         
         <!-- RulesPage -->
-        <mxCell id="rulespage" value="RulesPage" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1750" y="1700" width="150" height="60" as="geometry" />
+        <mxCell id="rulespage" value="RulesPage&#xa;---&#xa;- cards: JPanel&#xa;- contentPanel: JPanel&#xa;---&#xa;+ RulesPage(cards: JPanel)&#xa;- initUI(): void&#xa;- createRulesContent(): JPanel" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1980" y="2050" width="250" height="160" as="geometry" />
         </mxCell>
         
         <!-- ViewImpostazioni -->
-        <mxCell id="viewimpostazioni" value="ViewImpostazioni&#xa;---&#xa;- settings: MenuImpostazioni&#xa;- volumeSlider: JSlider&#xa;- fullscreenCheckbox: JCheckBox" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1750" y="1800" width="220" height="120" as="geometry" />
+        <mxCell id="viewimpostazioni" value="ViewImpostazioni&#xa;---&#xa;- settings: MenuImpostazioni&#xa;- volumeSlider: JSlider&#xa;- fullscreenCheckbox: JCheckBox&#xa;- effectsCheckbox: JCheckBox&#xa;- showScoreCheckbox: JCheckBox&#xa;- showMessagesCheckbox: JCheckBox&#xa;---&#xa;+ ViewImpostazioni()&#xa;+ onSettingsChanged(settings: MenuImpostazioni): void&#xa;- initUI(): void&#xa;- applySettings(): void&#xa;- saveSettings(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#87CEEB;strokeColor=#4682B4;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1980" y="2260" width="300" height="280" as="geometry" />
         </mxCell>
         
         <!-- CONTROLLER CLASSES -->
         
         <!-- GameController -->
-        <mxCell id="gamecontroller" value="GameController&#xa;---&#xa;- gameState: GameState&#xa;- humanPlayer: GiocatoreUmano&#xa;- view: GameView&#xa;- audioManager: AudioManager&#xa;- gameRunning: boolean&#xa;---&#xa;+ startGame(): void&#xa;+ onCardPlayed(index): void&#xa;+ onReturnToMenu(): void&#xa;+ onExitGame(): void&#xa;+ getGameRecord(): GamesRecord" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="200" y="1600" width="280" height="260" as="geometry" />
+        <mxCell id="gamecontroller" value="GameController&#xa;---&#xa;- gameState: GameState&#xa;- humanPlayer: GiocatoreUmano&#xa;- view: GameView&#xa;- onGameEnd: Runnable&#xa;- audioManager: AudioManager&#xa;- gameExecutor: ExecutorService&#xa;- gameRunning: boolean (volatile)&#xa;---&#xa;+ GameController(players: List&lt;Giocatore&gt;, onGameEnd: Runnable)&#xa;+ startGame(): void&#xa;+ onCardPlayed(cardIndex: int): void&#xa;+ onReturnToMenu(): void&#xa;+ onExitGame(): void&#xa;+ getGameRecord(): GamesRecord&#xa;+ getView(): GameView&#xa;+ onSettingsChanged(settings: MenuImpostazioni): void&#xa;- runGameLoop(): void&#xa;- calculateResult(): String&#xa;- experienceFromGame(player, winner, points, cardsWon): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="150" y="2000" width="400" height="380" as="geometry" />
         </mxCell>
         
         <!-- Cursor -->
-        <mxCell id="cursor" value="Cursor&#xa;---&#xa;- parentPanel: JPanel&#xa;- selectedIndex: int&#xa;---&#xa;+ setSelectedIndex(index): void&#xa;+ getSelectedIndex(): int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="1900" y="1500" width="220" height="140" as="geometry" />
+        <mxCell id="cursor" value="Cursor&#xa;---&#xa;- parentPanel: JPanel&#xa;- selectedIndex: int&#xa;- optionCount: int&#xa;---&#xa;+ Cursor(parentPanel: JPanel)&#xa;+ setSelectedIndex(index: int): void&#xa;+ getSelectedIndex(): int&#xa;+ moveUp(): void&#xa;+ moveDown(): void&#xa;+ setOptionCount(count: int): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="2300" y="1800" width="280" height="200" as="geometry" />
         </mxCell>
         
         <!-- ProfileController Interface -->
-        <mxCell id="profilecontroller" value="&lt;&lt;interface&gt;&gt;&#xa;ProfileController&#xa;---&#xa;+ getProfile(): UserProfile&#xa;+ setName(name): void&#xa;+ setAvatar(file): void&#xa;+ recordMatch(game): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="2200" y="900" width="240" height="140" as="geometry" />
+        <mxCell id="profilecontroller" value="&lt;&lt;interface&gt;&gt;&#xa;ProfileController&#xa;---&#xa;+ getProfile(): UserProfile&#xa;+ setName(newName: String): void&#xa;+ setAvatar(imageFile: File): void&#xa;+ addListener(listener: ProfileListener): void&#xa;+ removeListener(listener: ProfileListener): void&#xa;+ recordMatch(game: GamesRecord): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="2300" y="950" width="320" height="180" as="geometry" />
         </mxCell>
         
         <!-- ProfileControllerImpl -->
-        <mxCell id="profilecontrollerimpl" value="ProfileControllerImpl&#xa;---&#xa;- storage: StorageProfile&#xa;- profile: UserProfile&#xa;---&#xa;+ getProfile(): UserProfile&#xa;+ setName(name): void&#xa;+ setAvatar(file): void&#xa;+ recordMatch(game): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="2200" y="1100" width="240" height="180" as="geometry" />
+        <mxCell id="profilecontrollerimpl" value="ProfileControllerImpl&#xa;---&#xa;- storage: StorageProfile&#xa;- profile: UserProfile&#xa;- listeners: List&lt;ProfileListener&gt;&#xa;---&#xa;+ ProfileControllerImpl(storage: StorageProfile)&#xa;+ getProfile(): UserProfile&#xa;+ setName(newName: String): void&#xa;+ setAvatar(imageFile: File): void&#xa;+ addListener(listener: ProfileListener): void&#xa;+ removeListener(listener: ProfileListener): void&#xa;+ recordMatch(game: GamesRecord): void&#xa;- notifyListeners(): void&#xa;- saveAsync(): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFB347;strokeColor=#FF8C00;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="2300" y="1180" width="320" height="300" as="geometry" />
         </mxCell>
         
         <!-- Main -->
-        <mxCell id="jtressette" value="JTressette&#xa;---&#xa;+ main(args): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
-          <mxGeometry x="2200" y="1500" width="160" height="80" as="geometry" />
+        <mxCell id="jtressette" value="JTressette&#xa;---&#xa;+ {static} main(args: String[]): void" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;align=left;verticalAlign=top;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="2700" y="950" width="240" height="80" as="geometry" />
         </mxCell>
         
         <!-- RELATIONSHIPS -->
