@@ -54,18 +54,24 @@ Se preferisci compilare manualmente, assicurati di essere nella directory princi
 **Linux/macOS:**
 ```bash
 cd JTressette
+mkdir -p bin
 javac -d bin -sourcepath src src/main/JTressette.java
-java -cp bin:src main.JTressette
+cp -r src/res bin/
+java -cp bin main.JTressette
 ```
 
 **Windows:**
 ```cmd
 cd JTressette
+mkdir bin
 javac -d bin -sourcepath src src\main\JTressette.java
-java -cp bin;src main.JTressette
+xcopy /E /I /Y src\res bin\res
+java -cp bin main.JTressette
 ```
 
-**Nota importante:** Assicurati di eseguire i comandi dalla directory corretta. Il codice sorgente si trova nella sottodirectory `JTressette/src/`.
+**Nota importante:** 
+- Assicurati di eseguire i comandi dalla directory corretta. Il codice sorgente si trova nella sottodirectory `JTressette/src/`.
+- Le risorse (immagini, audio) devono essere copiate dalla directory `src/res/` a `bin/res/` dopo la compilazione.
 
 ## Architettura del progetto
 Il progetto è strutturato in diverse classi principali:

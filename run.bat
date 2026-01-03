@@ -14,7 +14,7 @@ if not exist bin (
 )
 
 REM Run the application
-java -cp bin;src main.JTressette
+java -cp bin main.JTressette
 
 REM Check if run was successful
 if %ERRORLEVEL% NEQ 0 (

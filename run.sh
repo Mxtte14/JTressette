@@ -14,7 +14,7 @@ if [ ! -d "bin" ]; then
 fi
 
 # Run the application
-java -cp bin:src main.JTressette
+java -cp bin main.JTressette
 
 # Check if run was successful
 if [ $? -ne 0 ]; then
