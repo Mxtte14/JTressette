@@ -1,0 +1,443 @@
+@startuml JTressette Class Diagram
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+
+' Color scheme for MVC
+skinparam class {
+    BackgroundColor<<Model>> #90EE90
+    BorderColor<<Model>> #228B22
+    BackgroundColor<<View>> #87CEEB
+    BorderColor<<View>> #4682B4
+    BackgroundColor<<Controller>> #FFB347
+    BorderColor<<Controller>> #FF8C00
+}
+
+title JTressette - Diagramma delle Classi (Pattern MVC)
+
+' ==================== MODEL ====================
+package "Model" #DDFFDD {
+    
+    package "Model.Game" {
+        interface Giocatore <<Model>> {
+            + getName(): String
+            + isBot(): boolean
+            + chooseCard(state: GameState): int
+        }
+        
+        class GiocatoreUmano <<Model>> implements Giocatore {
+            - name: String
+            - queue: BlockingQueue<Integer>
+            + submitCardChoice(handIndex: int): void
+        }
+        
+        class Bot <<Model>> implements Giocatore {
+            - name: String
+            - difficulty: Difficoltà
+            - rnd: Random
+            - chooseCardHard(state: GameState, legal: int[]): int
+        }
+        
+        enum Difficoltà <<Model>> {
+            EASY
+            MEDIUM
+            HARD
+        }
+        
+        class Cards <<Model>> {
+            - segno: Segno
+            - rank: Rank
+            + getSegno(): Segno
+            + getRank(): Rank
+            + getPriority(): int
+        }
+        
+        enum "Cards.Segno" <<Model>> {
+            DENARA
+            SPADE
+            BASTONI
+            COPPE
+        }
+        
+        enum "Cards.Rank" <<Model>> {
+            TRE
+            DUE
+            ASSO
+            RE
+            CAVALLO
+            ALFIERE
+            SETTE
+            SEI
+            CINQUE
+            QUATTRO
+            - value: int
+            + getPriority(): int
+        }
+        
+        class Mazzo <<Model>> {
+            - cards: List<Cards>
+            - rand: Random
+            - audioManager: AudioManager
+            + shuffle(): void
+            + draw(): Cards
+            + isEmpty(): boolean
+            + remaining(): int
+        }
+        
+        class GameState <<Model>> {
+            - players: List<Giocatore>
+            - hands: Map<Giocatore, List<Cards>>
+            - scores: Map<Giocatore, Integer>
+            - wonCardsCount: Map<Giocatore, Integer>
+            - deck: Mazzo
+            - currentPlayerIndex: int
+            - trickPlayers: List<Giocatore>
+            - trickCards: List<Cards>
+            - playedCards: List<Cards>
+            - lastTrickWinner: Giocatore
+            - observers: List<GameStateObserver>
+            + deal(cardsPerPlayer: int): void
+            + playCard(player: Giocatore, cardIndex: int): Cards
+            + getCurrentPlayer(): Giocatore
+            + getHand(player: Giocatore): List<Cards>
+            + getLegalMoves(player: Giocatore): int[]
+            + isFinished(): boolean
+            + getScores(): Map<Giocatore, Integer>
+            + {static} getCardPoints(card: Cards): int
+        }
+        
+        interface GameStateObserver <<Model>> {
+            + onGameStateChanged(state: GameState): void
+        }
+    }
+    
+    package "Model.Profile" {
+        class UserProfile <<Model>> {
+            - username: String
+            - avatarPath: String
+            - level: int
+            - experience: int
+            - gamesPlayed: int
+            - gamesWon: int
+            - gameRecords: List<GamesRecord>
+            + setUsername(name: String): void
+            + setAvatarPath(path: String): void
+            + addExperience(xp: int): void
+            + addGameRecord(record: GamesRecord): void
+        }
+        
+        class GamesRecord <<Model>> {
+            - date: String
+            - opponents: String
+            - winner: String
+            - winnerScore: String
+            - myScore: String
+            - experience: int
+        }
+        
+        class StorageProfile <<Model>> {
+            - profileFile: File
+            + save(profile: UserProfile): void
+            + load(): UserProfile
+        }
+    }
+    
+    package "Model.Audio" {
+        class AudioManager <<Model>> {
+            - clip: Clip
+            - volume: float
+            + {static} BACKGROUND_MENU: int
+            + {static} BACKGROUND_GAME: int
+            + {static} MAX_VOLUME_SCALE: float
+            + setFile(soundType: int): void
+            + play(): void
+            + loop(): void
+            + stop(): void
+            + close(): void
+            + setVolume(volume: float): void
+            + fadeIn(duration: int, targetVolume: float): void
+            + fadeOut(duration: int, onComplete: Runnable): void
+            + playCardSound(): void
+            + playDrawSound(): void
+            + playVictorySound(): void
+            + playDefeatSound(): void
+            + playMenuClick(): void
+        }
+    }
+    
+    package "Model.Impostazioni" {
+        class MenuImpostazioni <<Model>> {
+            - volume: int
+            - fullscreen: boolean
+            - effects: boolean
+            - showScore: boolean
+            - showMessages: boolean
+            - listeners: List<SettingsListener>
+            + {static} getInstance(): MenuImpostazioni
+            + addListener(listener: SettingsListener): void
+            + removeListener(listener: SettingsListener): void
+        }
+        
+        interface "MenuImpostazioni.SettingsListener" <<Model>> {
+            + onSettingsChanged(settings: MenuImpostazioni): void
+        }
+    }
+    
+    package "Model.Util" {
+        class CardImageLoader <<Model>> {
+            - imageCache: Map<String, Image>
+            + {static} preloadImages(): void
+            + {static} getScaledCardImage(card: Cards, width: int, height: int): Image
+            + {static} getScaledCardBackImage(width: int, height: int): Image
+        }
+    }
+}
+
+' ==================== VIEW ====================
+package "View" #E6F5FF {
+    
+    package "View.Game" {
+        class GameView <<View>> extends JFrame {
+            - gameState: GameState
+            - humanPlayer: GiocatoreUmano
+            - controller: GameController
+            - audioManager: AudioManager
+            - playerHandPanel: JPanel
+            - opponentArea: JPanel
+            - statusLabel: JLabel
+            - scoreLabel: JLabel
+            - logArea: JPanel
+            - tableOval: JPanel
+            - cardPanels: List<CardPanel>
+            + refresh(): void
+            + log(message: String): void
+            + showCardPlayed(player: Giocatore, card: Cards, onComplete: Runnable): void
+            + showTrickWon(winner: Giocatore): void
+            + showGameOver(result: String): void
+            + showDealingAnimation(players: List<Giocatore>, onComplete: Runnable): void
+            + fadeIn(): void
+        }
+        
+        class GameSetup <<View>> extends JFrame {
+            - controller: ProfileController
+            + getSelectedPlayers(): List<Giocatore>
+            + getSelectedDifficulty(): Difficoltà
+        }
+    }
+    
+    package "View.Menu" {
+        class MenuFrame <<View>> extends JFrame {
+            - panel: HomeMenu
+            - cards: JPanel
+            - profilePanel: ProfileMenu
+            - rulesPanel: RulesPage
+            - audioManager: AudioManager
+            + getAudioManager(): AudioManager
+            + playMenuClick(): void
+            + showProfile(): void
+            + showRules(): void
+            + showMenu(): void
+            + transitionToGameMusic(onComplete: Runnable): void
+        }
+        
+        class HomeMenu <<View>> extends JPanel {
+            - background: BufferedImage
+            - options: MenuOption[]
+            - cursor: Cursor
+            - avatarSmallLabel: JLabel
+            - nameSmallLabel: JLabel
+            - levelBadgeLabel: JLabel
+            - onProfileClick: Runnable
+            + setOnProfileClick(r: Runnable): void
+        }
+        
+        class MenuOption <<View>> {
+            - text: String
+            - x: int
+            - y: int
+            - scale: double
+            + draw(g: Graphics2D, selected: boolean): void
+            + setScale(scale: double): void
+        }
+    }
+    
+    package "View.Profile" {
+        class ProfileMenu <<View>> extends JPanel {
+            - cards: JPanel
+            - controller: ProfileController
+            - avatarLabel: JLabel
+            - nameField: JTextField
+            + refreshFromModel(): void
+        }
+    }
+    
+    package "View.Rules" {
+        class RulesPage <<View>> extends JPanel {
+            - cards: JPanel
+        }
+    }
+    
+    package "View.Impostazioni" {
+        class ViewImpostazioni <<View>> extends JFrame {
+            - settings: MenuImpostazioni
+            - volumeSlider: JSlider
+            - fullscreenCheckbox: JCheckBox
+            - effectsCheckbox: JCheckBox
+            - showScoreCheckbox: JCheckBox
+            - showMessagesCheckbox: JCheckBox
+        }
+    }
+}
+
+' ==================== CONTROLLER ====================
+package "Controller" #FFE6CC {
+    
+    package "Controller.Game" {
+        class GameController <<Controller>> {
+            - gameState: GameState
+            - humanPlayer: GiocatoreUmano
+            - view: GameView
+            - onGameEnd: Runnable
+            - audioManager: AudioManager
+            - gameExecutor: ExecutorService
+            - gameRunning: boolean
+            + startGame(): void
+            + onCardPlayed(cardIndex: int): void
+            + onReturnToMenu(): void
+            + onExitGame(): void
+            + getGameRecord(): GamesRecord
+            + getView(): GameView
+            - runGameLoop(): void
+        }
+        
+        class Cursor <<Controller>> {
+            - parentPanel: JPanel
+            - selectedIndex: int
+            + setSelectedIndex(index: int): void
+            + getSelectedIndex(): int
+        }
+    }
+    
+    package "Controller.Profile" {
+        interface ProfileController <<Controller>> {
+            + getProfile(): UserProfile
+            + setName(newName: String): void
+            + setAvatar(imageFile: File): void
+            + addListener(l: ProfileListener): void
+            + recordMatch(game: GamesRecord): void
+        }
+        
+        class ProfileControllerImpl <<Controller>> implements ProfileController {
+            - storage: StorageProfile
+            - profile: UserProfile
+            - listeners: List<ProfileListener>
+            - saveAsync(): void
+        }
+        
+        interface ProfileListener <<Controller>> {
+            + onProfileUpdated(profile: UserProfile): void
+            + onProfileSaveFailed(error: Exception): void
+        }
+    }
+}
+
+' ==================== Main ====================
+package "main" {
+    class JTressette <<Main>> {
+        + {static} main(args: String[]): void
+    }
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' Model relationships
+Bot ..> Difficoltà : uses
+Cards *-- "Cards.Segno"
+Cards *-- "Cards.Rank"
+Mazzo o-- Cards : contains
+Mazzo --> AudioManager : uses
+GameState o-- Giocatore : manages
+GameState *-- Mazzo
+GameState --> GameStateObserver : notifies
+GameState --> Cards : uses
+UserProfile o-- GamesRecord : contains
+StorageProfile --> UserProfile : saves/loads
+MenuImpostazioni --> "MenuImpostazioni.SettingsListener" : notifies
+
+' View-Model relationships
+GameView --> GameState : observes
+GameView --> GiocatoreUmano : interacts
+GameView --> AudioManager : uses
+GameView --> CardImageLoader : uses
+GameSetup --> Giocatore : creates
+HomeMenu ..|> ProfileListener
+ProfileMenu ..|> ProfileListener
+MenuFrame ..|> "MenuImpostazioni.SettingsListener"
+MenuFrame --> AudioManager : uses
+ViewImpostazioni ..|> "MenuImpostazioni.SettingsListener"
+ViewImpostazioni --> MenuImpostazioni : configures
+
+' Controller relationships
+GameController --> GameState : manages
+GameController --> GiocatoreUmano : interacts
+GameController --> GameView : controls
+GameController --> AudioManager : uses
+GameController --> GamesRecord : creates
+GameController ..|> "MenuImpostazioni.SettingsListener"
+ProfileControllerImpl --> StorageProfile : uses
+ProfileControllerImpl --> UserProfile : manages
+ProfileControllerImpl --> ProfileListener : notifies
+HomeMenu --> Cursor : uses
+
+' Main relationships
+JTressette --> MenuFrame : creates
+JTressette --> ProfileControllerImpl : creates
+JTressette --> StorageProfile : creates
+
+' Additional associations
+MenuFrame --> HomeMenu : contains
+MenuFrame --> ProfileMenu : contains
+MenuFrame --> RulesPage : contains
+GameView --> "GameView.CardPanel" : contains
+
+note right of GameState
+  <b>Pattern MVC - Model</b>
+  Gestisce lo stato della partita:
+  - Mani dei giocatori
+  - Punteggi
+  - Mazzo di carte
+  - Prese e turni
+end note
+
+note right of GameView
+  <b>Pattern MVC - View</b>
+  Visualizza l'interfaccia:
+  - Mani dei giocatori
+  - Tavolo da gioco
+  - Animazioni
+  - Punteggi e log
+end note
+
+note right of GameController
+  <b>Pattern MVC - Controller</b>
+  Coordina il gioco:
+  - Loop di gioco
+  - Gestione turni
+  - Eventi utente
+  - Transizioni di stato
+end note
+
+legend right
+  |<#90EE90> Model |
+  |<#87CEEB> View |
+  |<#FFB347> Controller |
+  
+  <b>Legenda:</b>
+  ──────> Associazione
+  ──────|> Implementazione
+  ──────▷ Estensione (Extends)
+  ◆────── Composizione
+  ○────── Aggregazione
+endlegend
+
+@enduml
