@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="e8778508-99e1-4f1d-ad18-5a35cbfc941a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/JTressette/src/Model/Game/GameState.java" beforeDir="false" afterPath="$PROJECT_DIR$/JTressette/src/Model/Game/GameState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JTressette/src/res/audio/backGame.wav" beforeDir="false" afterPath="$PROJECT_DIR$/JTressette/src/res/audio/backGame.wav" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JTressette/src/res/audio/backgroundMenu.wav" beforeDir="false" afterPath="$PROJECT_DIR$/JTressette/src/res/audio/backgroundMenu.wav" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JTressette/src/res/audio/dealing.wav" beforeDir="false" afterPath="$PROJECT_DIR$/JTressette/src/res/audio/dealing.wav" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni02.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni03.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni04.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni05.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni06.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni07.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni08.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni09.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Bastoni10.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/BastoniAsso.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe02.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe03.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe04.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe05.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe06.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe07.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe08.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe09.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Coppe10.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/CoppeAsso.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari02.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari03.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari04.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari05.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari06.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari07.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari08.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari09.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Denari10.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/DenariAsso.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Dorso.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade02.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade03.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade04.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade05.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade06.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade07.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade08.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade09.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/Spade10.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/Cards/SpadeAsso.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/audio/SelectionClick.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/audio/backGame.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/audio/backgroundMenu.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/audio/cardDraw.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/audio/cardPlayed.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/audio/dealing.wav" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/default_images/default_icon.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/default_images/sfondo_1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/JTressette/res/default_images/white_ping.jpg" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Mxtte14&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Mxtte14/JTressette.git&quot;,
+    &quot;accountId&quot;: &quot;529825c5-c7ba-41b1-842f-f832758ae445&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="35k1ctY0UGD6mB9MxCuQfv2oTpx" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.JTressette.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.uml&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\meima\IdeaProjects\JTressette" />
+      <recent name="C:\Users\meima\IdeaProjects\JTressette\JTressette\src\res\audio" />
+      <recent name="C:\Users\meima\IdeaProjects\JTressette\JTressette\src\res" />
+      <recent name="C:\Users\meima\IdeaProjects\JTressette\JTressette\src\main\resource" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.28238.7" />
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-IU-252.28238.7" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e8778508-99e1-4f1d-ad18-5a35cbfc941a" name="Changes" comment="" />
+      <created>1763639343720</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1763639343720</updated>
+      <workItem from="1763639351794" duration="11850000" />
+      <workItem from="1764494262884" duration="25000" />
+      <workItem from="1764494314048" duration="921000" />
+      <workItem from="1764495567566" duration="4914000" />
+      <workItem from="1764595623683" duration="16000000" />
+      <workItem from="1764762780838" duration="8397000" />
+      <workItem from="1765274633385" duration="434000" />
+      <workItem from="1765275100219" duration="4849000" />
+      <workItem from="1765793579118" duration="10604000" />
+      <workItem from="1765874774450" duration="3591000" />
+      <workItem from="1765902938601" duration="83000" />
+      <workItem from="1765903058142" duration="561000" />
+      <workItem from="1765965698503" duration="5107000" />
+      <workItem from="1766046624714" duration="7297000" />
+      <workItem from="1766141965425" duration="2092000" />
+      <workItem from="1766144200405" duration="3472000" />
+      <workItem from="1767720996444" duration="581000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>

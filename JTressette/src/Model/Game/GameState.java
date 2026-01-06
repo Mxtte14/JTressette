@@ -75,15 +75,15 @@ public class GameState {
 
     /**
      * Mappa immutabile dei punti assegnati a ogni valore di carta.
-     * ASSO, TRE, DUE valgono 3 punti; RE, CAVALLO, ALFIERE valgono 1 punto;
+     * ASSO vale 3 punti; RE, CAVALLO, ALFIERE, TRE e DUE valgono 1 punto;
      * le altre carte (SETTE, SEI, CINQUE, QUATTRO) valgono 0 punti.
      */
     private static final Map<Cards.Rank, Integer> CARD_POINTS;
     static {
         Map<Cards.Rank, Integer> m = new EnumMap<>(Cards.Rank.class);
         m.put(Cards.Rank.ASSO, 3);
-        m.put(Cards.Rank.TRE, 3);
-        m.put(Cards.Rank.DUE, 3);
+        m.put(Cards.Rank.TRE, 1);
+        m.put(Cards.Rank.DUE, 1);
         m.put(Cards.Rank.RE, 1);
         m.put(Cards.Rank.CAVALLO, 1);
         m.put(Cards.Rank.ALFIERE, 1);
