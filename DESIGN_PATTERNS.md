@@ -86,7 +86,7 @@ private final List<GameStateObserver> observers = new CopyOnWriteArrayList<>();
 
 public void addObserver(GameStateObserver observer) {
     if (observer != null) {
-        observers.addIfAbsent(observer);
+        ((CopyOnWriteArrayList<GameStateObserver>) observers).addIfAbsent(observer);
     }
 }
 
@@ -98,10 +98,19 @@ private void notifyCardPlayed(Giocatore player, Cards card) {
 **Esempio pratico** nel metodo `playCard()`:
 ```java
 public Cards playCard(Giocatore p, int handIndex) {
-    // ... logica di gioco ...
+    // Rimuove la carta dalla mano
+    Cards c = hand.remove(handIndex);
+    trickCards.add(c);
+    
+    // Notifica gli observers
     notifyCardPlayed(p, c);
     
+    // Se la presa è completa
     if (trickCards.size() == players.size()) {
+        int winnerPos = determineTrickWinner();
+        Giocatore winner = trickPlayers.get(winnerPos);
+        int cardsWon = trickCards.size();
+        
         notifyTrickCompleted(winner, cardsWon);
         notifyTurnChanged(getCurrentPlayer());
     }
