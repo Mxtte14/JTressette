@@ -7,6 +7,13 @@
 4. [Stream API per le Funzioni](#4-stream-api-per-le-funzioni)
 5. [Gestione Audio](#5-gestione-audio)
 6. [Effetti Grafici](#6-effetti-grafici)
+7. [Design Pattern Singleton](#7-design-pattern-singleton)
+8. [Utility Class Pattern (Static Helper)](#8-utility-class-pattern-static-helper)
+9. [Strategy Pattern](#9-strategy-pattern)
+10. [Polymorphism e Interface-based Design](#10-polymorphism-e-interface-based-design)
+11. [Repository/DAO Pattern](#11-repositorydao-pattern)
+12. [Thread Safety e Concorrenza](#12-thread-safety-e-concorrenza)
+13. [Immutability e Defensive Copying](#13-immutability-e-defensive-copying)
 
 ---
 
@@ -569,15 +576,618 @@ g2d.setRenderingHint(RenderingHints.KEY_RENDERING, VALUE_RENDER_QUALITY);
 
 ---
 
+
+## 7. Design Pattern Singleton
+
+### Descrizione
+Il pattern Singleton garantisce che una classe abbia una sola istanza nell'intera applicazione e fornisce un punto di accesso globale a questa istanza.
+
+### Implementazione nel Progetto
+
+#### **MenuImpostazioni (Singleton Thread-Safe)**
+**`MenuImpostazioni.java`** (`Model/Impostazioni/MenuImpostazioni.java`, linee 29-86):
+
+```java
+public class MenuImpostazioni {
+    /** Istanza singleton */
+    private static MenuImpostazioni instance;
+    
+    /** Costruttore privato per pattern Singleton */
+    private MenuImpostazioni() {
+        String home = System.getProperty("user.home");
+        settingsDir = Paths.get(home, DIR_NAME);
+        settingsFile = settingsDir.resolve(FILE_NAME);
+        load();
+    }
+    
+    /**
+     * Restituisce l'istanza singleton delle impostazioni.
+     * Metodo thread-safe con lazy initialization.
+     */
+    public static synchronized MenuImpostazioni getInstance() {
+        if (instance == null) {
+            instance = new MenuImpostazioni();
+        }
+        return instance;
+    }
+}
+```
+
+**Caratteristiche**:
+- **Costruttore privato**: impedisce la creazione di istanze dall'esterno
+- **Metodo getInstance() sincronizzato**: garantisce thread-safety
+- **Lazy initialization**: l'istanza viene creata solo quando necessaria
+- **Persistenza automatica**: carica le impostazioni da file al primo accesso
+
+**Gestisce**:
+- Volume audio (0-100)
+- Abilitazione effetti sonori
+- Visualizzazione punteggi e messaggi
+- Modalità fullscreen
+
+**Integrazione con Observer Pattern**:
+```java
+public interface SettingsListener {
+    void onSettingsChanged(MenuImpostazioni settings);
+}
+
+private void notifyListeners() {
+    for (SettingsListener listener : listeners) {
+        listener.onSettingsChanged(this);
+    }
+}
+```
+- Combina Singleton con Observer per notificare cambiamenti globali
+
+### Vantaggi del Singleton
+- **Unica fonte di verità**: tutte le parti dell'applicazione accedono alle stesse impostazioni
+- **Gestione centralizzata**: modifiche alle impostazioni si propagano automaticamente
+- **Risparmio risorse**: una sola istanza invece di multiple copie
+- **Thread-safe**: sincronizzazione garantisce correttezza in ambiente multi-thread
+
+---
+
+## 8. Utility Class Pattern (Static Helper)
+
+### Descrizione
+Classi che forniscono metodi statici di utilità senza mantenere stato. Il costruttore è privato per prevenire istanziazione.
+
+### Implementazione nel Progetto
+
+#### **CardImageLoader (Utility Class con Cache)**
+**`CardImageLoader.java`** (`Model/Util/CardImageLoader.java`, linee 31-42):
+
+```java
+public class CardImageLoader {
+    /** Costruttore privato per impedire l'instanziazione */
+    private CardImageLoader() {
+        throw new UnsupportedOperationException(
+            "CardImageLoader è una classe utility e non può essere istanziata.");
+    }
+    
+    /** Cache statica delle immagini caricate */
+    private static final Map<String, BufferedImage> imageCache = new HashMap<>();
+    
+    /** Immagine del retro carta (singleton interno) */
+    private static BufferedImage cardBackImage;
+}
+```
+
+**Funzionalità principali**:
+
+1. **Caricamento con cache** (linee 152-162):
+```java
+private static BufferedImage getCardImage(String imageName) {
+    if (imageCache.containsKey(imageName)) {
+        return imageCache.get(imageName);
+    }
+    
+    BufferedImage image = loadImage(imageName);
+    if (image != null) {
+        imageCache.put(imageName, image);
+    }
+    return image;
+}
+```
+
+2. **Scaling ottimizzato**:
+```java
+public static Image getScaledCardImage(Cards card, int width, int height) {
+    BufferedImage original = getCardImage(card);
+    if (original == null) {
+        return createPlaceholderImage(card, width, height);
+    }
+    return original.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+}
+```
+
+3. **Preload per performance** (linee 324-332):
+```java
+public static void preloadImages() {
+    for (Cards.Segno segno : Cards.Segno.values()) {
+        for (Cards.Rank rank : Cards.Rank.values()) {
+            Cards card = new Cards(segno, rank);
+            getCardImage(card);
+        }
+    }
+    getCardBackImage();
+}
+```
+
+4. **Fallback con placeholder**:
+```java
+private static Image createPlaceholderImage(Cards card, int width, int height) {
+    // Genera immagine con Graphics2D quando il file non è disponibile
+    BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g2d = img.createGraphics();
+    // ... rendering del placeholder ...
+    return img;
+}
+```
+
+### Vantaggi Utility Class
+- **Nessuno stato condiviso**: solo metodi statici, nessuna istanza
+- **Cache trasparente**: le immagini vengono caricate una sola volta
+- **Resilienza**: genera placeholder se le risorse non sono disponibili
+- **Performance**: preload opzionale per gioco fluido
+
+---
+
+## 9. Strategy Pattern
+
+### Descrizione
+Il pattern Strategy definisce una famiglia di algoritmi, li incapsula e li rende intercambiabili. L'algoritmo può variare indipendentemente dai client che lo usano.
+
+### Implementazione nel Progetto
+
+#### **Difficoltà Bot (Strategy con Enum)**
+**`Bot.java`** (`Model/Game/Bot.java`, linee 67-105):
+
+```java
+@Override
+public int chooseCard(GameState state) {
+    int[] legal = state.getLegalMoves(this);
+    if (legal == null || legal.length == 0) return -1;
+    
+    switch (difficulty) {
+        case EASY:
+            return legal[rnd.nextInt(legal.length)];
+            
+        case MEDIUM:
+            // Strategia: vinci con carta minima o scarta la più debole
+            Cards lead = state.getLeadCard();
+            if (lead != null) {
+                List<Cards> hand = state.getHand(this);
+                int bestWinIdx = Arrays.stream(legal)
+                        .boxed()
+                        .filter(idx -> canWin(hand.get(idx), lead))
+                        .min(Comparator.comparingInt(idx -> hand.get(idx).getPriority()))
+                        .orElse(-1);
+                if (bestWinIdx >= 0) return bestWinIdx;
+            }
+            return findWeakestLegal(state, legal);
+            
+        case HARD:
+            return chooseCardHard(state, legal);
+    }
+    return 0;
+}
+```
+
+**Strategie implementate**:
+
+1. **EASY - Strategia Casuale**:
+   - Scelta completamente random tra le mosse legali
+   - Nessuna valutazione tattica
+
+2. **MEDIUM - Strategia Tattica Base**:
+   - Cerca di vincere la presa con la carta minima necessaria
+   - Se non può vincere, scarta la carta più debole
+   - Usa Stream API per trovare la mossa ottimale
+
+3. **HARD - Strategia Avanzata con Euristica** (linee 122-213):
+   - Analizza le carte già giocate
+   - Calcola i punti nella presa corrente
+   - Stima le carte punto rimanenti nel seme
+   - Usa scoring euristico complesso:
+```java
+if (wouldWin) {
+    score = 2000 - candidate.getPriority();
+    score += trickPoints * 100;
+    score += remainingPointCardsInLead * 50;
+} else {
+    score = -candidate.getPriority();
+    if (trickPoints == 0 && remainingPointCardsInLead == 0) {
+        score += 20;  // bonus per scartare carte inutili
+    }
+}
+```
+
+### Vantaggi Strategy Pattern
+- **Algoritmi intercambiabili**: facile cambiare difficoltà senza modificare Bot
+- **Estensibilità**: semplice aggiungere nuove difficoltà
+- **Testabilità**: ogni strategia può essere testata indipendentemente
+- **Leggibilità**: logiche separate e ben identificabili
+
+---
+
+## 10. Polymorphism e Interface-based Design
+
+### Descrizione
+Utilizzo di interfacce per definire contratti comuni e implementazioni polimorfiche per comportamenti diversi.
+
+### Implementazione nel Progetto
+
+#### **Giocatore Interface**
+**`Giocatore.java`** (`Model/Game/Giocatore.java`, linee 8-33):
+
+```java
+public interface Giocatore {
+    String getName();
+    boolean isBot();
+    int chooseCard(GameState state) throws InterruptedException;
+}
+```
+
+**Implementazioni**:
+
+1. **GiocatoreUmano** - Interazione con UI:
+```java
+public class GiocatoreUmano implements Giocatore {
+    private final String name;
+    private final BlockingQueue<Integer> cardChoiceQueue = new LinkedBlockingQueue<>();
+    
+    @Override
+    public int chooseCard(GameState state) throws InterruptedException {
+        // Aspetta input dall'utente tramite queue thread-safe
+        Integer choice = cardChoiceQueue.take();
+        return choice;
+    }
+    
+    public void submitCardChoice(int cardIndex) {
+        cardChoiceQueue.offer(cardIndex);
+    }
+}
+```
+- Utilizza `BlockingQueue` per comunicazione thread-safe tra UI e game loop
+- `take()` blocca fino a quando l'utente fa una scelta
+
+2. **Bot** - IA con strategia:
+```java
+public class Bot implements Giocatore {
+    private final String name;
+    private final Difficoltà difficulty;
+    
+    @Override
+    public int chooseCard(GameState state) {
+        // Scelta immediata basata su algoritmo (vedi Strategy Pattern)
+        int[] legal = state.getLegalMoves(this);
+        return applyStrategy(state, legal);
+    }
+}
+```
+
+**Utilizzo polimorfico** nel GameController:
+```java
+while (!gameState.isFinished()) {
+    Giocatore current = gameState.getCurrentPlayer();
+    
+    // Chiamata polimorfica - funziona sia per umano che bot
+    int idx = current.chooseCard(gameState);
+    
+    Cards played = gameState.playCard(current, idx);
+    // ...
+}
+```
+
+### Vantaggi Polymorphism
+- **Codice generico**: GameController non distingue tra umano e bot
+- **Estensibilità**: facile aggiungere nuovi tipi di giocatori (es. rete)
+- **Manutenibilità**: modifiche a un tipo non impattano gli altri
+- **Testabilità**: possibile creare mock player per test
+
+---
+
+## 11. Repository/DAO Pattern
+
+### Descrizione
+Pattern che astrae l'accesso ai dati, separando la logica di persistenza dalla logica di business.
+
+### Implementazione nel Progetto
+
+#### **StorageProfile (Repository per UserProfile)**
+**`StorageProfile.java`** (`Model/Profile/StorageProfile.java`):
+
+**Caratteristiche principali**:
+
+1. **Separazione delle responsabilità**:
+   - `UserProfile`: entità di dominio (POJO)
+   - `StorageProfile`: logica di persistenza
+
+2. **Salvataggio atomico** (linee 257-301):
+```java
+public synchronized void save(UserProfile profile) throws IOException {
+    // Crea Properties con tutti i dati
+    Properties props = new Properties();
+    props.setProperty(KEY_USERNAME, profile.getUsername());
+    props.setProperty(KEY_EXPERIENCE, String.valueOf(profile.getExperience()));
+    // ... altre proprietà ...
+    
+    // Salva in file temporaneo
+    Path tmp = profileDir.resolve(FILE_NAME + ".tmp");
+    try (OutputStream os = Files.newOutputStream(tmp, ...)) {
+        props.store(os, "JTressette User Profile");
+    }
+    
+    // Move atomico per prevenire corruzione
+    Files.move(tmp, profileFile, 
+               StandardCopyOption.REPLACE_EXISTING, 
+               StandardCopyOption.ATOMIC_MOVE);
+}
+```
+- **Atomicità**: salva prima in `.tmp`, poi sposta atomicamente
+- **Thread-safe**: metodo sincronizzato
+- **Resilienza**: previene corruzione dati in caso di crash
+
+3. **Caricamento con fallback** (linee 88-104):
+```java
+public UserProfile loadOrCreateDefault() {
+    try {
+        if (Files.notExists(profileFile)) {
+            // Crea profilo default e lo salva
+            UserProfile defaultProfile = new UserProfile("Giocatore");
+            save(defaultProfile);
+            return defaultProfile;
+        } else {
+            return loadFromFile();
+        }
+    } catch (IOException e) {
+        // Fallback su profilo default senza salvare
+        return new UserProfile("Giocatore");
+    }
+}
+```
+
+4. **Serializzazione complessa con Stream API** (linee 192-221):
+```java
+private List<GamesRecord> loadGamesFromProperties(Properties props) {
+    int count = Integer.parseInt(props.getProperty(KEY_GAMES_COUNT, "0"));
+    
+    return IntStream.range(0, count)
+            .mapToObj(i -> {
+                String prefix = KEY_GAME_PREFIX + i + ".";
+                String date = props.getProperty(prefix + "date", "");
+                String opponent = props.getProperty(prefix + "opponent", "");
+                // ... altri campi ...
+                
+                GamesRecord record = new GamesRecord(date, opponent, ...);
+                return record;
+            })
+            .collect(Collectors.toList());
+}
+```
+
+### Vantaggi Repository Pattern
+- **Disaccoppiamento**: il Model non conosce i dettagli di persistenza
+- **Testabilità**: facile creare mock repository per test
+- **Flessibilità**: possibile cambiare storage (file → database) senza impattare il Model
+- **Affidabilità**: salvataggio atomico previene perdita dati
+
+---
+
+## 12. Thread Safety e Concorrenza
+
+### Descrizione
+Tecniche e pattern utilizzati per garantire correttezza in ambiente multi-threaded.
+
+### Implementazioni nel Progetto
+
+#### **1. CopyOnWriteArrayList per Observers**
+**`GameState.java`** (linea 70):
+```java
+private final List<GameStateObserver> observers = new CopyOnWriteArrayList<>();
+```
+- **Thread-safe**: modifiche creano una copia dell'array interno
+- **Iterazione sicura**: nessun ConcurrentModificationException
+- **Ideale per**: molte letture, poche scritture (tipico pattern Observer)
+
+#### **2. AtomicBoolean per Flag**
+**`GameState.java`** (linea 73):
+```java
+private final AtomicBoolean gameFinished = new AtomicBoolean(false);
+
+public boolean isFinished() {
+    boolean finished = hands.values().stream().allMatch(List::isEmpty);
+    if (finished && gameFinished.compareAndSet(false, true)) {
+        // Solo il primo thread notifica
+        notifyGameFinished();
+    }
+    return finished;
+}
+```
+- **Operazione atomica**: `compareAndSet` è thread-safe
+- **Garanzia**: notifica una sola volta anche con chiamate concorrenti
+
+#### **3. BlockingQueue per Comunicazione Thread**
+**`GiocatoreUmano.java`**:
+```java
+private final BlockingQueue<Integer> cardChoiceQueue = new LinkedBlockingQueue<>();
+
+public int chooseCard(GameState state) throws InterruptedException {
+    // Blocca finché non arriva una scelta dall'UI thread
+    Integer choice = cardChoiceQueue.take();
+    return choice;
+}
+
+public void submitCardChoice(int cardIndex) {
+    // Chiamato dall'UI thread
+    cardChoiceQueue.offer(cardIndex);
+}
+```
+- **Comunicazione sicura**: tra game loop thread e UI thread
+- **Blocking**: `take()` aspetta senza busy-waiting
+- **Non-blocking**: `offer()` non blocca l'UI
+
+#### **4. Synchronized Methods**
+**`MenuImpostazioni.java`** (linea 81):
+```java
+public static synchronized MenuImpostazioni getInstance() {
+    if (instance == null) {
+        instance = new MenuImpostazioni();
+    }
+    return instance;
+}
+```
+
+**`StorageProfile.java`** (linea 257):
+```java
+public synchronized void save(UserProfile profile) throws IOException {
+    // Salvataggio thread-safe del profilo
+}
+```
+
+#### **5. SwingUtilities.invokeLater per UI Updates**
+**`GameController.java`**:
+```java
+private void runGameLoop() {
+    while (!gameState.isFinished()) {
+        // Game logic nel background thread
+        Cards played = gameState.playCard(current, idx);
+        
+        // Aggiornamenti UI sempre nell'Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            view.showCardPlayed(current, played, ...);
+            view.refresh();
+        });
+    }
+}
+```
+- **Thread confinement**: tutta la UI in un solo thread (EDT)
+- **Previene**: race conditions e deadlock nella GUI
+
+#### **6. Volatile e Final per Visibilità**
+**`GameController.java`** (linea 46):
+```java
+private volatile boolean gameRunning = false;
+```
+- **Volatile**: garantisce visibilità tra thread
+- **Final**: campi immutabili dopo costruzione
+
+### Tecniche Thread-Safety Utilizzate
+- **Immutability**: oggetti immutabili sono automaticamente thread-safe
+- **Thread confinement**: UI operations solo nell'EDT
+- **Synchronization**: per sezioni critiche
+- **Concurrent collections**: CopyOnWriteArrayList, BlockingQueue
+- **Atomic variables**: AtomicBoolean per flag
+- **Defensive copying**: Collections.unmodifiableList/Map
+
+---
+
+## 13. Immutability e Defensive Copying
+
+### Descrizione
+Utilizzo di oggetti immutabili e copie difensive per prevenire modifiche indesiderate e garantire thread-safety.
+
+### Implementazioni nel Progetto
+
+#### **1. Collections Immutabili**
+**`GameState.java`**:
+
+```java
+// Restituisce copia immutabile
+public List<Giocatore> getPlayers() { 
+    return Collections.unmodifiableList(players); 
+}
+
+public List<Cards> getHand(Giocatore p) {
+    List<Cards> hand = hands.get(p);
+    return (hand == null) ? List.of() : Collections.unmodifiableList(hand);
+}
+
+public Map<Giocatore, Integer> getScores() { 
+    return Collections.unmodifiableMap(scores); 
+}
+
+public List<Cards> getTrickCards() {
+    return Collections.unmodifiableList(trickCards);
+}
+```
+- **Protezione**: impossibile modificare stato interno dall'esterno
+- **Sicurezza**: nessuna reference leak
+- **API pulita**: interfaccia di sola lettura
+
+#### **2. Mappa Immutabile di Costanti**
+**`GameState.java`** (linee 81-95):
+```java
+private static final Map<Cards.Rank, Integer> CARD_POINTS;
+static {
+    Map<Cards.Rank, Integer> m = new EnumMap<>(Cards.Rank.class);
+    m.put(Cards.Rank.ASSO, 3);
+    m.put(Cards.Rank.TRE, 1);
+    m.put(Cards.Rank.DUE, 1);
+    // ...
+    CARD_POINTS = Collections.unmodifiableMap(m);
+}
+```
+- **Inizializzazione statica**: valori costanti condivisi
+- **Immutabile**: nessuna modifica possibile dopo inizializzazione
+
+#### **3. Final Fields**
+Quasi tutti i campi sono `final` quando possibile:
+```java
+private final List<Giocatore> players;
+private final Map<Giocatore, List<Cards>> hands = new LinkedHashMap<>();
+private final Mazzo deck;
+private final AudioManager audioManager;
+private final List<GameStateObserver> observers = new CopyOnWriteArrayList<>();
+```
+- **Garanzia**: reference non può cambiare dopo costruzione
+- **Thread-safety**: campi final sono safely published
+
+#### **4. Defensive Copy nei Getter**
+**`Mazzo.java`** (linea 79):
+```java
+public List<Cards> snapshot() {
+    return List.copyOf(cards);
+}
+```
+- **Copia profonda**: modifiche alla copia non impattano l'originale
+
+### Vantaggi Immutability
+- **Thread-safety**: oggetti immutabili sono automaticamente thread-safe
+- **Prevedibilità**: lo stato non cambia inaspettatamente
+- **Caching sicuro**: possibile condividere reference senza rischi
+- **Debugging facilitato**: meno stati mutabili da tracciare
+
+---
+
+
 ## Conclusione
 
 Il progetto JTressette dimostra un'applicazione completa e professionale di design patterns e tecnologie moderne Java:
 
-- **MVC**: Separazione netta tra dati, presentazione e logica
-- **Observer**: Notifiche reattive per aggiornamenti automatici
-- **Swing**: UI ricca con componenti personalizzati
-- **Stream API**: Codice funzionale e manutenibile
-- **Audio avanzato**: Sistema completo con fade e volume dinamico
-- **Grafica 2D**: Rendering professionale con animazioni ed effetti
+### Design Patterns Implementati
+- **MVC**: Separazione netta tra Model, View e Controller
+- **Observer**: Notifiche reattive per aggiornamenti automatici della UI
+- **Singleton**: Gestione centralizzata di impostazioni globali (MenuImpostazioni)
+- **Strategy**: Algoritmi intercambiabili per difficoltà bot (Easy, Medium, Hard)
+- **Utility Class**: Helper statici con cache per risorse (CardImageLoader)
+- **Repository/DAO**: Astrazione della persistenza (StorageProfile)
+- **Polymorphism**: Design basato su interfacce (Giocatore → Bot, GiocatoreUmano)
 
-Ogni aspetto del progetto segue best practices e principi SOLID, risultando in un codebase ben strutturato, estensibile e manutenibile.
+### Tecnologie e Best Practices
+- **Java Swing**: UI ricca con 5 layout managers e componenti personalizzati
+- **Stream API**: Programmazione funzionale per operazioni su collezioni
+- **Thread Safety**: CopyOnWriteArrayList, BlockingQueue, AtomicBoolean, synchronized
+- **Immutability**: Collections immutabili e defensive copying
+- **Audio System**: Gestione completa con fade, volume dinamico ed effetti
+- **Grafica 2D**: Rendering professionale con animazioni a 60fps, trasparenze ed effetti
+
+### Architettura e Qualità del Codice
+- **Principi SOLID**: Single Responsibility, Open/Closed, Interface Segregation
+- **Separation of Concerns**: Logica di business separata da presentazione e persistenza
+- **Concurrent Programming**: Comunicazione sicura tra UI thread e game loop thread
+- **Error Handling**: Gestione errori con fallback e resilienza
+- **Resource Management**: Cache intelligente e preload opzionale per performance
+
+Il progetto risulta in un codebase ben strutturato, estensibile, manutenibile e thread-safe, ideale sia per uso pratico che per studio accademico dei design patterns.
